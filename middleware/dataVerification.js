@@ -169,6 +169,49 @@ const verifyBoolean = (fieldName) => {
     .toBoolean();
 };
 
+const verifyNDC = () => {
+  return body('ndc')
+    .matches(/^[0-9\-]{10,14}$/)
+    .withMessage('NDC must be 10-11 digits with optional dashes (e.g., 12345-678-90)')
+    .customSanitizer((value) => {
+      return value.replace(/[^\d]/g, '');
+    })
+    .custom((value) => {
+      if (value.length < 10 || value.length > 11) {
+        throw new Error('NDC must be 10 or 11 digits');
+      }
+      return true;
+    });
+};
+
+const verifyQuantity = (fieldName = 'quantity') => {
+  return body(fieldName)
+    .isInt({ min: 0 })
+    .withMessage(`${fieldName} must be a non-negative integer`)
+    .toInt();
+};
+
+const verifyPrice = (fieldName) => {
+  return body(fieldName)
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage(`${fieldName} must be a positive number`)
+    .custom((value) => {
+      if (value && parseFloat(value) > 999999.99) {
+        throw new Error(`${fieldName} cannot exceed $999,999.99`);
+      }
+      return true;
+    });
+};
+
+const verifyDate = (fieldName) => {
+  return body(fieldName)
+    .optional()
+    .isISO8601()
+    .withMessage(`${fieldName} must be a valid date (YYYY-MM-DD)`)
+    .toDate();
+};
+
 const verifyId = (paramName = 'id') => {
   return param(paramName)
     .isInt({ min: 1 })
@@ -269,6 +312,10 @@ module.exports = {
   verifyPassword,
   verifyRole,
   verifyBoolean,
+  verifyNDC,
+  verifyQuantity,
+  verifyPrice,
+  verifyDate,
   verifyId,
   sanitizeAndTrim,
   checkDataIntegrity

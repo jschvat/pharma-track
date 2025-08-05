@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: pharmatrak-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: pharmatrak
+      MYSQL_USER: pharmatrak_user
+      MYSQL_PASSWORD: pharmatrak_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d
+    command: 
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=256M
+      - --max-connections=200
+    networks:
+      - pharmatrak-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-proot_password"]
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      interval: 10s
+
+  # Optional: Redis for caching (uncomment if needed)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: pharmatrak-redis
+  #   restart: unless-stopped
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - pharmatrak-network
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     timeout: 3s
+  #     retries: 5
+  #     start_period: 5s
+  #     interval: 10s
+
+  # Application service (for production deployment)
+  app:
+    build: .
+    container_name: pharmatrak-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_USER: pharmatrak_user
+      DB_PASSWORD: pharmatrak_password
+      DB_NAME: pharmatrak
+      PORT: 3000
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - pharmatrak-network
+    volumes:
+      - app_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      interval: 30s
+    # Uncomment for development with live reload
+    # volumes:
+    #   - .:/app
+    #   - /app/node_modules
+    # command: npm run dev
+
+volumes:
+  mysql_data:
+    driver: local
+  # redis_data:  # Uncomment if using Redis
+  #   driver: local
+  app_logs:
+    driver: local
+
+networks:
+  pharmatrak-network:
+    driver: bridge

@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/auth');
 const storeRoutes = require('./routes/stores');
 const userRoutes = require('./routes/users');
+const drugRoutes = require('./routes/drugs');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { sanitizeInput } = require('./middleware/validation');
 const { sanitizeAndTrim, checkDataIntegrity } = require('./middleware/dataVerification');
@@ -32,6 +33,7 @@ app.use(sanitizeInput);
 app.use('/api/auth', authRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/drugs', drugRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Server is running' });

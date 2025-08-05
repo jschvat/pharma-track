@@ -60,6 +60,18 @@ npm start
 - `PUT /api/users/:id` - Update user
 - `DELETE /api/users/:id` - Delete user
 
+### Drugs & Inventory
+- `GET /api/drugs/search/fda` - Search FDA database
+- `GET /api/drugs/search` - Search local drug database
+- `GET /api/drugs/:id` - Get drug by ID
+- `POST /api/drugs/add-from-fda` - Add drug from FDA to local database
+- `GET /api/drugs/inventory/:storeId` - Get store inventory
+- `POST /api/drugs/inventory` - Add drug to inventory
+- `PUT /api/drugs/inventory/:id` - Update inventory item
+- `GET /api/drugs/inventory/:storeId/low-stock` - Get low stock items
+- `GET /api/drugs/inventory/:storeId/expiring` - Get expiring items
+- `GET /api/drugs/inventory/:storeId/stats` - Get inventory statistics
+
 ## Database Schema
 
 ### Stores
@@ -87,9 +99,31 @@ npm start
 - **is_active**: BOOLEAN - Account status
 - **date_created, updated_at**: Timestamps
 
+### Drugs & Inventory
+- **drugs**: NDC, generic/brand names, dosage forms, manufacturers, FDA data
+- **store_inventory**: Quantities, costs, expiration dates, lot numbers, suppliers
+- **fda_search_history**: Search analytics and caching optimization
+
 ### Database Constraints
 - **CHECK constraints** enforce data format validation at database level
-- **UNIQUE constraints** on email, DEA, and NPI numbers
+- **UNIQUE constraints** on email, DEA, NPI numbers, and NDC codes
 - **FOREIGN KEY constraints** with CASCADE/SET NULL actions
-- **REGEX validation** for phone numbers, emails, DEA/NPI formats
+- **REGEX validation** for phone numbers, emails, DEA/NPI/NDC formats
 - **State validation** against complete US state/territory list
+- **Full-text search** indexes for drug names and substances
+
+## OpenFDA Integration
+
+The system integrates with the OpenFDA NDC endpoint to provide:
+- **Real-time drug lookups** from FDA database
+- **NDC validation** and formatting
+- **Comprehensive drug information** including ingredients, manufacturers, dosage forms
+- **Intelligent caching** to reduce API calls and improve performance
+- **Local drug database** for frequently accessed medications
+
+### FDA Features
+- Search by NDC, generic name, brand name, or manufacturer
+- Automatic data synchronization with FDA database
+- Advanced search with multiple criteria
+- Response caching with TTL management
+- Rate limit handling and error recovery
