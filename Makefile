@@ -75,9 +75,29 @@ docker-remove: ## Remove MySQL Docker container (DESTRUCTIVE)
 	./scripts/docker-manage.sh remove
 
 # Development Tools
-test: ## Run tests
-	@echo "🧪 Running tests..."
+test: ## Run all tests
+	@echo "🧪 Running all tests..."
 	npm test
+
+test-watch: ## Run tests in watch mode
+	@echo "👀 Running tests in watch mode..."
+	npm run test:watch
+
+test-coverage: ## Run tests with coverage report
+	@echo "📊 Running tests with coverage..."
+	npm run test:coverage
+
+test-fda: ## Run FDA service integration tests
+	@echo "🏥 Running FDA API tests..."
+	npm run test:fda
+
+test-fda-interactive: ## Run interactive FDA tests
+	@echo "🔍 Running interactive FDA tests..."
+	npm run test:fda:interactive
+
+test-fda-offline: ## Run FDA tests without API calls
+	@echo "📴 Running offline FDA tests..."
+	npm run test:fda:offline
 
 lint: ## Run linting
 	@echo "🔍 Running linter..."

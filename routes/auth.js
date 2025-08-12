@@ -1,5 +1,5 @@
 const express = require('express');
-const { validationResult } = require('express-validator');
+const { validationResult, body } = require('express-validator');
 const User = require('../models/User');
 const Store = require('../models/Store');
 const { generateToken, authenticateToken } = require('../middleware/auth');
@@ -62,6 +62,9 @@ router.post('/register', [
         phone: user.phone,
         address: user.address,
         store_id: user.store_id,
+        active_store_id: user.active_store_id,
+        store_name: user.store_name,
+        active_store_name: user.active_store_name,
         role: user.role
       }
     });
@@ -106,6 +109,9 @@ router.post('/login', [
         phone: user.phone,
         address: user.address,
         store_id: user.store_id,
+        active_store_id: user.active_store_id,
+        store_name: user.store_name,
+        active_store_name: user.active_store_name,
         role: user.role
       }
     });
@@ -113,6 +119,36 @@ router.post('/login', [
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Get current user profile with fresh data
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    // Get fresh user data from database
+    const user = await User.findById(req.user.id);
+    
+    if (!user || !user.is_active) {
+      return res.status(401).json({ error: 'User account not found or inactive' });
+    }
+
+    res.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        store_id: user.store_id,
+        active_store_id: user.active_store_id,
+        store_name: user.store_name,
+        active_store_name: user.active_store_name,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Get current user error:', error);
+    res.status(500).json({ error: 'Failed to get user profile' });
   }
 });
 
@@ -126,6 +162,9 @@ router.get('/profile', authenticateToken, async (req, res) => {
       phone: user.phone,
       address: user.address,
       store_id: user.store_id,
+      active_store_id: user.active_store_id,
+      store_name: user.store_name,
+      active_store_name: user.active_store_name,
       role: user.role,
       date_created: user.date_created
     });
@@ -175,6 +214,17 @@ router.put('/profile', authenticateToken, [
   } catch (error) {
     console.error('Profile update error:', error);
     res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+router.post('/logout', authenticateToken, async (req, res) => {
+  try {
+    res.json({
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ error: 'Logout failed' });
   }
 });
 

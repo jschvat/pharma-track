@@ -1,0 +1,27 @@
+# Admin setup Dockerfile - Runs once to create admin user
+FROM node:18-alpine
+
+# Security: Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Install only required packages for admin setup
+RUN apk add --no-cache curl
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy admin setup script
+COPY scripts/createAdmin.js ./scripts/
+COPY models/ ./models/
+COPY config/ ./config/
+
+# Security: Switch to non-root user
+USER nodejs
+
+# Wait for database and create admin user
+CMD ["sh", "-c", "sleep 30 && node scripts/createAdmin.js"]

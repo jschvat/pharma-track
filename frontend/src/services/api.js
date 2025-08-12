@@ -300,6 +300,7 @@ export const userAPI = {
   getById: (id) => api.get(`/users/${id}`),
   create: (userData) => api.post('/users', userData),
   update: (id, userData) => api.put(`/users/${id}`, userData),
+  updatePassword: (id, passwordData) => api.put(`/users/${id}/password`, passwordData),
   delete: (id) => api.delete(`/users/${id}`),
 };
 

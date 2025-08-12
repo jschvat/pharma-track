@@ -1,6 +1,46 @@
-const db = require('../config/database');
-const { handleDatabaseError } = require('./ValidationError');
+/**
+ * Drug Database Model
+ * 
+ * Comprehensive data model for managing pharmaceutical drug information in the PharmaTraK system.
+ * Handles drug data from multiple sources including FDA imports and manual entries.
+ * Provides full CRUD operations with advanced search capabilities and data validation.
+ * 
+ * Key Features:
+ * - FDA data integration with automatic parsing and normalization  
+ * - Advanced search with multiple criteria support
+ * - Data validation and error handling
+ * - Audit trail tracking for all operations
+ * - Support for complex drug relationships and metadata
+ * 
+ * Database Integration:
+ * - Uses MySQL connection pool for optimal performance
+ * - Prepared statements for SQL injection prevention
+ * - Transaction support for data integrity
+ * - Foreign key relationships with inventory and audit tables
+ * 
+ * Data Sources:
+ * - FDA OpenFDA API imports
+ * - Manual pharmacy staff entries
+ * - Bulk import from external systems
+ * - Third-party drug databases
+ * 
+ * @class Drug
+ * @requires ../config/database - Database connection pool
+ * @requires ./ValidationError - Error handling utilities
+ * 
+ * @author PharmaTraK Development Team
+ * @version 2.0.0
+ * @since 1.0.0
+ */
 
+const { pool: db } = require('../config/database');
+const { handleDatabaseError } = require('./ValidationError');
+const fdaService = require('../openfda/fdaService');
+
+/**
+ * Drug Model Class
+ * Represents pharmaceutical drug data with comprehensive management capabilities
+ */
 class Drug {
   /**
    * Create or update drug from FDA data
@@ -19,14 +59,8 @@ class Drug {
         return existing.id;
       }
       
-      // Create new drug
-      const [result] = await db.execute(`
-        INSERT INTO drugs (
-          ndc, product_ndc, generic_name, brand_name, dosage_form, route, strength,
-          manufacturer_name, labeler_name, substance_name, product_type, 
-          marketing_status, listing_expiration_date, fda_data
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
+      // Debug: Log all parameters to identify undefined values
+      const params = [
         drugData.ndc,
         drugData.product_ndc,
         drugData.generic_name,
@@ -41,7 +75,25 @@ class Drug {
         drugData.marketing_status,
         drugData.listing_expiration_date,
         JSON.stringify(fdaData)
-      ]);
+      ];
+      
+      console.log('=== DEBUG: Drug creation parameters ===');
+      const paramNames = ['ndc', 'product_ndc', 'generic_name', 'brand_name', 'dosage_form', 'route', 'strength', 'manufacturer_name', 'labeler_name', 'substance_name', 'product_type', 'marketing_status', 'listing_expiration_date', 'fda_data'];
+      params.forEach((param, index) => {
+        console.log(`${paramNames[index]}: ${param === undefined ? 'UNDEFINED' : param === null ? 'NULL' : typeof param === 'object' ? JSON.stringify(param) : param}`);
+      });
+      
+      // Replace undefined values with null
+      const safeParams = params.map(param => param === undefined ? null : param);
+      
+      // Create new drug
+      const [result] = await db.execute(`
+        INSERT INTO drugs (
+          ndc, product_ndc, generic_name, brand_name, dosage_form, route, strength,
+          manufacturer_name, labeler_name, substance_name, product_type, 
+          marketing_status, listing_expiration_date, fda_data
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, safeParams);
       
       return result.insertId;
     } catch (error) {
@@ -56,9 +108,12 @@ class Drug {
    */
   static async findByNDC(ndc) {
     try {
+      // Standardize the search NDC to match database format
+      const standardizedNDC = ndc ? fdaService.standardizeNDC(ndc) : null;
+      
       const [rows] = await db.execute(
         'SELECT * FROM drugs WHERE ndc = ? OR product_ndc = ?',
-        [ndc, ndc]
+        [standardizedNDC, ndc] // Search both standardized and original formats
       );
       
       if (rows.length > 0) {
@@ -87,8 +142,16 @@ class Drug {
       const params = [];
       
       if (criteria.ndc) {
-        query += ' AND (ndc LIKE ? OR product_ndc LIKE ?)';
-        params.push(`%${criteria.ndc}%`, `%${criteria.ndc}%`);
+        // Standardize the search NDC for better matching
+        const standardizedNDC = fdaService.standardizeNDC(criteria.ndc);
+        
+        query += ' AND (ndc LIKE ? OR product_ndc LIKE ? OR ndc = ? OR product_ndc = ?)';
+        params.push(
+          `%${criteria.ndc}%`,        // Original search term
+          `%${criteria.ndc}%`,        // Original search term
+          standardizedNDC,            // Exact match on standardized format
+          criteria.ndc               // Exact match on original format
+        );
       }
       
       if (criteria.genericName) {
@@ -174,7 +237,12 @@ class Drug {
    * @returns {Object} Parsed drug data
    */
   static parseFDAData(fdaData) {
-    const parseArray = (arr) => arr && arr.length > 0 ? arr.join(', ') : null;
+    const parseArray = (arr) => {
+      if (!arr) return null;
+      if (typeof arr === 'string') return arr;
+      if (Array.isArray(arr) && arr.length > 0) return arr.join(', ');
+      return null;
+    };
     const parseDate = (dateStr) => {
       if (!dateStr) return null;
       try {
@@ -191,24 +259,38 @@ class Drug {
       }
     };
 
-    return {
-      ndc: fdaData.product_ndc || fdaData.ndc,
-      product_ndc: fdaData.product_ndc,
+    // Get the raw NDC and standardize it to 5-4-2 format
+    const rawNDC = fdaData.product_ndc || fdaData.ndc;
+    const standardizedNDC = rawNDC ? fdaService.standardizeNDC(rawNDC) : null;
+    
+    // Build the result with explicit null checks
+    const result = {
+      ndc: standardizedNDC,
+      product_ndc: fdaData.product_ndc || null,
       generic_name: parseArray(fdaData.generic_name),
       brand_name: parseArray(fdaData.brand_name),
       dosage_form: parseArray(fdaData.dosage_form),
       route: parseArray(fdaData.route),
-      strength: parseArray(fdaData.active_ingredients?.map(ing => 
+      strength: fdaData.active_ingredients?.map(ing => 
         `${ing.name}: ${ing.strength}`
-      )),
+      )?.join(', ') || null,
       manufacturer_name: fdaData.openfda?.manufacturer_name ? 
         parseArray(fdaData.openfda.manufacturer_name) : null,
-      labeler_name: fdaData.labeler_name,
-      substance_name: fdaData.active_ingredients?.map(ing => ing.name).join(', '),
-      product_type: fdaData.product_type,
-      marketing_status: fdaData.marketing_status,
+      labeler_name: fdaData.labeler_name || null,
+      substance_name: fdaData.active_ingredients?.map(ing => ing.name)?.join(', ') || null,
+      product_type: fdaData.product_type || null,
+      marketing_status: fdaData.marketing_status || null,
       listing_expiration_date: parseDate(fdaData.listing_expiration_date)
     };
+    
+    // Ensure no field is undefined - replace with null
+    Object.keys(result).forEach(key => {
+      if (result[key] === undefined) {
+        result[key] = null;
+      }
+    });
+    
+    return result;
   }
 
   /**
@@ -266,6 +348,87 @@ class Drug {
    * Get drug statistics
    * @returns {Object} Statistics
    */
+  static async findWithFilters(filters = {}, limit = 20, offset = 0) {
+    try {
+      let query = 'SELECT * FROM drugs WHERE 1=1';
+      const params = [];
+
+      if (filters.is_active !== undefined) {
+        query += ' AND is_active = ?';
+        params.push(filters.is_active);
+      }
+
+      if (filters.manufacturer) {
+        query += ' AND manufacturer_name LIKE ?';
+        params.push(`%${filters.manufacturer}%`);
+      }
+
+      if (filters.dosage_form) {
+        query += ' AND dosage_form LIKE ?';
+        params.push(`%${filters.dosage_form}%`);
+      }
+
+      query += ' ORDER BY last_updated DESC LIMIT ? OFFSET ?';
+      params.push(limit, offset);
+
+      const [rows] = await db.execute(query, params);
+      
+      return rows.map(drug => {
+        if (drug.fda_data && typeof drug.fda_data === 'string') {
+          drug.fda_data = JSON.parse(drug.fda_data);
+        }
+        return drug;
+      });
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  static async countWithFilters(filters = {}) {
+    try {
+      let query = 'SELECT COUNT(*) as total FROM drugs WHERE 1=1';
+      const params = [];
+
+      if (filters.is_active !== undefined) {
+        query += ' AND is_active = ?';
+        params.push(filters.is_active);
+      }
+
+      if (filters.manufacturer) {
+        query += ' AND manufacturer_name LIKE ?';
+        params.push(`%${filters.manufacturer}%`);
+      }
+
+      if (filters.dosage_form) {
+        query += ' AND dosage_form LIKE ?';
+        params.push(`%${filters.dosage_form}%`);
+      }
+
+      const [rows] = await db.execute(query, params);
+      return rows[0].total;
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  static async findById(id) {
+    try {
+      const [rows] = await db.execute('SELECT * FROM drugs WHERE id = ?', [id]);
+      
+      if (rows.length > 0) {
+        const drug = rows[0];
+        if (drug.fda_data && typeof drug.fda_data === 'string') {
+          drug.fda_data = JSON.parse(drug.fda_data);
+        }
+        return drug;
+      }
+      
+      return null;
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
   static async getStats() {
     try {
       const [stats] = await db.execute(`
@@ -277,7 +440,29 @@ class Drug {
         FROM drugs
       `);
       
-      return stats[0];
+      const [topManufacturers] = await db.execute(`
+        SELECT manufacturer_name, COUNT(*) as count 
+        FROM drugs 
+        WHERE manufacturer_name IS NOT NULL AND is_active = TRUE
+        GROUP BY manufacturer_name 
+        ORDER BY count DESC 
+        LIMIT 10
+      `);
+
+      const [topDosageForms] = await db.execute(`
+        SELECT dosage_form, COUNT(*) as count 
+        FROM drugs 
+        WHERE dosage_form IS NOT NULL AND is_active = TRUE
+        GROUP BY dosage_form 
+        ORDER BY count DESC 
+        LIMIT 10
+      `);
+      
+      return {
+        ...stats[0],
+        top_manufacturers: topManufacturers,
+        top_dosage_forms: topDosageForms
+      };
     } catch (error) {
       handleDatabaseError(error);
     }

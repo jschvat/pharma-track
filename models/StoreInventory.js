@@ -1,13 +1,15 @@
-const db = require('../config/database');
+const { pool: db } = require('../config/database');
 const { handleDatabaseError } = require('./ValidationError');
+const InventoryAuditLog = require('./InventoryAuditLog');
 
 class StoreInventory {
   /**
    * Add drug to store inventory
    * @param {Object} inventoryData - Inventory data
+   * @param {number} performedBy - User ID who performed the action
    * @returns {number} Inventory ID
    */
-  static async add(inventoryData) {
+  static async add(inventoryData, performedBy = null) {
     try {
       const {
         store_id,
@@ -31,7 +33,24 @@ class StoreInventory {
         selling_price, lot_number, expiration_date, supplier
       ]);
 
-      return result.insertId;
+      const inventoryId = result.insertId;
+
+      // Log initial stock if quantity > 0 and performed_by is provided
+      if (quantity_on_hand > 0 && performedBy) {
+        await InventoryAuditLog.logTransaction({
+          inventory_id: inventoryId,
+          store_id,
+          drug_id,
+          transaction_type: 'initial_inventory',
+          quantity_change: quantity_on_hand,
+          quantity_before: 0,
+          quantity_after: quantity_on_hand,
+          reason: 'Initial inventory stock',
+          performed_by: performedBy
+        });
+      }
+
+      return inventoryId;
     } catch (error) {
       handleDatabaseError(error);
     }
@@ -178,20 +197,63 @@ class StoreInventory {
   }
 
   /**
-   * Adjust stock (add or subtract)
+   * Add stock from shipment received
+   * @param {number} id - Inventory ID
+   * @param {number} quantity - Quantity received (positive)
+   * @param {string} reason - Reason for shipment
+   * @param {number} performedBy - User ID who performed the action
+   * @param {string} invoiceNumber - Required invoice number
+   * @returns {boolean} Success status
+   */
+  static async receiveShipment(id, quantity, reason = 'Shipment received', performedBy, invoiceNumber) {
+    if (!invoiceNumber) {
+      throw new Error('Invoice number is required for shipment received');
+    }
+    return await this.adjustStock(id, quantity, reason, performedBy, 'shipment_received', invoiceNumber);
+  }
+
+  /**
+   * Internal method: Adjust stock (add or subtract)
    * @param {number} id - Inventory ID
    * @param {number} adjustment - Quantity adjustment (positive or negative)
    * @param {string} reason - Reason for adjustment
+   * @param {number} performedBy - User ID who performed the action
+   * @param {string} transactionType - Type of transaction
+   * @param {string} referenceNumber - Optional reference number
    * @returns {boolean} Success status
    */
-  static async adjustStock(id, adjustment, reason = 'Manual adjustment') {
+  static async adjustStock(id, adjustment, reason = 'Stock adjustment', performedBy, transactionType = 'shipment_received', referenceNumber = null) {
     try {
+      // Get current inventory data
+      const inventory = await this.findById(id);
+      if (!inventory) {
+        throw new Error('Inventory item not found');
+      }
+
+      const quantityBefore = inventory.quantity_on_hand;
+      const quantityAfter = quantityBefore + adjustment;
+
+      // Update the quantity
       const [result] = await db.execute(
         'UPDATE store_inventory SET quantity_on_hand = quantity_on_hand + ? WHERE id = ?',
         [adjustment, id]
       );
       
-      // TODO: Log the adjustment in an audit table
+      if (result.affectedRows > 0 && performedBy) {
+        // Log the transaction
+        await InventoryAuditLog.logTransaction({
+          inventory_id: id,
+          store_id: inventory.store_id,
+          drug_id: inventory.drug_id,
+          transaction_type: transactionType,
+          quantity_change: adjustment,
+          quantity_before: quantityBefore,
+          quantity_after: quantityAfter,
+          reason,
+          reference_number: referenceNumber,
+          performed_by: performedBy
+        });
+      }
       
       return result.affectedRows > 0;
     } catch (error) {
@@ -202,9 +264,10 @@ class StoreInventory {
   /**
    * Get low stock items
    * @param {number} storeId - Store ID
+   * @param {number} limit - Maximum results
    * @returns {Array} Low stock items
    */
-  static async getLowStock(storeId) {
+  static async getLowStock(storeId, limit = 50) {
     try {
       const [rows] = await db.execute(`
         SELECT si.*, d.ndc, d.generic_name, d.brand_name, d.dosage_form, 
@@ -215,6 +278,7 @@ class StoreInventory {
           AND si.is_active = TRUE 
           AND si.quantity_on_hand <= si.reorder_level
         ORDER BY (si.quantity_on_hand / NULLIF(si.reorder_level, 0)) ASC
+        LIMIT ${parseInt(limit)}
       `, [storeId]);
       
       return rows;
@@ -227,9 +291,10 @@ class StoreInventory {
    * Get expiring items
    * @param {number} storeId - Store ID
    * @param {number} days - Days until expiration
+   * @param {number} limit - Maximum results
    * @returns {Array} Expiring items
    */
-  static async getExpiring(storeId, days = 30) {
+  static async getExpiring(storeId, days = 30, limit = 50) {
     try {
       const [rows] = await db.execute(`
         SELECT si.*, d.ndc, d.generic_name, d.brand_name, d.dosage_form, 
@@ -242,7 +307,8 @@ class StoreInventory {
           AND si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
           AND si.expiration_date > CURDATE()
         ORDER BY si.expiration_date ASC
-      `, [storeId, days]);
+        LIMIT ${parseInt(limit)}
+      `, [storeId, parseInt(days)]);
       
       return rows;
     } catch (error) {
@@ -284,6 +350,241 @@ class StoreInventory {
       `, [storeId]);
       
       return stats[0];
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Find inventory with filters
+   * @param {Object} filters - Search filters
+   * @param {number} limit - Maximum results
+   * @param {number} offset - Results offset
+   * @returns {Array} Inventory items
+   */
+  static async findWithFilters(filters = {}, limit = 20, offset = 0) {
+    try {
+      let query = 'SELECT si.*, d.ndc, d.generic_name, d.brand_name, d.dosage_form, d.strength, d.manufacturer_name FROM store_inventory si INNER JOIN drugs d ON si.drug_id = d.id WHERE 1=1';
+      const params = [];
+
+      if (filters.store_id) {
+        query += ' AND si.store_id = ?';
+        params.push(filters.store_id);
+      }
+
+      if (filters.is_active !== undefined) {
+        query += ' AND si.is_active = ?';
+        params.push(filters.is_active ? 1 : 0);
+      }
+
+      if (filters.low_stock) {
+        query += ' AND si.quantity_on_hand <= si.reorder_level';
+      }
+
+      if (filters.expiring_days) {
+        query += ' AND si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)';
+        params.push(filters.expiring_days);
+      }
+
+      if (filters.search) {
+        query += ' AND (d.generic_name LIKE ? OR d.brand_name LIKE ? OR d.ndc LIKE ? OR si.lot_number LIKE ?)';
+        params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+      }
+
+      query += ` ORDER BY d.generic_name, d.brand_name LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
+
+      const [rows] = await db.execute(query, params);
+      return rows;
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Count inventory with filters
+   * @param {Object} filters - Search filters
+   * @returns {number} Total count
+   */
+  static async countWithFilters(filters = {}) {
+    try {
+      let query = 'SELECT COUNT(*) as total FROM store_inventory si INNER JOIN drugs d ON si.drug_id = d.id WHERE 1=1';
+      const params = [];
+
+      if (filters.store_id) {
+        query += ' AND si.store_id = ?';
+        params.push(filters.store_id);
+      }
+
+      if (filters.is_active !== undefined) {
+        query += ' AND si.is_active = ?';
+        params.push(filters.is_active ? 1 : 0);
+      }
+
+      if (filters.low_stock) {
+        query += ' AND si.quantity_on_hand <= si.reorder_level';
+      }
+
+      if (filters.expiring_days) {
+        query += ' AND si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)';
+        params.push(filters.expiring_days);
+      }
+
+      if (filters.search) {
+        query += ' AND (d.generic_name LIKE ? OR d.brand_name LIKE ? OR d.ndc LIKE ? OR si.lot_number LIKE ?)';
+        params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+      }
+
+      const [rows] = await db.execute(query, params);
+      return rows[0].total;
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Fill a prescription (subtract from inventory)
+   * @param {number} inventoryId - Inventory ID
+   * @param {number} quantity - Quantity to fill
+   * @param {string} prescriptionNumber - Prescription reference number
+   * @param {number} performedBy - User ID who performed the action
+   * @param {string} reason - Optional reason
+   * @returns {boolean} Success status
+   */
+  static async fillPrescription(inventoryId, quantity, prescriptionNumber, performedBy, reason = 'Prescription fill') {
+    try {
+      const inventory = await this.findById(inventoryId);
+      if (!inventory) {
+        throw new Error('Inventory item not found');
+      }
+
+      if (inventory.quantity_on_hand < quantity) {
+        throw new Error('Insufficient inventory to fill prescription');
+      }
+
+      return await this.adjustStock(
+        inventoryId, 
+        -quantity, 
+        reason, 
+        performedBy, 
+        'prescription_fill', 
+        prescriptionNumber
+      );
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Return medication to stock
+   * @param {number} inventoryId - Inventory ID
+   * @param {number} quantity - Quantity to return
+   * @param {string} returnReason - Reason for return
+   * @param {number} performedBy - User ID who performed the action
+   * @param {string} referenceNumber - Optional reference number
+   * @returns {boolean} Success status
+   */
+  static async returnToStock(inventoryId, quantity, returnReason, performedBy, referenceNumber = null) {
+    try {
+      return await this.adjustStock(
+        inventoryId, 
+        quantity, 
+        returnReason, 
+        performedBy, 
+        'return_to_stock', 
+        referenceNumber
+      );
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Expire medication (remove from inventory)
+   * @param {number} inventoryId - Inventory ID
+   * @param {number} quantity - Quantity to expire
+   * @param {string} reason - Reason for expiration
+   * @param {number} performedBy - User ID who performed the action
+   * @returns {boolean} Success status
+   */
+  static async expireMedication(inventoryId, quantity, reason, performedBy) {
+    try {
+      const inventory = await this.findById(inventoryId);
+      if (!inventory) {
+        throw new Error('Inventory item not found');
+      }
+
+      if (inventory.quantity_on_hand < quantity) {
+        throw new Error('Cannot expire more than available quantity');
+      }
+
+      return await this.adjustStock(
+        inventoryId, 
+        -quantity, 
+        reason, 
+        performedBy, 
+        'expire'
+      );
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  /**
+   * Perform inventory audit (reset to actual count)
+   * @param {number} inventoryId - Inventory ID
+   * @param {number} actualQuantity - Actual counted quantity
+   * @param {string} reason - Audit reason
+   * @param {number} performedBy - User ID who performed the action
+   * @returns {boolean} Success status
+   */
+  static async auditInventory(inventoryId, actualQuantity, reason, performedBy) {
+    try {
+      const inventory = await this.findById(inventoryId);
+      if (!inventory) {
+        throw new Error('Inventory item not found');
+      }
+
+      const quantityBefore = inventory.quantity_on_hand;
+      const adjustment = actualQuantity - quantityBefore;
+
+      if (adjustment === 0) {
+        // Still log audit even if no change
+        await InventoryAuditLog.logTransaction({
+          inventory_id: inventoryId,
+          store_id: inventory.store_id,
+          drug_id: inventory.drug_id,
+          transaction_type: 'audit',
+          quantity_change: 0,
+          quantity_before: quantityBefore,
+          quantity_after: actualQuantity,
+          reason,
+          performed_by: performedBy
+        });
+        return true;
+      }
+
+      // Update quantity directly to actual count
+      const [result] = await db.execute(
+        'UPDATE store_inventory SET quantity_on_hand = ? WHERE id = ?',
+        [actualQuantity, inventoryId]
+      );
+
+      if (result.affectedRows > 0) {
+        // Log the audit transaction
+        await InventoryAuditLog.logTransaction({
+          inventory_id: inventoryId,
+          store_id: inventory.store_id,
+          drug_id: inventory.drug_id,
+          transaction_type: 'audit',
+          quantity_change: adjustment,
+          quantity_before: quantityBefore,
+          quantity_after: actualQuantity,
+          reason,
+          performed_by: performedBy
+        });
+      }
+
+      return result.affectedRows > 0;
     } catch (error) {
       handleDatabaseError(error);
     }

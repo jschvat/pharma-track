@@ -96,18 +96,15 @@ setup_environment() {
             cp .env.example .env
             
             # Update .env with our database configuration
-            sed -i.bak "s/DB_HOST=localhost/DB_HOST=localhost/" .env
-            sed -i.bak "s/DB_USER=root/DB_USER=$DB_USER/" .env
-            sed -i.bak "s/DB_PASSWORD=/DB_PASSWORD=$DB_PASSWORD/" .env
-            sed -i.bak "s/DB_NAME=pharmatrak/DB_NAME=$DB_NAME/" .env
-            sed -i.bak "s/PORT=3000/PORT=3000/" .env
+            sed -i "s/DB_HOST=localhost/DB_HOST=localhost/" .env
+            sed -i "s/DB_USER=root/DB_USER=$DB_USER/" .env
+            sed -i "s/DB_PASSWORD=/DB_PASSWORD=$DB_PASSWORD/" .env
+            sed -i "s/DB_NAME=pharmatrak/DB_NAME=$DB_NAME/" .env
+            sed -i "s/PORT=3000/PORT=3000/" .env
             
             # Generate a random JWT secret
             JWT_SECRET=$(openssl rand -base64 32 2>/dev/null || echo "your_jwt_secret_key_$(date +%s)")
-            sed -i.bak "s/JWT_SECRET=your_jwt_secret_key_here/JWT_SECRET=$JWT_SECRET/" .env
-            
-            # Clean up backup file
-            rm -f .env.bak
+            sed -i "s/JWT_SECRET=your_jwt_secret_key_here/JWT_SECRET=$JWT_SECRET/" .env
             
             success "Environment file created and configured"
         else
@@ -198,6 +195,53 @@ setup_database() {
     success "Database setup completed"
 }
 
+# Setup frontend
+setup_frontend() {
+    log "Setting up React frontend..."
+    
+    if [ -d "frontend" ]; then
+        cd frontend
+        
+        if [ -f "package.json" ]; then
+            log "Installing frontend dependencies..."
+            npm install
+            success "Frontend dependencies installed"
+        else
+            error "Frontend package.json not found"
+            cd ..
+            return 1
+        fi
+        
+        cd ..
+        success "Frontend setup completed"
+    else
+        warning "Frontend directory not found, skipping frontend setup"
+    fi
+}
+
+# Create default admin user
+create_admin_user() {
+    log "Creating default admin user..."
+    
+    if [ -f "scripts/createAdmin.js" ]; then
+        log "Running admin user creation script..."
+        
+        # Set environment variables for the script
+        export DB_HOST=localhost
+        export DB_USER=$DB_USER  
+        export DB_PASSWORD=$DB_PASSWORD
+        export DB_NAME=$DB_NAME
+        
+        # Wait a bit more for database to be fully ready
+        sleep 2
+        
+        node scripts/createAdmin.js
+        success "Default admin user created"
+    else
+        warning "Admin creation script not found, skipping admin user creation"
+    fi
+}
+
 # Verify setup
 verify_setup() {
     log "Verifying setup..."
@@ -249,6 +293,8 @@ main() {
     setup_environment
     setup_mysql_docker
     setup_database
+    create_admin_user
+    setup_frontend
     verify_setup
     
     echo -e "${GREEN}"
@@ -258,10 +304,15 @@ main() {
     echo -e "${NC}"
     
     echo ""
-    echo "Next steps:"
-    echo "1. Start the application: npm run dev"
-    echo "2. Access the API at: http://localhost:3000"
-    echo "3. Test the health endpoint: curl http://localhost:3000/api/health"
+    echo "🚀 Next steps:"
+    echo "1. Start backend: npm run dev"
+    echo "2. Start frontend: npm run frontend (in new terminal)"
+    echo "3. Access the web app at: http://localhost:3001"
+    echo "4. API endpoint: http://localhost:3001/api"
+    echo ""
+    echo "🔐 Test Login Credentials:"
+    echo "Email: admin@pharmatrak.com"
+    echo "Password: Admin123!"
     echo ""
     echo "Database Information:"
     echo "- Host: localhost"

@@ -90,7 +90,7 @@ const NDCAuditReport = () => {
       expire: { bg: 'danger', text: 'Expired' },
       audit: { bg: 'warning', text: 'Audit' },
       adjustment: { bg: 'info', text: 'Adjustment' },
-      initial_stock: { bg: 'secondary', text: 'Initial' }
+      initial_inventory: { bg: 'secondary', text: 'Initial' }
     };
     const badge = badges[type] || { bg: 'secondary', text: type };
     return <Badge bg={badge.bg}>{badge.text}</Badge>;
@@ -279,27 +279,19 @@ const NDCAuditReport = () => {
             </Card.Header>
             <Card.Body>
               <Row>
-                <Col md={3}>
+                <Col md={4}>
                   <div className="text-center">
                     <h4 className="text-primary">{reportData.audit_summary.total_transactions}</h4>
                     <div className="text-muted">Total Transactions</div>
                   </div>
                 </Col>
-                <Col md={3}>
+                <Col md={4}>
                   <div className="text-center">
                     <h4 className="text-success">{reportData.audit_summary.final_running_total}</h4>
                     <div className="text-muted">Final Stock Level</div>
                   </div>
                 </Col>
-                <Col md={3}>
-                  <div className="text-center">
-                    <h4 className="text-info">
-                      ${reportData.audit_summary.total_value_impact?.toFixed(2) || '0.00'}
-                    </h4>
-                    <div className="text-muted">Total Value Impact</div>
-                  </div>
-                </Col>
-                <Col md={3}>
+                <Col md={4}>
                   <div className="text-center">
                     <h4 className="text-warning">{reportData.audit_summary.transaction_breakdown.prescription_fills}</h4>
                     <div className="text-muted">Prescriptions Filled</div>

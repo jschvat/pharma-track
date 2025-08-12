@@ -1,8 +1,11 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { Dropdown } from 'react-bootstrap';
 
 const Header = ({ title, subtitle, onMenuToggle, onSidebarToggle }) => {
   const { user, isAdmin } = useAuth();
+  const { currentTheme, changeTheme, availableThemes } = useTheme();
 
   const getPageInfo = () => {
     const path = window.location.pathname;
@@ -19,7 +22,7 @@ const Header = ({ title, subtitle, onMenuToggle, onSidebarToggle }) => {
       case '/admin/stores':
         return { title: 'Store Management', subtitle: 'Manage pharmacy locations' };
       case '/admin/users':
-        return { title: 'User Management', subtitle: 'Manage system users' };
+        return { title: 'User Management', subtitle: 'Manage store users and permissions' };
       default:
         return { title: title || 'PharmaTraK', subtitle: subtitle || 'Professional Pharmacy Management' };
     }
@@ -62,6 +65,33 @@ const Header = ({ title, subtitle, onMenuToggle, onSidebarToggle }) => {
 
         {/* Right Side - User Info and Actions */}
         <div className="user-menu">
+          {/* Theme Switcher */}
+          <div className="d-none d-md-flex align-items-center me-3">
+            <Dropdown>
+              <Dropdown.Toggle 
+                variant="outline-primary" 
+                size="sm" 
+                style={{ padding: '0.5rem 1rem', border: '1px solid var(--border-light)' }}
+              >
+                <i className="fas fa-palette me-2"></i>
+                <span className="d-none d-lg-inline">Theme</span>
+              </Dropdown.Toggle>
+              
+              <Dropdown.Menu align="end">
+                <Dropdown.Header>Choose Theme</Dropdown.Header>
+                {availableThemes.map((theme) => (
+                  <Dropdown.Item
+                    key={theme.value}
+                    active={currentTheme === theme.value}
+                    onClick={() => changeTheme(theme.value)}
+                  >
+                    {theme.label}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+          </div>
+
           {/* Notifications */}
           <div className="d-none d-sm-flex align-items-center me-3">
             <button className="btn btn-outline-primary me-2" style={{ padding: '0.5rem', position: 'relative' }}>

@@ -283,8 +283,23 @@ function FDASearch() {
    */
   const checkDrugExists = async (ndc) => {
     try {
-      const response = await drugAPI.search({ ndc: ndc.replace(/[-]/g, ''), limit: 1 });
-      return response.data.drugs && response.data.drugs.length > 0;
+      console.log('Checking if drug exists with NDC:', ndc);
+      
+      if (!ndc || typeof ndc !== 'string') {
+        console.warn('Invalid NDC provided to checkDrugExists:', ndc);
+        return false;
+      }
+      
+      const cleanNDC = ndc.replace(/[-]/g, '');
+      console.log('Clean NDC for search:', cleanNDC);
+      
+      const response = await drugAPI.search({ ndc: cleanNDC, limit: 1 });
+      console.log('Drug existence check response:', response);
+      
+      const exists = response.data.drugs && response.data.drugs.length > 0;
+      console.log('Drug exists:', exists);
+      
+      return exists;
     } catch (error) {
       console.error('Error checking if drug exists:', error);
       return false; // Assume doesn't exist on error to allow addition
@@ -295,11 +310,19 @@ function FDASearch() {
     console.log('=== FRONTEND: handleAddToDatabase called ===');
     console.log('Drug:', drug);
     
-    // Validate required NDC field
-    if (!drug.ndc) {
-      setError('Cannot add drug without NDC number');
-      return;
-    }
+    try {
+      // Validate input drug object
+      if (!drug) {
+        throw new Error('Drug object is null or undefined');
+      }
+      
+      // Validate required NDC field
+      if (!drug.ndc) {
+        setError('Cannot add drug without NDC number');
+        return;
+      }
+      
+      console.log('Drug validation passed, proceeding with addition');
 
     // Check if drug already exists in database
     setAddingToDatabase(true); // Show loading while checking
@@ -334,6 +357,16 @@ function FDASearch() {
       expiration_date: '',
       supplier: ''
     });
+    
+    } catch (error) {
+      console.error('=== CRITICAL ERROR in handleAddToDatabase ===');
+      console.error('Error:', error);
+      console.error('Stack:', error.stack);
+      console.error('Drug object:', drug);
+      
+      setError(`Failed to add drug: ${error.message}`);
+      setAddingToDatabase(false);
+    }
   };
 
   /**
@@ -386,7 +419,18 @@ function FDASearch() {
     try {
       // Use selected package NDC if available, otherwise use main NDC
       const ndcToUse = selectedPackageNDC || selectedDrugForAdd.ndc;
+      console.log('NDC to use:', ndcToUse);
+      
+      if (!ndcToUse) {
+        throw new Error('No NDC available - selectedPackageNDC and selectedDrugForAdd.ndc are both empty');
+      }
+      
       const standardizedNDC = standardizeNDC(ndcToUse);
+      console.log('Standardized NDC:', standardizedNDC);
+      
+      if (!standardizedNDC) {
+        throw new Error('NDC standardization failed - result is empty');
+      }
       
       // Add drug to database with initial inventory
       const requestData = {

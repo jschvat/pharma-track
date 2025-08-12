@@ -67,10 +67,105 @@ const Inventory = () => {
   const [transactionHistory, setTransactionHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [selectedDrug, setSelectedDrug] = useState(null);
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' for oldest first, 'desc' for newest first
+  const [availablePrescriptions, setAvailablePrescriptions] = useState([]); // Prescriptions that can be returned
+  const [sortField, setSortField] = useState('transaction_date');
+  const [sortDirection, setSortDirection] = useState('desc');
+  const [columnFilters, setColumnFilters] = useState({
+    transaction_type: '',
+    performed_by_name: '',
+    reason: '',
+    reference_number: ''
+  });
 
   useEffect(() => {
     loadInventory();
   }, [filters]);
+
+  // Helper function to calculate running balance for transactions
+  const calculateRunningBalance = (transactions) => {
+    // Sort transactions by date and id to ensure proper chronological order
+    const sortedTransactions = [...transactions].sort((a, b) => {
+      const dateA = new Date(a.transaction_date);
+      const dateB = new Date(b.transaction_date);
+      if (dateA.getTime() === dateB.getTime()) {
+        return a.id - b.id; // Use ID as tiebreaker for same timestamp
+      }
+      return dateA - dateB; // Oldest first for calculation
+    });
+    
+    let runningBalance = 0;
+    return sortedTransactions.map(transaction => {
+      runningBalance += transaction.quantity_change;
+      return {
+        ...transaction,
+        calculated_running_balance: runningBalance
+      };
+    });
+  };
+
+  // Helper function to filter, sort and display transactions
+  const getSortedTransactions = (transactions) => {
+    // First apply filters
+    const filteredTransactions = getFilteredTransactions(transactions);
+    // Then recalculate running balance for filtered results
+    const withRunningBalance = calculateRunningBalance(filteredTransactions);
+    
+    // Sort for display based on sortField and sortDirection
+    return withRunningBalance.sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortField) {
+        case 'transaction_date':
+          aValue = new Date(a.transaction_date);
+          bValue = new Date(b.transaction_date);
+          break;
+        case 'transaction_type':
+          aValue = a.transaction_type;
+          bValue = b.transaction_type;
+          break;
+        case 'performed_by_name':
+          aValue = (a.performed_by_name || 'System').toLowerCase();
+          bValue = (b.performed_by_name || 'System').toLowerCase();
+          break;
+        case 'quantity_change':
+          aValue = parseInt(a.quantity_change);
+          bValue = parseInt(b.quantity_change);
+          break;
+        case 'quantity_after':
+          aValue = parseInt(a.calculated_running_balance || a.quantity_after);
+          bValue = parseInt(b.calculated_running_balance || b.quantity_after);
+          break;
+        default:
+          aValue = new Date(a.transaction_date);
+          bValue = new Date(b.transaction_date);
+      }
+      
+      if (sortDirection === 'asc') {
+        if (aValue === bValue) {
+          // Use transaction date as tiebreaker, then ID
+          const dateA = new Date(a.transaction_date);
+          const dateB = new Date(b.transaction_date);
+          if (dateA.getTime() === dateB.getTime()) {
+            return a.id - b.id;
+          }
+          return dateA - dateB;
+        }
+        return aValue > bValue ? 1 : -1;
+      } else {
+        if (aValue === bValue) {
+          // Use transaction date as tiebreaker, then ID
+          const dateA = new Date(a.transaction_date);
+          const dateB = new Date(b.transaction_date);
+          if (dateA.getTime() === dateB.getTime()) {
+            return b.id - a.id;
+          }
+          return dateB - dateA;
+        }
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  };
 
   const loadInventory = async () => {
     if (!user.store_id) return;
@@ -116,7 +211,115 @@ const Inventory = () => {
     setSearchParams(newParams);
   };
 
-  const openTransactionModal = (type, item) => {
+  // Helper function to get available prescriptions for return
+  const getAvailablePrescriptions = (transactions) => {
+    // Get all prescription fills with reference numbers
+    const prescriptionFills = transactions.filter(t => 
+      t.transaction_type === 'prescription_fill' && 
+      t.reference_number && 
+      t.quantity_change < 0
+    );
+    
+    // Get all returns that reference prescription numbers
+    const returns = transactions.filter(t => 
+      t.transaction_type === 'return_to_stock' && 
+      t.reference_number
+    );
+    
+    // Calculate net quantities for each prescription (fills minus returns)
+    const prescriptionMap = new Map();
+    
+    prescriptionFills.forEach(fill => {
+      const rxNumber = fill.reference_number;
+      const fillQuantity = Math.abs(fill.quantity_change);
+      prescriptionMap.set(rxNumber, {
+        prescription_number: rxNumber,
+        fill_date: fill.transaction_date,
+        filled_quantity: fillQuantity,
+        returned_quantity: 0,
+        available_for_return: fillQuantity
+      });
+    });
+    
+    returns.forEach(returnTx => {
+      const rxNumber = returnTx.reference_number;
+      if (prescriptionMap.has(rxNumber)) {
+        const prescription = prescriptionMap.get(rxNumber);
+        prescription.returned_quantity += returnTx.quantity_change;
+        prescription.available_for_return = prescription.filled_quantity - prescription.returned_quantity;
+      }
+    });
+    
+    // Return only prescriptions that still have quantity available for return
+    return Array.from(prescriptionMap.values()).filter(p => p.available_for_return > 0);
+  };
+
+  // Sorting functions for the transaction register table
+  const handleSort = (field) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field) => {
+    if (field !== sortField) {
+      return '↕️';
+    }
+    return sortDirection === 'asc' ? '↑' : '↓';
+  };
+
+  // Column filter functions
+  const handleColumnFilterChange = (field, value) => {
+    setColumnFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const clearAllFilters = () => {
+    setColumnFilters({
+      transaction_type: '',
+      performed_by_name: '',
+      reason: '',
+      reference_number: ''
+    });
+  };
+
+  const getFilteredTransactions = (transactions) => {
+    return transactions.filter(transaction => {
+      return (
+        (!columnFilters.transaction_type || transaction.transaction_type === columnFilters.transaction_type) &&
+        (!columnFilters.performed_by_name || (transaction.performed_by_name || 'System').toLowerCase().includes(columnFilters.performed_by_name.toLowerCase())) &&
+        (!columnFilters.reason || (transaction.reason || '').toLowerCase().includes(columnFilters.reason.toLowerCase())) &&
+        (!columnFilters.reference_number || (transaction.reference_number || '').includes(columnFilters.reference_number))
+      );
+    });
+  };
+
+  const getUniqueValues = (transactions, field) => {
+    const values = new Set();
+    transactions.forEach(transaction => {
+      let value;
+      switch (field) {
+        case 'transaction_type':
+          value = transaction.transaction_type;
+          break;
+        case 'performed_by_name':
+          value = transaction.performed_by_name || 'System';
+          break;
+        default:
+          return;
+      }
+      values.add(value);
+    });
+    return Array.from(values).sort();
+  };
+
+
+  const openTransactionModal = async (type, item) => {
     setModalType(type);
     setSelectedItem(item);
     setTransactionForm({
@@ -126,11 +329,44 @@ const Inventory = () => {
       reference_number: '',
       actual_quantity: type === 'audit' ? item.quantity_on_hand : ''
     });
+    
+    // For return transactions, get available prescriptions
+    if (type === 'return') {
+      try {
+        const response = await auditAPI.getInventoryHistory(item.id);
+        const transactions = response.data.history || [];
+        const availableRx = getAvailablePrescriptions(transactions);
+        
+        if (availableRx.length === 0) {
+          alert('No filled prescriptions available for return. You can only return medications from prescriptions that were previously filled.');
+          return;
+        }
+        
+        setAvailablePrescriptions(availableRx);
+      } catch (error) {
+        console.error('Error loading prescription history:', error);
+        alert('Could not load prescription history for returns.');
+        return;
+      }
+    }
+    
     setShowModal(true);
   };
 
   const handleTransaction = async () => {
     if (!selectedItem) return;
+
+    // Validate required fields
+    if (modalType === 'audit') {
+      if (!transactionForm.reason || transactionForm.reason.trim() === '') {
+        setError('Audit reason is required');
+        return;
+      }
+      if (!transactionForm.actual_quantity || transactionForm.actual_quantity === '' || parseInt(transactionForm.actual_quantity) < 0) {
+        setError('Valid actual quantity is required');
+        return;
+      }
+    }
 
     try {
       setLoading(true);
@@ -257,16 +493,65 @@ const Inventory = () => {
           padding: 1rem;
           border-radius: 8px 8px 0 0;
         }
+        .register-sort-buttons .btn {
+          border-color: rgba(255, 255, 255, 0.3);
+          color: white;
+        }
+        .register-sort-buttons .btn:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.5);
+        }
+        .register-sort-buttons .btn.btn-primary {
+          background-color: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.5);
+        }
         .register-body {
           flex: 1;
-          overflow-y: scroll !important;
-          overflow-x: hidden;
+          overflow: auto !important;
           padding: 0;
           min-height: 400px;
           max-height: calc(100vh - 300px);
           height: calc(100vh - 300px);
           scrollbar-width: thin;
           scrollbar-color: #6c757d #f8f9fa;
+          border: 1px solid #dee2e6;
+          border-radius: 4px;
+        }
+        .register-table {
+          border-collapse: separate !important;
+          border-spacing: 0 !important;
+        }
+        .register-table thead th {
+          position: sticky;
+          top: 0;
+          z-index: 10;
+          background: linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 100%) !important;
+          border-bottom: 2px solid #dee2e6 !important;
+          color: #495057 !important;
+          font-weight: 600 !important;
+          text-align: left;
+          padding: 8px 12px !important;
+          font-size: 0.8rem !important;
+          white-space: nowrap;
+        }
+        .register-table thead th:hover {
+          background: linear-gradient(to bottom, #e9ecef 0%, #dee2e6 100%) !important;
+        }
+        .register-table thead tr:last-child th {
+          background: #f1f3f4 !important;
+          padding: 4px 8px !important;
+        }
+        .register-table tbody td {
+          padding: 6px 12px !important;
+          border-bottom: 1px solid #f1f3f4 !important;
+          vertical-align: middle !important;
+          font-size: 0.8rem !important;
+        }
+        .register-table tbody tr:hover {
+          background-color: rgba(0, 123, 255, 0.05) !important;
+        }
+        .register-table tbody tr:nth-child(even) {
+          background-color: rgba(0, 0, 0, 0.02);
         }
         .register-body::-webkit-scrollbar {
           width: 14px !important;
@@ -324,7 +609,7 @@ const Inventory = () => {
           color: #0d6efd;
         }
         .register-transaction-type.return_to_stock {
-          color: #198754;
+          color: #dc3545;
         }
         .register-transaction-type.expire {
           color: #fd7e14;
@@ -332,7 +617,10 @@ const Inventory = () => {
         .register-transaction-type.audit {
           color: #6f42c1;
         }
-        .register-transaction-type.initial_stock {
+        .register-transaction-type.shipment_received {
+          color: #198754;
+        }
+        .register-transaction-type.initial_inventory {
           color: #20c997;
         }
         .register-reference {
@@ -668,73 +956,235 @@ const Inventory = () => {
                       {selectedDrug?.brand_name && ` (${selectedDrug.brand_name})`}
                     </div>
                   </div>
-                  <Button 
-                    variant="link" 
-                    size="sm" 
-                    className="text-white p-0"
-                    onClick={() => setShowHistorySidebar(false)}
-                  >
-                    ✕
-                  </Button>
+                  {Object.values(columnFilters).some(filter => filter !== '') && (
+                    <Badge bg="info" className="d-flex align-items-center gap-1">
+                      🔍 Filtered
+                      <Button 
+                        size="sm" 
+                        variant="link" 
+                        className="p-0 text-white ms-1"
+                        onClick={clearAllFilters}
+                        style={{fontSize: '0.8rem'}}
+                      >
+                        ✕
+                      </Button>
+                    </Badge>
+                  )}
+                  <div className="d-flex align-items-center gap-2">
+                    <div className="btn-group register-sort-buttons" role="group">
+                      <Button
+                        variant={sortOrder === 'desc' ? 'primary' : 'outline-primary'}
+                        size="sm"
+                        onClick={() => setSortOrder('desc')}
+                        title="Newest first"
+                      >
+                        📅↓
+                      </Button>
+                      <Button
+                        variant={sortOrder === 'asc' ? 'primary' : 'outline-primary'}
+                        size="sm"
+                        onClick={() => setSortOrder('asc')}
+                        title="Oldest first"
+                      >
+                        📅↑
+                      </Button>
+                    </div>
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      className="text-white p-0"
+                      onClick={() => setShowHistorySidebar(false)}
+                    >
+                      ✕
+                    </Button>
+                  </div>
                 </div>
               </div>
               
               <div className="register-body">
-                {historyLoading ? (
-                  <div className="d-flex justify-content-center align-items-center py-4">
-                    <Spinner animation="border" size="sm" variant="primary" />
-                  </div>
-                ) : transactionHistory.length === 0 ? (
-                  <div className="register-entry text-center text-muted">
-                    No transactions found
-                  </div>
-                ) : (
-                  transactionHistory.map((transaction, index) => (
-                    <div key={index} className="register-entry">
-                      <div className="register-date">
-                        📅 {new Date(transaction.transaction_date).toLocaleDateString()} at {new Date(transaction.transaction_date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                      
-                      <div className="register-transaction">
-                        <div className="register-description">
-                          <div className={`register-transaction-type ${transaction.transaction_type}`}>
-                            {transaction.transaction_type === 'prescription_fill' && '💊 Prescription Fill'}
-                            {transaction.transaction_type === 'return_to_stock' && '↩️ Return to Stock'}
-                            {transaction.transaction_type === 'expire' && '⚠️ Expired'}
-                            {transaction.transaction_type === 'audit' && '🔍 Audit'}
-                            {transaction.transaction_type === 'initial_stock' && '📦 Initial Stock'}
-                          </div>
-                          {transaction.prescription_number && (
-                            <div className="register-reference">Rx# {transaction.prescription_number}</div>
-                          )}
-                          {transaction.reference_number && (
-                            <div className="register-reference">Ref# {transaction.reference_number}</div>
-                          )}
-                        </div>
-                        
-                        <div className={`register-amount ${transaction.quantity_change >= 0 ? 'positive' : 'negative'}`}>
-                          {transaction.quantity_change >= 0 ? '+' : ''}{transaction.quantity_change}
-                        </div>
-                      </div>
-                      
-                      <div className="register-balance">
-                        Running Balance: {transaction.quantity_after}
-                      </div>
-                      
-                      {transaction.reason && (
-                        <div className="register-reason">
-                          💬 {transaction.reason}
-                        </div>
+                <div className="table-responsive h-100">
+                  <Table hover size="sm" className="mb-0 register-table" style={{fontSize: '0.85rem'}}>
+                    <thead className="bg-light sticky-top">
+                      <tr style={{borderBottom: '1px solid #dee2e6'}}>
+                        <th 
+                          style={{cursor: 'pointer', minWidth: '110px'}} 
+                          onClick={() => handleSort('transaction_date')}
+                          className="user-select-none"
+                        >
+                          Date {getSortIcon('transaction_date')}
+                        </th>
+                        <th 
+                          style={{cursor: 'pointer', minWidth: '140px'}} 
+                          onClick={() => handleSort('transaction_type')}
+                          className="user-select-none"
+                        >
+                          Type {getSortIcon('transaction_type')}
+                        </th>
+                        <th 
+                          style={{cursor: 'pointer', minWidth: '80px'}} 
+                          onClick={() => handleSort('performed_by_name')}
+                          className="user-select-none"
+                        >
+                          User {getSortIcon('performed_by_name')}
+                        </th>
+                        <th style={{minWidth: '150px'}}>Reason</th>
+                        <th style={{minWidth: '90px'}}>Reference</th>
+                        <th 
+                          style={{cursor: 'pointer', minWidth: '70px', textAlign: 'right'}} 
+                          onClick={() => handleSort('quantity_change')}
+                          className="user-select-none text-end"
+                        >
+                          Change {getSortIcon('quantity_change')}
+                        </th>
+                        <th 
+                          style={{cursor: 'pointer', minWidth: '70px', textAlign: 'right'}} 
+                          onClick={() => handleSort('quantity_after')}
+                          className="user-select-none text-end"
+                        >
+                          Balance {getSortIcon('quantity_after')}
+                        </th>
+                      </tr>
+                      <tr style={{borderBottom: '2px solid #dee2e6'}}>
+                        <th style={{padding: '4px 8px'}}>
+                          <Button 
+                            size="sm" 
+                            variant="link" 
+                            className="p-0 text-muted"
+                            onClick={clearAllFilters}
+                            title="Clear all filters"
+                          >
+                            🗑️
+                          </Button>
+                        </th>
+                        <th style={{padding: '4px 8px'}}>
+                          <Form.Select
+                            size="sm"
+                            value={columnFilters.transaction_type}
+                            onChange={(e) => handleColumnFilterChange('transaction_type', e.target.value)}
+                            style={{fontSize: '0.75rem'}}
+                          >
+                            <option value="">All Types</option>
+                            {getUniqueValues(transactionHistory, 'transaction_type').map(type => (
+                              <option key={type} value={type}>
+                                {type.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </th>
+                        <th style={{padding: '4px 8px'}}>
+                          <Form.Select
+                            size="sm"
+                            value={columnFilters.performed_by_name}
+                            onChange={(e) => handleColumnFilterChange('performed_by_name', e.target.value)}
+                            style={{fontSize: '0.75rem'}}
+                          >
+                            <option value="">All Users</option>
+                            {getUniqueValues(transactionHistory, 'performed_by_name').map(user => (
+                              <option key={user} value={user}>{user}</option>
+                            ))}
+                          </Form.Select>
+                        </th>
+                        <th style={{padding: '4px 8px'}}>
+                          <Form.Control
+                            size="sm"
+                            type="text"
+                            placeholder="Filter reason..."
+                            value={columnFilters.reason}
+                            onChange={(e) => handleColumnFilterChange('reason', e.target.value)}
+                            style={{fontSize: '0.75rem'}}
+                          />
+                        </th>
+                        <th style={{padding: '4px 8px'}}>
+                          <Form.Control
+                            size="sm"
+                            type="text"
+                            placeholder="Filter ref..."
+                            value={columnFilters.reference_number}
+                            onChange={(e) => handleColumnFilterChange('reference_number', e.target.value)}
+                            style={{fontSize: '0.75rem'}}
+                          />
+                        </th>
+                        <th></th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {historyLoading ? (
+                        <tr>
+                          <td colSpan="7" className="text-center py-4">
+                            <Spinner animation="border" size="sm" variant="primary" />
+                          </td>
+                        </tr>
+                      ) : transactionHistory.length === 0 ? (
+                        <tr>
+                          <td colSpan="7" className="text-center text-muted py-4">
+                            No transactions found
+                          </td>
+                        </tr>
+                      ) : (
+                        getSortedTransactions(transactionHistory).map((transaction, index) => (
+                          <tr key={`${transaction.id}-${index}`} style={{borderBottom: '1px solid #dee2e6'}}>
+                            <td style={{fontSize: '0.8rem', color: '#6c757d', whiteSpace: 'nowrap'}}>
+                              <div>{new Date(transaction.transaction_date).toLocaleDateString()}</div>
+                              <div>{new Date(transaction.transaction_date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</div>
+                            </td>
+                            <td>
+                              <Badge 
+                                bg={
+                                  transaction.transaction_type === 'prescription_fill' ? 'primary' :
+                                  transaction.transaction_type === 'return_to_stock' ? 'danger' :
+                                  transaction.transaction_type === 'expire' ? 'warning' :
+                                  transaction.transaction_type === 'audit' ? 'info' :
+                                  transaction.transaction_type === 'shipment_received' ? 'success' :
+                                  transaction.transaction_type === 'initial_inventory' ? 'dark' :
+                                  'secondary'
+                                }
+                                className="small"
+                                style={{fontSize: '0.7rem'}}
+                              >
+                                {transaction.transaction_type === 'prescription_fill' && '💊'}
+                                {transaction.transaction_type === 'return_to_stock' && '↩️'}
+                                {transaction.transaction_type === 'expire' && '⚠️'}
+                                {transaction.transaction_type === 'audit' && '🔍'}
+                                {transaction.transaction_type === 'shipment_received' && '📦'}
+                                {transaction.transaction_type === 'initial_inventory' && '📦'}
+                                {' '}
+                                {transaction.transaction_type.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                              </Badge>
+                            </td>
+                            <td style={{fontSize: '0.8rem'}}>
+                              {transaction.performed_by_name || 'System'}
+                            </td>
+                            <td style={{fontSize: '0.8rem'}}>
+                              {transaction.reason || '-'}
+                            </td>
+                            <td style={{fontSize: '0.8rem'}}>
+                              {transaction.reference_number ? (
+                                <span style={{
+                                  color: transaction.transaction_type === 'return_to_stock' ? '#dc3545' : 
+                                         transaction.transaction_type === 'shipment_received' ? '#198754' : '#6c757d',
+                                  fontWeight: transaction.transaction_type === 'return_to_stock' || transaction.transaction_type === 'shipment_received' ? '600' : 'normal'
+                                }}>
+                                  {transaction.transaction_type === 'return_to_stock' ? 'Rx# ' :
+                                   transaction.transaction_type === 'shipment_received' ? 'Inv# ' : 
+                                   'Ref# '}{transaction.reference_number}
+                                </span>
+                              ) : '-'}
+                            </td>
+                            <td className="text-end" style={{fontWeight: '600'}}>
+                              <span className={transaction.quantity_change >= 0 ? 'text-success' : 'text-danger'}>
+                                {transaction.quantity_change >= 0 ? '+' : ''}{transaction.quantity_change}
+                              </span>
+                            </td>
+                            <td className="text-end" style={{fontWeight: '600'}}>
+                              {transaction.calculated_running_balance}
+                            </td>
+                          </tr>
+                        ))
                       )}
-                      
-                      {transaction.performed_by_name && (
-                        <div className="register-user">
-                          👤 {transaction.performed_by_name}
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
+                    </tbody>
+                  </Table>
+                </div>
               </div>
             </Card>
           </Col>
@@ -762,16 +1212,34 @@ const Inventory = () => {
               </div>
 
               {modalType === 'audit' ? (
-                <Form.Group className="mb-3">
-                  <Form.Label>Actual Quantity</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={transactionForm.actual_quantity}
-                    onChange={(e) => setTransactionForm({...transactionForm, actual_quantity: e.target.value})}
-                    min="0"
-                    required
-                  />
-                </Form.Group>
+                <>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Actual Quantity</Form.Label>
+                    <Form.Control
+                      type="number"
+                      value={transactionForm.actual_quantity}
+                      onChange={(e) => setTransactionForm({...transactionForm, actual_quantity: e.target.value})}
+                      min="0"
+                      required
+                    />
+                    <Form.Text className="text-muted">
+                      Enter the actual counted quantity during physical inventory
+                    </Form.Text>
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Audit Reason</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={transactionForm.reason}
+                      onChange={(e) => setTransactionForm({...transactionForm, reason: e.target.value})}
+                      placeholder="Physical inventory count, cycle count, etc."
+                      required
+                    />
+                    <Form.Text className="text-muted">
+                      Provide a reason for this inventory audit
+                    </Form.Text>
+                  </Form.Group>
+                </>
               ) : (
                 <Form.Group className="mb-3">
                   <Form.Label>Quantity</Form.Label>
@@ -799,14 +1267,51 @@ const Inventory = () => {
               )}
 
               {modalType === 'return' && (
-                <Form.Group className="mb-3">
-                  <Form.Label>Reference Number</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={transactionForm.reference_number}
-                    onChange={(e) => setTransactionForm({...transactionForm, reference_number: e.target.value})}
-                  />
-                </Form.Group>
+                <>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Select Prescription to Return</Form.Label>
+                    <Form.Select
+                      value={transactionForm.reference_number}
+                      onChange={(e) => {
+                        const selectedRx = availablePrescriptions.find(rx => rx.prescription_number === e.target.value);
+                        setTransactionForm({
+                          ...transactionForm, 
+                          reference_number: e.target.value,
+                          quantity: selectedRx ? selectedRx.available_for_return.toString() : ''
+                        });
+                      }}
+                      required
+                    >
+                      <option value="">Choose a prescription...</option>
+                      {availablePrescriptions.map(rx => (
+                        <option key={rx.prescription_number} value={rx.prescription_number}>
+                          Rx# {rx.prescription_number} - {rx.available_for_return} units available 
+                          (Filled: {new Date(rx.fill_date).toLocaleDateString()})
+                        </option>
+                      ))}
+                    </Form.Select>
+                    <Form.Text className="text-muted">
+                      Only prescriptions that were previously filled can be returned.
+                    </Form.Text>
+                  </Form.Group>
+                  
+                  {transactionForm.reference_number && (
+                    <Form.Group className="mb-3">
+                      <Form.Label>Return Quantity</Form.Label>
+                      <Form.Control
+                        type="number"
+                        value={transactionForm.quantity}
+                        onChange={(e) => setTransactionForm({...transactionForm, quantity: e.target.value})}
+                        min="1"
+                        max={availablePrescriptions.find(rx => rx.prescription_number === transactionForm.reference_number)?.available_for_return || 1}
+                        required
+                      />
+                      <Form.Text className="text-muted">
+                        Maximum returnable: {availablePrescriptions.find(rx => rx.prescription_number === transactionForm.reference_number)?.available_for_return || 0} units
+                      </Form.Text>
+                    </Form.Group>
+                  )}
+                </>
               )}
 
               <Form.Group className="mb-3">
@@ -899,10 +1404,11 @@ const Inventory = () => {
                             <Badge 
                               bg={
                                 transaction.transaction_type === 'prescription_fill' ? 'primary' :
-                                transaction.transaction_type === 'return_to_stock' ? 'success' :
+                                transaction.transaction_type === 'return_to_stock' ? 'danger' :
                                 transaction.transaction_type === 'expire' ? 'warning' :
                                 transaction.transaction_type === 'audit' ? 'info' :
-                                transaction.transaction_type === 'initial_stock' ? 'dark' :
+                                transaction.transaction_type === 'shipment_received' ? 'success' :
+                                transaction.transaction_type === 'initial_inventory' ? 'dark' :
                                 'secondary'
                               }
                               className="small"

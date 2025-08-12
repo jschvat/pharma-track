@@ -64,6 +64,35 @@ CREATE TABLE IF NOT EXISTS store_inventory (
     UNIQUE KEY unique_store_drug_lot (store_id, drug_id, lot_number)
 );
 
+-- Inventory audit log for tracking all changes to drug quantities
+CREATE TABLE IF NOT EXISTS inventory_audit_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    inventory_id INT NOT NULL,
+    store_id INT NOT NULL,
+    drug_id INT NOT NULL,
+    transaction_type ENUM('prescription_fill', 'return_to_stock', 'expire', 'audit', 'shipment_received', 'initial_inventory') NOT NULL,
+    quantity_change INT NOT NULL COMMENT 'Positive for additions, negative for subtractions',
+    quantity_before INT NOT NULL,
+    quantity_after INT NOT NULL,
+    reason VARCHAR(500),
+    reference_number VARCHAR(100) COMMENT 'Prescription number, return receipt, etc.',
+    performed_by INT NOT NULL COMMENT 'User who performed the action',
+    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (inventory_id) REFERENCES store_inventory(id) ON DELETE CASCADE,
+    FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE,
+    FOREIGN KEY (drug_id) REFERENCES drugs(id) ON DELETE CASCADE,
+    FOREIGN KEY (performed_by) REFERENCES users(id) ON DELETE RESTRICT,
+    
+    -- Indexes for efficient querying
+    INDEX idx_inventory_id (inventory_id),
+    INDEX idx_store_drug (store_id, drug_id),
+    INDEX idx_transaction_date (transaction_date),
+    INDEX idx_transaction_type (transaction_type),
+    INDEX idx_performed_by (performed_by),
+    INDEX idx_reference_number (reference_number)
+);
+
 -- FDA search history for analytics and caching
 CREATE TABLE IF NOT EXISTS fda_search_history (
     id INT AUTO_INCREMENT PRIMARY KEY,

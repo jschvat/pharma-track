@@ -116,8 +116,8 @@ const verifyName = (fieldName = 'name') => {
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage(`${fieldName} must be between 2 and 100 characters`)
-    .matches(/^[a-zA-Z\s\-'\.]+$/)
-    .withMessage(`${fieldName} can only contain letters, spaces, hyphens, apostrophes, and periods`)
+    .matches(/^[a-zA-Z0-9\s\-'\.]+$/)
+    .withMessage(`${fieldName} can only contain letters, numbers, spaces, hyphens, apostrophes, and periods`)
     .custom((value) => {
       if (value.includes('  ')) {
         throw new Error(`${fieldName} cannot contain multiple consecutive spaces`);
@@ -171,14 +171,14 @@ const verifyBoolean = (fieldName) => {
 
 const verifyNDC = () => {
   return body('ndc')
-    .matches(/^[0-9\-]{10,14}$/)
-    .withMessage('NDC must be 10-11 digits with optional dashes (e.g., 12345-678-90)')
+    .matches(/^[0-9\-]{7,14}$/)
+    .withMessage('NDC must be 7-11 digits with optional dashes (e.g., 12345-678-90)')
     .customSanitizer((value) => {
       return value.replace(/[^\d]/g, '');
     })
     .custom((value) => {
-      if (value.length < 10 || value.length > 11) {
-        throw new Error('NDC must be 10 or 11 digits');
+      if (value.length < 7 || value.length > 11) {
+        throw new Error('NDC must be 7-11 digits');
       }
       return true;
     });
@@ -221,6 +221,11 @@ const verifyId = (paramName = 'id') => {
 
 const sanitizeAndTrim = () => {
   return (req, res, next) => {
+    // Skip sanitization for GET requests as they shouldn't have bodies
+    if (req.method === 'GET') {
+      return next();
+    }
+    
     const sanitizeValue = (value) => {
       if (typeof value === 'string') {
         return value.trim()
@@ -259,6 +264,11 @@ const sanitizeAndTrim = () => {
 
 const checkDataIntegrity = () => {
   return (req, res, next) => {
+    // Skip data integrity checks for GET requests as they shouldn't have bodies
+    if (req.method === 'GET') {
+      return next();
+    }
+    
     const suspiciousPatterns = [
       /(\bSELECT\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b|\bUNION\b)/i,
       /<script[^>]*>.*?<\/script>/gi,

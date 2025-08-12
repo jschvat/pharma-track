@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAdmin } = useAuth();
+  const { currentTheme, changeTheme, availableThemes } = useTheme();
   const [openDropdowns, setOpenDropdowns] = useState({});
 
   const handleLogout = async () => {
@@ -92,11 +94,11 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
         {
           key: 'admin',
           icon: 'fas fa-users-cog',
-          label: 'Admin',
+          label: 'Administration',
           dropdown: true,
           items: [
-            { label: 'Stores', path: '/admin/stores' },
-            { label: 'Users', path: '/admin/users' },
+            { label: 'Manage Stores', path: '/admin/stores' },
+            { label: 'Manage Users', path: '/admin/users' },
             { label: 'System Settings', path: '/admin/settings' }
           ]
         }
@@ -202,6 +204,50 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
               ))}
             </div>
           ))}
+
+          {/* Theme Section - Only show on mobile */}
+          <div className="nav-section d-md-none" style={{ paddingTop: '1rem' }}>
+            <div className="nav-section-title">Appearance</div>
+            <div className="nav-item">
+              <div className={`nav-dropdown ${openDropdowns.theme ? 'open' : ''}`}>
+                <a
+                  href="#"
+                  className="nav-link"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleDropdown('theme');
+                  }}
+                >
+                  <div className="nav-dropdown-content">
+                    <span>
+                      <i className="fas fa-palette"></i>
+                      <span className="nav-link-text">Theme</span>
+                    </span>
+                    <i className="fas fa-chevron-down nav-dropdown-icon"></i>
+                  </div>
+                </a>
+                <div className="nav-dropdown-menu">
+                  {availableThemes.map((theme) => (
+                    <div key={theme.value} className="nav-item">
+                      <a
+                        href="#"
+                        className={`nav-link nav-dropdown-item ${currentTheme === theme.value ? 'active' : ''}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          changeTheme(theme.value);
+                          if (mobileOpen) {
+                            onMobileToggle();
+                          }
+                        }}
+                      >
+                        <span className="nav-link-text">{theme.label}</span>
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* User Section */}
           <div className="nav-section" style={{ marginTop: 'auto', paddingTop: '2rem' }}>

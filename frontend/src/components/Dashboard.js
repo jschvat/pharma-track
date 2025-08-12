@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Alert, Spinner, Button, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, Alert, Button, Badge } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { inventoryAPI, auditAPI, drugAPI, storeAPI } from '../services/api';
 import { Link } from 'react-router-dom';
@@ -34,7 +34,7 @@ const Dashboard = () => {
           inventoryAPI.getStats(user.store_id),
           inventoryAPI.getLowStock(user.store_id, { limit: 5 }),
           inventoryAPI.getExpiring(user.store_id, { days: 30, limit: 5 }),
-          auditAPI.getStoreHistory(user.store_id, {}, 5, 0)
+          auditAPI.getStoreHistory(user.store_id, { limit: 5 })
         );
       }
 

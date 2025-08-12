@@ -1,5 +1,5 @@
 const express = require('express');
-const { validationResult } = require('express-validator');
+const { validationResult, query, body } = require('express-validator');
 const Store = require('../models/Store');
 const User = require('../models/User');
 const { authenticateToken, requireRole } = require('../middleware/auth');
@@ -78,13 +78,56 @@ router.post('/', authenticateToken, requireRole('admin'), [
   }
 });
 
-router.get('/', authenticateToken, requireRole('admin'), async (req, res) => {
+// Get all stores with filtering and pagination
+router.get('/', authenticateToken, requireRole('admin'), [
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100').toInt(),
+  query('state').optional().isLength({ min: 2, max: 2 }).withMessage('State must be 2 characters'),
+  query('search').optional().isLength({ min: 1, max: 100 }).withMessage('Search must be 1-100 characters'),
+  query('admin_only').optional().isBoolean().withMessage('Admin only must be boolean').toBoolean()
+], async (req, res) => {
   try {
-    const stores = await Store.findAll();
-    res.json({ stores });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { page = 1, limit = 20, state, search, admin_only } = req.query;
+    const offset = (page - 1) * limit;
+
+    const filters = {};
+    if (state) filters.state = state.toUpperCase();
+    if (search) filters.search = search;
+    if (admin_only) filters.admin_user_id = req.user.id;
+
+    const stores = await Store.findWithFilters(filters, limit, offset);
+    const total = await Store.countWithFilters(filters);
+
+    console.log(`📊 Stores API: Found ${stores.length} stores, total: ${total}`);
+    
+    res.json({ 
+      stores,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error('Get stores error:', error);
     res.status(500).json({ error: 'Failed to fetch stores' });
+  }
+});
+
+// Get store statistics
+router.get('/stats', authenticateToken, requireRole('admin'), async (req, res) => {
+  try {
+    const stats = await Store.getStats();
+    res.json({ stats });
+  } catch (error) {
+    console.error('Get store stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch store statistics' });
   }
 });
 

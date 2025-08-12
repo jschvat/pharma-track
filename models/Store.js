@@ -1,4 +1,4 @@
-const db = require('../config/database');
+const { pool: db } = require('../config/database');
 const { handleDatabaseError } = require('./ValidationError');
 
 class Store {
@@ -41,6 +41,100 @@ class Store {
        LEFT JOIN users u ON s.admin_user_id = u.id`
     );
     return rows;
+  }
+
+  static async findWithFilters(filters = {}, limit = 20, offset = 0) {
+    try {
+      let query = `
+        SELECT s.*, u.name as admin_name, u.email as admin_email 
+        FROM stores s 
+        LEFT JOIN users u ON s.admin_user_id = u.id
+        WHERE 1=1
+      `;
+      const params = [];
+
+      if (filters.state) {
+        query += ' AND s.state = ?';
+        params.push(filters.state);
+      }
+
+      if (filters.search) {
+        query += ' AND (s.name LIKE ? OR s.address LIKE ? OR s.dea_registration_number LIKE ? OR s.npi LIKE ?)';
+        params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+      }
+
+      if (filters.admin_user_id) {
+        query += ' AND s.admin_user_id = ?';
+        params.push(parseInt(filters.admin_user_id));
+      }
+
+      // Ensure limit and offset are proper integers  
+      const limitInt = parseInt(limit) || 20;
+      const offsetInt = parseInt(offset) || 0;
+      
+      // Build LIMIT clause without parameters to avoid MySQL parameter binding issues
+      query += ` ORDER BY s.date_created DESC LIMIT ${offsetInt}, ${limitInt}`;
+
+      const [rows] = await db.execute(query, params);
+      return rows;
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  static async countWithFilters(filters = {}) {
+    try {
+      let query = 'SELECT COUNT(*) as total FROM stores s WHERE 1=1';
+      const params = [];
+
+      if (filters.state) {
+        query += ' AND s.state = ?';
+        params.push(filters.state);
+      }
+
+      if (filters.search) {
+        query += ' AND (s.name LIKE ? OR s.address LIKE ? OR s.dea_registration_number LIKE ? OR s.npi LIKE ?)';
+        params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+      }
+
+      if (filters.admin_user_id) {
+        query += ' AND s.admin_user_id = ?';
+        params.push(parseInt(filters.admin_user_id));
+      }
+
+      const [rows] = await db.execute(query, params);
+      return rows[0].total;
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  static async getStats() {
+    try {
+      const [stats] = await db.execute(`
+        SELECT 
+          COUNT(*) as total_stores,
+          COUNT(DISTINCT state) as unique_states,
+          COUNT(admin_user_id) as stores_with_admin,
+          AVG(YEAR(CURDATE()) - YEAR(date_created)) as avg_age_years
+        FROM stores
+      `);
+      
+      const [stateStats] = await db.execute(`
+        SELECT state, COUNT(*) as count 
+        FROM stores 
+        GROUP BY state 
+        ORDER BY count DESC 
+        LIMIT 10
+      `);
+
+      return {
+        ...stats[0],
+        states: stateStats
+      };
+    } catch (error) {
+      handleDatabaseError(error);
+    }
   }
 
   static async findByDeaNumber(dea_registration_number) {
