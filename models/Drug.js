@@ -77,11 +77,7 @@ class Drug {
         JSON.stringify(fdaData)
       ];
       
-      console.log('=== DEBUG: Drug creation parameters ===');
-      const paramNames = ['ndc', 'product_ndc', 'generic_name', 'brand_name', 'dosage_form', 'route', 'strength', 'manufacturer_name', 'labeler_name', 'substance_name', 'product_type', 'marketing_status', 'listing_expiration_date', 'fda_data'];
-      params.forEach((param, index) => {
-        console.log(`${paramNames[index]}: ${param === undefined ? 'UNDEFINED' : param === null ? 'NULL' : typeof param === 'object' ? JSON.stringify(param) : param}`);
-      });
+      // Debug logging removed for production security
       
       // Replace undefined values with null
       const safeParams = params.map(param => param === undefined ? null : param);

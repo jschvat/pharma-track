@@ -35,12 +35,7 @@ const Login = () => {
     }
   };
 
-  const handleTestLogin = () => {
-    setFormData({
-      email: 'admin@pharmatrak.com',
-      password: 'Admin123!'
-    });
-  };
+  // Demo credentials removed for security in production
 
   return (
     <div className="login-container" style={{
@@ -84,23 +79,7 @@ const Login = () => {
             </div>
           )}
           
-          <div className="alert alert-info">
-            <div style={{ marginBottom: '0.5rem' }}>
-              <strong>Demo Credentials:</strong>
-            </div>
-            <div style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
-              Email: <code>admin@pharmatrak.com</code><br />
-              Password: <code>Admin123!</code>
-            </div>
-            <button 
-              className="btn btn-outline-primary btn-sm"
-              onClick={handleTestLogin}
-              type="button"
-            >
-              <i className="fas fa-user me-1"></i>
-              Use Demo Credentials
-            </button>
-          </div>
+          {/* Demo credentials section removed for production security */}
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">

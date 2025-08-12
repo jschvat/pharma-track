@@ -21,6 +21,7 @@
 import React, { useState } from 'react';
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
 import { drugAPI } from '../services/api';
+import DOMPurify from 'dompurify';
 
 /**
  * FDASearch Component - Main component for FDA drug database searches
@@ -493,6 +494,16 @@ function FDASearch() {
   };
 
   /**
+   * Sanitize user input to prevent XSS attacks
+   * @param {string} input - Raw input string
+   * @returns {string} Sanitized string
+   */
+  const sanitizeInput = (input) => {
+    if (!input || typeof input !== 'string') return 'N/A';
+    return DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+  };
+
+  /**
    * Format NDC number with standard dashes for display
    * Converts raw NDC number to readable format (XXXXX-XXXX-XX)
    * Handles both 10 and 11 digit NDC codes according to FDA standards
@@ -558,7 +569,7 @@ function FDASearch() {
     <div key={index} className="card mb-3">
       <div className="card-body">
         <h5 className="card-title text-primary">
-          {drug.brand_name || drug.generic_name || 'Unknown Drug'}
+          {sanitizeInput(drug.brand_name) || sanitizeInput(drug.generic_name) || 'Unknown Drug'}
         </h5>
         
         <div className="row">
@@ -567,27 +578,27 @@ function FDASearch() {
               <strong>NDC:</strong> <code>{formatNDC(drug.ndc)}</code>
             </p>
             <p className="mb-1">
-              <strong>Generic Name:</strong> {drug.generic_name || 'N/A'}
+              <strong>Generic Name:</strong> {sanitizeInput(drug.generic_name)}
             </p>
             <p className="mb-1">
-              <strong>Brand Name:</strong> {drug.brand_name || 'N/A'}
+              <strong>Brand Name:</strong> {sanitizeInput(drug.brand_name)}
             </p>
             <p className="mb-1">
-              <strong>Manufacturer:</strong> {drug.manufacturer_name || 'N/A'}
+              <strong>Manufacturer:</strong> {sanitizeInput(drug.manufacturer_name)}
             </p>
           </div>
           <div className="col-md-6">
             <p className="mb-1">
-              <strong>Dosage Form:</strong> {drug.dosage_form || 'N/A'}
+              <strong>Dosage Form:</strong> {sanitizeInput(drug.dosage_form)}
             </p>
             <p className="mb-1">
-              <strong>Route:</strong> {drug.route ? drug.route.join(', ') : 'N/A'}
+              <strong>Route:</strong> {drug.route ? drug.route.map(sanitizeInput).join(', ') : 'N/A'}
             </p>
             <p className="mb-1">
-              <strong>Strength:</strong> {drug.strength || 'N/A'}
+              <strong>Strength:</strong> {sanitizeInput(drug.strength)}
             </p>
             <p className="mb-1">
-              <strong>Package Description:</strong> {drug.package_description || 'N/A'}
+              <strong>Package Description:</strong> {sanitizeInput(drug.package_description)}
             </p>
           </div>
         </div>
@@ -597,8 +608,8 @@ function FDASearch() {
             <strong>Active Ingredients:</strong> 
             <span className="text-info ml-2">
               {Array.isArray(drug.substance_name) 
-                ? drug.substance_name.join(', ')
-                : drug.substance_name}
+                ? drug.substance_name.map(sanitizeInput).join(', ')
+                : sanitizeInput(drug.substance_name)}
             </span>
           </p>
         )}
@@ -607,7 +618,7 @@ function FDASearch() {
           <div className="mt-3">
             <h6>Package Information</h6>
             <p className="mb-2 p-2 bg-light rounded border">
-              <strong>Package:</strong> {drug.package_description}
+              <strong>Package:</strong> {sanitizeInput(drug.package_description)}
             </p>
           </div>
         )}

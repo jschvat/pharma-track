@@ -78,18 +78,15 @@ const debugLog = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:78
    */
   request: (config) => {
-    console.log(`🔵 API REQUEST: ${config.method?.toUpperCase()} ${config.url}`, {
-      timestamp: new Date().toISOString(),
-      method: config.method,
-      url: config.url,
-      baseURL: config.baseURL,
-      data: config.data,
-      params: config.params,
-      headers: {
-        ...config.headers,
-        Authorization: config.headers?.Authorization ? '[REDACTED]' : undefined
-      }
-    });
+    // Debug logging disabled in production
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔵 API REQUEST: ${config.method?.toUpperCase()} ${config.url}`, {
+        timestamp: new Date().toISOString(),
+        method: config.method,
+        url: config.url,
+        params: config.params
+      });
+    }
     config.requestStartTime = Date.now();
     return config;
   },
@@ -109,14 +106,15 @@ const debugLog = {
       ? Date.now() - response.config.requestStartTime 
       : null;
     
-    console.log(`🟢 API RESPONSE: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, {
-      timestamp: new Date().toISOString(),
-      status: response.status,
-      statusText: response.statusText,
-      duration: duration ? `${duration}ms` : null,
-      data: response.data,
-      headers: response.headers
-    });
+    // Debug logging disabled in production
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🟢 API RESPONSE: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+        timestamp: new Date().toISOString(),
+        status: response.status,
+        statusText: response.statusText,
+        duration: duration ? `${duration}ms` : null
+      });
+    }
     return response;
   },
 
@@ -336,7 +334,9 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:309
    */
   getAll: (params) => {
-    console.log('🔍 DRUG API: Getting all drugs', { params });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 DRUG API: Getting all drugs', { params });
+    }
     return api.get('/drugs/all', { params });
   },
 
@@ -364,7 +364,9 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:337
    */
   search: (params) => {
-    console.log('🔍 DRUG API: Searching local database', { params });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 DRUG API: Searching local database', { params });
+    }
     return api.get('/drugs/search', { params });
   },
 

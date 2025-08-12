@@ -21,15 +21,28 @@ export const AuthProvider = ({ children }) => {
     const userData = localStorage.getItem('user');
     
     if (token && userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch (err) {
-        console.error('Error parsing user data:', err);
-        logout();
-      }
+      // Validate token with server before auto-login
+      validateToken(token, userData);
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
+
+  const validateToken = async (token, userData) => {
+    try {
+      // Test if token is valid by making an authenticated request
+      await authAPI.getProfile();
+      setUser(JSON.parse(userData));
+    } catch (err) {
+      console.error('Token validation failed:', err);
+      // Token is invalid, clear localStorage and redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (email, password) => {
     try {

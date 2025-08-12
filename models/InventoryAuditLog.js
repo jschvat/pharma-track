@@ -170,8 +170,8 @@ class InventoryAuditLog {
         INNER JOIN drugs d ON ial.drug_id = d.id
         WHERE ial.inventory_id = ?
         ORDER BY ial.transaction_date DESC
-        LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
-      `, [inventoryId]);
+        LIMIT ? OFFSET ?
+      `, [inventoryId, Math.max(1, Math.min(parseInt(limit) || 50, 1000)), Math.max(0, parseInt(offset) || 0)]);
 
       return rows;
     } catch (error) {
@@ -212,7 +212,12 @@ class InventoryAuditLog {
         params.push(storeId);
       }
       
-      query += ` ORDER BY ial.transaction_date DESC LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
+      // Sanitize limit and offset parameters
+      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
+      const offsetInt = Math.max(0, parseInt(offset) || 0);
+      
+      query += ` ORDER BY ial.transaction_date DESC LIMIT ? OFFSET ?`;
+      params.push(limitInt, offsetInt);
 
       const [rows] = await db.execute(query, params);
       return rows;
@@ -272,7 +277,12 @@ class InventoryAuditLog {
         params.push(filters.date_to);
       }
 
-      query += ` ORDER BY ial.transaction_date DESC LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
+      // Sanitize limit and offset parameters
+      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
+      const offsetInt = Math.max(0, parseInt(offset) || 0);
+      
+      query += ` ORDER BY ial.transaction_date DESC LIMIT ? OFFSET ?`;
+      params.push(limitInt, offsetInt);
 
       const [rows] = await db.execute(query, params);
       return rows;
@@ -435,7 +445,7 @@ class InventoryAuditLog {
         INNER JOIN drugs d ON ial.drug_id = d.id
         ORDER BY ial.transaction_date DESC
         LIMIT ?
-      `.replace('LIMIT ?', `LIMIT ${parseInt(limit)}`), []);
+      `, [Math.max(1, Math.min(parseInt(limit) || 50, 1000))]);
 
       return rows;
     } catch (error) {
@@ -515,7 +525,12 @@ class InventoryAuditLog {
         params.push(restrictToFutureDate);
       }
 
-      auditQuery += ` ORDER BY ial.transaction_date ASC, ial.id ASC LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
+      // Sanitize limit and offset parameters
+      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
+      const offsetInt = Math.max(0, parseInt(offset) || 0);
+      
+      auditQuery += ` ORDER BY ial.transaction_date ASC, ial.id ASC LIMIT ? OFFSET ?`;
+      params.push(limitInt, offsetInt);
 
       const [auditRows] = await db.execute(auditQuery, params);
 

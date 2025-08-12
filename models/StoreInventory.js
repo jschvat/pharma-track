@@ -278,7 +278,7 @@ class StoreInventory {
           AND si.is_active = TRUE 
           AND si.quantity_on_hand <= si.reorder_level
         ORDER BY (si.quantity_on_hand / NULLIF(si.reorder_level, 0)) ASC
-        LIMIT ${parseInt(limit)}
+        LIMIT ?
       `, [storeId]);
       
       return rows;
@@ -307,7 +307,7 @@ class StoreInventory {
           AND si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
           AND si.expiration_date > CURDATE()
         ORDER BY si.expiration_date ASC
-        LIMIT ${parseInt(limit)}
+        LIMIT ?
       `, [storeId, parseInt(days)]);
       
       return rows;
@@ -391,7 +391,12 @@ class StoreInventory {
         params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
       }
 
-      query += ` ORDER BY d.generic_name, d.brand_name LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
+      // Sanitize limit and offset parameters
+      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
+      const offsetInt = Math.max(0, parseInt(offset) || 0);
+      
+      query += ` ORDER BY d.generic_name, d.brand_name LIMIT ? OFFSET ?`;
+      params.push(limitInt, offsetInt);
 
       const [rows] = await db.execute(query, params);
       return rows;

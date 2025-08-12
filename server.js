@@ -27,22 +27,23 @@ app.use(helmet());
 app.use(limiter);
 app.use(cors());
 
-// Debug logging middleware to catch JSON parsing issues
-app.use((req, res, next) => {
-  console.log(`📨 ${req.method} ${req.path} - ${new Date().toISOString()}`);
-  
-  // Log body for all requests to catch unexpected bodies on GET
-  if (req.body && Object.keys(req.body).length > 0) {
-    console.log('📦 Request body (unexpected for GET):', req.body);
-  }
-  
-  // Log query parameters
-  if (Object.keys(req.query).length > 0) {
-    console.log('🔍 Query params:', req.query);
-  }
-  
-  next();
-});
+// Conditional debug logging middleware (disabled in production)
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, res, next) => {
+    console.log(`📨 ${req.method} ${req.path} - ${new Date().toISOString()}`);
+    
+    // Log query parameters (excluding sensitive data)
+    if (Object.keys(req.query).length > 0) {
+      const sanitizedQuery = { ...req.query };
+      // Remove sensitive query parameters
+      delete sanitizedQuery.password;
+      delete sanitizedQuery.token;
+      console.log('🔍 Query params:', sanitizedQuery);
+    }
+    
+    next();
+  });
+}
 
 // JSON parsing with error handling
 app.use(express.json({ 

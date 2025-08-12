@@ -53,6 +53,12 @@ const verifyDeaNumber = () => {
     .matches(/^[A-Z]{2}[0-9]{7}$/)
     .withMessage('DEA number must be in format: 2 letters followed by 7 digits (e.g., AB1234567)')
     .custom((value) => {
+      // DEA number format: 2 letters + 7 digits (9 total characters, indexed 0-8)
+      // Check digit is the 7th digit (index 8), calculated from digits at positions 2,3,4,5,6,7
+      if (value.length !== 9) {
+        throw new Error('DEA number must be exactly 9 characters');
+      }
+      
       const checkDigit = parseInt(value[8]);
       const sum = (parseInt(value[2]) + parseInt(value[4]) + parseInt(value[6])) + 
                   2 * (parseInt(value[3]) + parseInt(value[5]) + parseInt(value[7]));

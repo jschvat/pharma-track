@@ -69,11 +69,12 @@ class Store {
       }
 
       // Ensure limit and offset are proper integers  
-      const limitInt = parseInt(limit) || 20;
-      const offsetInt = parseInt(offset) || 0;
+      const limitInt = Math.max(1, Math.min(parseInt(limit) || 20, 1000)); // Sanitize: 1-1000 range
+      const offsetInt = Math.max(0, parseInt(offset) || 0); // Sanitize: non-negative
       
-      // Build LIMIT clause without parameters to avoid MySQL parameter binding issues
-      query += ` ORDER BY s.date_created DESC LIMIT ${offsetInt}, ${limitInt}`;
+      // Use parameterized query to prevent SQL injection
+      query += ` ORDER BY s.date_created DESC LIMIT ? OFFSET ?`;
+      params.push(limitInt, offsetInt);
 
       const [rows] = await db.execute(query, params);
       return rows;
