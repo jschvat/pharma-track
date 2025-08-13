@@ -33,10 +33,8 @@ const dbConfig = {
     // key: process.env.DB_SSL_KEY // Uncomment for client key
   } : false,
   // Security: Additional connection security
-  charset: 'utf8mb4',
-  acquireTimeout: 60000,
-  timeout: 60000,
-  reconnect: true
+  charset: 'utf8mb4'
+  // Removed deprecated MySQL2 v3+ options: acquireTimeout, timeout, reconnect
 };
 
 const pool = mysql.createPool(dbConfig);

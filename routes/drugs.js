@@ -1093,20 +1093,19 @@ router.post('/check-exist', authenticateToken, async (req, res) => {
       storeId
     });
     
-    const placeholders = ndcs.map(() => '?').join(',');
+    const ndcPlaceholders = ndcs.map(ndc => `'${ndc.replace(/'/g, "''")}'`).join(',');
     const sqlQuery = `
       SELECT DISTINCT d.ndc 
       FROM drugs d
       INNER JOIN store_inventory si ON d.id = si.drug_id
-      WHERE si.store_id = ? AND d.ndc IN (${placeholders}) AND si.is_active = TRUE
+      WHERE si.store_id = ${parseInt(storeId)} AND d.ndc IN (${ndcPlaceholders}) AND si.is_active = TRUE
     `;
-    const queryParams = [storeId, ...ndcs];
     
     const queryStartTime = Date.now();
-    const [rows] = await db.execute(sqlQuery, queryParams);
+    const [rows] = await db.query(sqlQuery);
     const queryTime = Date.now() - queryStartTime;
     
-    debugLogger.dbQuery(sqlQuery, queryParams, 'SELECT', queryTime);
+    debugLogger.dbQuery(sqlQuery, [], 'SELECT', queryTime);
 
     const existingNDCs = rows.map(row => row.ndc);
     

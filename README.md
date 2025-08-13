@@ -1,15 +1,41 @@
-# PharmaTrack Backend
+# PharmaTraK - Pharmacy Management System
 
-A Node.js backend application for pharmacy store management with authentication and user management.
+A comprehensive Node.js backend application for pharmacy store management with authentication, inventory tracking, and audit capabilities.
 
 ## Features
 
 - JWT-based authentication
 - Store management (admin only)
 - User management with role-based access control
+- Inventory management and tracking
+- Audit logging and transaction history
+- OpenFDA integration for drug information
 - MySQL database integration
 - Input validation and sanitization
 - Rate limiting and security middleware
+
+## Project Structure
+
+```
+pharmatrak/
+├── config/           # Database and app configuration
+├── database/         # SQL schemas and migrations
+├── docker/           # Docker containerization files
+├── docs/             # Documentation (deployment, frontend, testing)
+├── debug/            # Debug JSON files and logs
+├── frontend/         # React frontend application
+├── logs/             # Application log files
+├── middleware/       # Express middleware (auth, validation, etc.)
+├── models/           # Database models and business logic
+├── nginx/            # Nginx configuration
+├── openfda/          # FDA API integration service
+├── routes/           # Express API routes
+├── scripts/          # Setup and maintenance scripts
+├── tests/            # Test files (unit, integration, frontend, api)
+├── utilities/        # Utility scripts (check, debug)
+├── server.js         # Main application entry point
+└── README.md         # This file
+```
 
 ## Setup
 

@@ -269,17 +269,17 @@ class StoreInventory {
    */
   static async getLowStock(storeId, limit = 50) {
     try {
-      const [rows] = await db.execute(`
+      const [rows] = await db.query(`
         SELECT si.*, d.ndc, d.generic_name, d.brand_name, d.dosage_form, 
                d.strength, d.manufacturer_name
         FROM store_inventory si
         INNER JOIN drugs d ON si.drug_id = d.id
-        WHERE si.store_id = ? 
+        WHERE si.store_id = ${parseInt(storeId)} 
           AND si.is_active = TRUE 
           AND si.quantity_on_hand <= si.reorder_level
         ORDER BY (si.quantity_on_hand / NULLIF(si.reorder_level, 0)) ASC
-        LIMIT ?
-      `, [storeId]);
+        LIMIT ${parseInt(limit)}
+      `);
       
       return rows;
     } catch (error) {
@@ -296,19 +296,19 @@ class StoreInventory {
    */
   static async getExpiring(storeId, days = 30, limit = 50) {
     try {
-      const [rows] = await db.execute(`
+      const [rows] = await db.query(`
         SELECT si.*, d.ndc, d.generic_name, d.brand_name, d.dosage_form, 
                d.strength, d.manufacturer_name,
                DATEDIFF(si.expiration_date, CURDATE()) as days_until_expiration
         FROM store_inventory si
         INNER JOIN drugs d ON si.drug_id = d.id
-        WHERE si.store_id = ? 
+        WHERE si.store_id = ${parseInt(storeId)} 
           AND si.is_active = TRUE 
-          AND si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
+          AND si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ${parseInt(days)} DAY)
           AND si.expiration_date > CURDATE()
         ORDER BY si.expiration_date ASC
-        LIMIT ?
-      `, [storeId, parseInt(days)]);
+        LIMIT ${parseInt(limit)}
+      `);
       
       return rows;
     } catch (error) {
@@ -365,40 +365,40 @@ class StoreInventory {
   static async findWithFilters(filters = {}, limit = 20, offset = 0) {
     try {
       let query = 'SELECT si.*, d.ndc, d.generic_name, d.brand_name, d.dosage_form, d.strength, d.manufacturer_name FROM store_inventory si INNER JOIN drugs d ON si.drug_id = d.id WHERE 1=1';
-      const params = [];
+      let whereConditions = [];
 
       if (filters.store_id) {
-        query += ' AND si.store_id = ?';
-        params.push(filters.store_id);
+        whereConditions.push(`si.store_id = ${parseInt(filters.store_id)}`);
       }
 
       if (filters.is_active !== undefined) {
-        query += ' AND si.is_active = ?';
-        params.push(filters.is_active ? 1 : 0);
+        whereConditions.push(`si.is_active = ${filters.is_active ? 1 : 0}`);
       }
 
       if (filters.low_stock) {
-        query += ' AND si.quantity_on_hand <= si.reorder_level';
+        whereConditions.push('si.quantity_on_hand <= si.reorder_level');
       }
 
       if (filters.expiring_days) {
-        query += ' AND si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)';
-        params.push(filters.expiring_days);
+        whereConditions.push(`si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ${parseInt(filters.expiring_days)} DAY)`);
       }
 
       if (filters.search) {
-        query += ' AND (d.generic_name LIKE ? OR d.brand_name LIKE ? OR d.ndc LIKE ? OR si.lot_number LIKE ?)';
-        params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+        const searchTerm = filters.search.replace(/'/g, "''");
+        whereConditions.push(`(d.generic_name LIKE '%${searchTerm}%' OR d.brand_name LIKE '%${searchTerm}%' OR d.ndc LIKE '%${searchTerm}%' OR si.lot_number LIKE '%${searchTerm}%')`);
+      }
+
+      if (whereConditions.length > 0) {
+        query += ' AND ' + whereConditions.join(' AND ');
       }
 
       // Sanitize limit and offset parameters
       const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
       const offsetInt = Math.max(0, parseInt(offset) || 0);
       
-      query += ` ORDER BY d.generic_name, d.brand_name LIMIT ? OFFSET ?`;
-      params.push(limitInt, offsetInt);
+      query += ` ORDER BY d.generic_name, d.brand_name LIMIT ${limitInt} OFFSET ${offsetInt}`;
 
-      const [rows] = await db.execute(query, params);
+      const [rows] = await db.query(query);
       return rows;
     } catch (error) {
       handleDatabaseError(error);
@@ -413,33 +413,34 @@ class StoreInventory {
   static async countWithFilters(filters = {}) {
     try {
       let query = 'SELECT COUNT(*) as total FROM store_inventory si INNER JOIN drugs d ON si.drug_id = d.id WHERE 1=1';
-      const params = [];
+      let whereConditions = [];
 
       if (filters.store_id) {
-        query += ' AND si.store_id = ?';
-        params.push(filters.store_id);
+        whereConditions.push(`si.store_id = ${parseInt(filters.store_id)}`);
       }
 
       if (filters.is_active !== undefined) {
-        query += ' AND si.is_active = ?';
-        params.push(filters.is_active ? 1 : 0);
+        whereConditions.push(`si.is_active = ${filters.is_active ? 1 : 0}`);
       }
 
       if (filters.low_stock) {
-        query += ' AND si.quantity_on_hand <= si.reorder_level';
+        whereConditions.push('si.quantity_on_hand <= si.reorder_level');
       }
 
       if (filters.expiring_days) {
-        query += ' AND si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)';
-        params.push(filters.expiring_days);
+        whereConditions.push(`si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ${parseInt(filters.expiring_days)} DAY)`);
       }
 
       if (filters.search) {
-        query += ' AND (d.generic_name LIKE ? OR d.brand_name LIKE ? OR d.ndc LIKE ? OR si.lot_number LIKE ?)';
-        params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+        const searchTerm = filters.search.replace(/'/g, "''");
+        whereConditions.push(`(d.generic_name LIKE '%${searchTerm}%' OR d.brand_name LIKE '%${searchTerm}%' OR d.ndc LIKE '%${searchTerm}%' OR si.lot_number LIKE '%${searchTerm}%')`);
       }
 
-      const [rows] = await db.execute(query, params);
+      if (whereConditions.length > 0) {
+        query += ' AND ' + whereConditions.join(' AND ');
+      }
+
+      const [rows] = await db.query(query);
       return rows[0].total;
     } catch (error) {
       handleDatabaseError(error);

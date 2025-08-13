@@ -348,7 +348,7 @@ router.get('/store/:storeId/low-stock', authenticateToken, [
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const lowStock = await StoreInventory.getLowStock(storeId, limit);
+    const lowStock = await StoreInventory.getLowStock(parseInt(storeId), parseInt(limit));
 
     res.json({
       low_stock: lowStock,
@@ -379,7 +379,7 @@ router.get('/store/:storeId/expiring', authenticateToken, [
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const expiring = await StoreInventory.getExpiring(storeId, days, limit);
+    const expiring = await StoreInventory.getExpiring(parseInt(storeId), parseInt(days), parseInt(limit));
 
     res.json({
       expiring,

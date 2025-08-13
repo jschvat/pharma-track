@@ -15,9 +15,10 @@ import {
 import { storeAPI, userAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import StoreSettings from './StoreSettings';
 
 const AdminSettings = () => {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin, isStoreAdmin } = useAuth();
   const { 
     currentTheme, 
     fontFamily, 
@@ -110,7 +111,15 @@ const AdminSettings = () => {
     }
   }, [success]);
 
-  if (!isAdmin()) {
+  // Check access level and render appropriate component
+  if (isAdmin()) {
+    // System admin - show full admin settings
+    return renderSystemAdminSettings();
+  } else if (isStoreAdmin()) {
+    // Store admin - show store settings only
+    return <StoreSettings />;
+  } else {
+    // No admin access
     return (
       <Container fluid className="p-4">
         <Alert variant="danger">
@@ -120,7 +129,8 @@ const AdminSettings = () => {
     );
   }
 
-  return (
+  function renderSystemAdminSettings() {
+    return (
     <Container fluid className="p-4">
       <Row>
         <Col>
@@ -498,7 +508,8 @@ const AdminSettings = () => {
         </Col>
       </Row>
     </Container>
-  );
+    );
+  }
 };
 
 export default AdminSettings;

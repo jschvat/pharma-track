@@ -646,4 +646,7 @@ export const storeAccessAPI = {
   getStoreUsers: (storeId) => api.get(`/store-access/store/${storeId}/users`),
 };
 
+// Import and re-export the store settings API
+export { storeSettingsAPI } from './storeSettingsAPI';
+
 export default api;

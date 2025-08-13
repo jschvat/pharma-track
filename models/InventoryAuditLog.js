@@ -157,7 +157,12 @@ class InventoryAuditLog {
    */
   static async getInventoryHistory(inventoryId, limit = 50, offset = 0) {
     try {
-      const [rows] = await db.execute(`
+      // Sanitize parameters
+      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
+      const offsetInt = Math.max(0, parseInt(offset) || 0);
+      const inventoryIdInt = parseInt(inventoryId);
+
+      const [rows] = await db.query(`
         SELECT 
           ial.*,
           u.name as performed_by_name,
@@ -168,10 +173,10 @@ class InventoryAuditLog {
         FROM inventory_audit_log ial
         INNER JOIN users u ON ial.performed_by = u.id
         INNER JOIN drugs d ON ial.drug_id = d.id
-        WHERE ial.inventory_id = ?
+        WHERE ial.inventory_id = ${inventoryIdInt}
         ORDER BY ial.transaction_date DESC
-        LIMIT ? OFFSET ?
-      `, [inventoryId, Math.max(1, Math.min(parseInt(limit) || 50, 1000)), Math.max(0, parseInt(offset) || 0)]);
+        LIMIT ${limitInt} OFFSET ${offsetInt}
+      `);
 
       return rows;
     } catch (error) {
@@ -189,6 +194,11 @@ class InventoryAuditLog {
    */
   static async getDrugHistory(drugId, storeId = null, limit = 100, offset = 0) {
     try {
+      // Sanitize parameters
+      const drugIdInt = parseInt(drugId);
+      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
+      const offsetInt = Math.max(0, parseInt(offset) || 0);
+      
       let query = `
         SELECT 
           ial.*,
@@ -202,24 +212,16 @@ class InventoryAuditLog {
         INNER JOIN users u ON ial.performed_by = u.id
         INNER JOIN stores s ON ial.store_id = s.id
         INNER JOIN drugs d ON ial.drug_id = d.id
-        WHERE ial.drug_id = ?
+        WHERE ial.drug_id = ${drugIdInt}
       `;
       
-      const params = [drugId];
-      
       if (storeId) {
-        query += ' AND ial.store_id = ?';
-        params.push(storeId);
+        query += ` AND ial.store_id = ${parseInt(storeId)}`;
       }
       
-      // Sanitize limit and offset parameters
-      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
-      const offsetInt = Math.max(0, parseInt(offset) || 0);
-      
-      query += ` ORDER BY ial.transaction_date DESC LIMIT ? OFFSET ?`;
-      params.push(limitInt, offsetInt);
+      query += ` ORDER BY ial.transaction_date DESC LIMIT ${limitInt} OFFSET ${offsetInt}`;
 
-      const [rows] = await db.execute(query, params);
+      const [rows] = await db.query(query);
       return rows;
     } catch (error) {
       handleDatabaseError(error);
@@ -236,7 +238,34 @@ class InventoryAuditLog {
    */
   static async getStoreHistory(storeId, filters = {}, limit = 100, offset = 0) {
     try {
-      let query = `
+      // Sanitize parameters
+      const storeIdInt = parseInt(storeId);
+      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
+      const offsetInt = Math.max(0, parseInt(offset) || 0);
+      
+      let whereConditions = [`ial.store_id = ${storeIdInt}`];
+      
+      if (filters.transaction_type) {
+        whereConditions.push(`ial.transaction_type = '${filters.transaction_type.replace(/'/g, "''")}'`);
+      }
+
+      if (filters.drug_id) {
+        whereConditions.push(`ial.drug_id = ${parseInt(filters.drug_id)}`);
+      }
+
+      if (filters.performed_by) {
+        whereConditions.push(`ial.performed_by = ${parseInt(filters.performed_by)}`);
+      }
+
+      if (filters.date_from) {
+        whereConditions.push(`ial.transaction_date >= '${filters.date_from}'`);
+      }
+
+      if (filters.date_to) {
+        whereConditions.push(`ial.transaction_date <= '${filters.date_to}'`);
+      }
+      
+      const query = `
         SELECT 
           ial.*,
           u.name as performed_by_name,
@@ -247,44 +276,12 @@ class InventoryAuditLog {
         FROM inventory_audit_log ial
         INNER JOIN users u ON ial.performed_by = u.id
         INNER JOIN drugs d ON ial.drug_id = d.id
-        WHERE ial.store_id = ?
+        WHERE ${whereConditions.join(' AND ')}
+        ORDER BY ial.transaction_date DESC 
+        LIMIT ${limitInt} OFFSET ${offsetInt}
       `;
-      
-      const params = [storeId];
 
-      if (filters.transaction_type) {
-        query += ' AND ial.transaction_type = ?';
-        params.push(filters.transaction_type);
-      }
-
-      if (filters.drug_id) {
-        query += ' AND ial.drug_id = ?';
-        params.push(filters.drug_id);
-      }
-
-      if (filters.performed_by) {
-        query += ' AND ial.performed_by = ?';
-        params.push(filters.performed_by);
-      }
-
-      if (filters.date_from) {
-        query += ' AND ial.transaction_date >= ?';
-        params.push(filters.date_from);
-      }
-
-      if (filters.date_to) {
-        query += ' AND ial.transaction_date <= ?';
-        params.push(filters.date_to);
-      }
-
-      // Sanitize limit and offset parameters
-      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
-      const offsetInt = Math.max(0, parseInt(offset) || 0);
-      
-      query += ` ORDER BY ial.transaction_date DESC LIMIT ? OFFSET ?`;
-      params.push(limitInt, offsetInt);
-
-      const [rows] = await db.execute(query, params);
+      const [rows] = await db.query(query);
       return rows;
     } catch (error) {
       handleDatabaseError(error);
@@ -431,7 +428,8 @@ class InventoryAuditLog {
    */
   static async getRecentTransactions(limit = 20) {
     try {
-      const [rows] = await db.execute(`
+      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
+      const [rows] = await db.query(`
         SELECT 
           ial.*,
           u.name as performed_by_name,
@@ -444,8 +442,8 @@ class InventoryAuditLog {
         INNER JOIN stores s ON ial.store_id = s.id
         INNER JOIN drugs d ON ial.drug_id = d.id
         ORDER BY ial.transaction_date DESC
-        LIMIT ?
-      `, [Math.max(1, Math.min(parseInt(limit) || 50, 1000))]);
+        LIMIT ${limitInt}
+      `);
 
       return rows;
     } catch (error) {
@@ -484,20 +482,27 @@ class InventoryAuditLog {
       const drug = drugRows[0];
 
       // Get current inventory for this drug at the store
+      const storeIdInt = parseInt(storeId);
+      const ndcSafe = ndc.replace(/'/g, "''");
+      
       let inventoryQuery = `
         SELECT si.*, d.generic_name, d.brand_name, d.ndc
         FROM store_inventory si
         INNER JOIN drugs d ON si.drug_id = d.id
-        WHERE si.store_id = ? AND d.ndc = ?
+        WHERE si.store_id = ${storeIdInt} AND d.ndc = '${ndcSafe}'
       `;
       
       if (!includeInactive) {
         inventoryQuery += ' AND si.is_active = TRUE';
       }
 
-      const [inventoryRows] = await db.execute(inventoryQuery, [storeId, ndc]);
+      const [inventoryRows] = await db.query(inventoryQuery);
 
       // Build the audit query with date filtering
+      // Sanitize parameters
+      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
+      const offsetInt = Math.max(0, parseInt(offset) || 0);
+      
       let auditQuery = `
         SELECT 
           ial.*,
@@ -509,30 +514,21 @@ class InventoryAuditLog {
         INNER JOIN users u ON ial.performed_by = u.id
         INNER JOIN drugs d ON ial.drug_id = d.id
         LEFT JOIN store_inventory si ON ial.inventory_id = si.id
-        WHERE ial.store_id = ? AND d.ndc = ?
+        WHERE ial.store_id = ${storeIdInt} AND d.ndc = '${ndcSafe}'
       `;
-      
-      const params = [storeId, ndc];
 
       // Add date filtering
       if (auditPointDate) {
-        auditQuery += ' AND ial.transaction_date >= ?';
-        params.push(auditPointDate);
+        auditQuery += ` AND ial.transaction_date >= '${auditPointDate}'`;
       }
 
       if (restrictToFutureDate) {
-        auditQuery += ' AND ial.transaction_date <= ?';
-        params.push(restrictToFutureDate);
+        auditQuery += ` AND ial.transaction_date <= '${restrictToFutureDate}'`;
       }
-
-      // Sanitize limit and offset parameters
-      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
-      const offsetInt = Math.max(0, parseInt(offset) || 0);
       
-      auditQuery += ` ORDER BY ial.transaction_date ASC, ial.id ASC LIMIT ? OFFSET ?`;
-      params.push(limitInt, offsetInt);
+      auditQuery += ` ORDER BY ial.transaction_date ASC, ial.id ASC LIMIT ${limitInt} OFFSET ${offsetInt}`;
 
-      const [auditRows] = await db.execute(auditQuery, params);
+      const [auditRows] = await db.query(auditQuery);
 
       // Calculate running totals
       let runningTotal = 0;
@@ -590,29 +586,25 @@ class InventoryAuditLog {
         SELECT COUNT(*) as total
         FROM inventory_audit_log ial
         INNER JOIN drugs d ON ial.drug_id = d.id
-        WHERE ial.store_id = ? AND d.ndc = ?
+        WHERE ial.store_id = ${storeIdInt} AND d.ndc = '${ndcSafe}'
       `;
-      
-      const countParams = [storeId, ndc];
 
       if (auditPointDate) {
-        countQuery += ' AND ial.transaction_date >= ?';
-        countParams.push(auditPointDate);
+        countQuery += ` AND ial.transaction_date >= '${auditPointDate}'`;
       }
 
       if (restrictToFutureDate) {
-        countQuery += ' AND ial.transaction_date <= ?';
-        countParams.push(restrictToFutureDate);
+        countQuery += ` AND ial.transaction_date <= '${restrictToFutureDate}'`;
       }
 
-      const [countRows] = await db.execute(countQuery, countParams);
+      const [countRows] = await db.query(countQuery);
 
       // Get store information
-      const [storeRows] = await db.execute(`
+      const [storeRows] = await db.query(`
         SELECT name, address, state, zipcode, dea_registration_number, npi
         FROM stores
-        WHERE id = ?
-      `, [storeId]);
+        WHERE id = ${storeIdInt}
+      `);
 
       return {
         drug_info: drug,

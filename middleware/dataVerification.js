@@ -1,4 +1,4 @@
-const { body, param } = require('express-validator');
+const { body, param, validationResult } = require('express-validator');
 
 const US_STATES = [
   'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
@@ -315,6 +315,71 @@ const checkDataIntegrity = () => {
   };
 };
 
+const dataVerification = (validationRules) => {
+  return [
+    ...validationRules.map(rule => {
+      const { field, type, required = false, maxLength, minLength, enum: enumValues } = rule;
+      
+      let validator = body(field);
+      
+      if (!required) {
+        validator = validator.optional();
+      }
+      
+      switch (type) {
+        case 'string':
+          validator = validator.isString().withMessage(`${field} must be a string`);
+          if (maxLength) {
+            validator = validator.isLength({ max: maxLength }).withMessage(`${field} must be less than ${maxLength} characters`);
+          }
+          if (minLength) {
+            validator = validator.isLength({ min: minLength }).withMessage(`${field} must be at least ${minLength} characters`);
+          }
+          if (enumValues) {
+            validator = validator.isIn(enumValues).withMessage(`${field} must be one of: ${enumValues.join(', ')}`);
+          }
+          break;
+        case 'number':
+          validator = validator.isNumeric().withMessage(`${field} must be a number`);
+          break;
+        case 'boolean':
+          validator = validator.isBoolean().withMessage(`${field} must be true or false`).toBoolean();
+          break;
+        case 'array':
+          validator = validator.isArray().withMessage(`${field} must be an array`);
+          break;
+        case 'json':
+          validator = validator.custom((value) => {
+            if (typeof value === 'object') return true;
+            try {
+              JSON.parse(value);
+              return true;
+            } catch {
+              throw new Error(`${field} must be valid JSON`);
+            }
+          });
+          break;
+        case 'any':
+        default:
+          // Allow any type - no specific validation
+          break;
+      }
+      
+      return validator;
+    }),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: errors.array()
+        });
+      }
+      next();
+    }
+  ];
+};
+
 module.exports = {
   verifyEmail,
   verifyPhoneNumber,
@@ -334,5 +399,6 @@ module.exports = {
   verifyDate,
   verifyId,
   sanitizeAndTrim,
-  checkDataIntegrity
+  checkDataIntegrity,
+  dataVerification
 };

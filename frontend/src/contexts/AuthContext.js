@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
   const validateToken = async (token, userData) => {
     try {
       // Test if token is valid by making an authenticated request
-      await authAPI.getProfile();
+      await authAPI.getCurrentUser();
       setUser(JSON.parse(userData));
     } catch (err) {
       console.error('Token validation failed:', err);
@@ -110,8 +110,19 @@ export const AuthProvider = ({ children }) => {
     return user?.role === 'admin';
   };
 
-  const isStoreAdmin = () => {
-    return user?.role === 'admin';
+  const isStoreAdmin = (storeId = null) => {
+    // System admin can access any store
+    if (user?.role === 'admin') {
+      return true;
+    }
+    
+    // Check if user is admin of a specific store
+    if (storeId && user?.managed_stores) {
+      return user.managed_stores.includes(parseInt(storeId));
+    }
+    
+    // Check if user is admin of their active store
+    return user?.is_store_admin || false;
   };
 
   const refreshUser = async () => {

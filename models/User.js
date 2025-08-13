@@ -69,37 +69,36 @@ class User {
       FROM users u 
       LEFT JOIN stores s ON u.store_id = s.id 
       WHERE 1=1`;
-      const params = [];
+      let whereConditions = [];
 
       if (filters.store_id) {
-        query += ' AND u.store_id = ?';
-        params.push(parseInt(filters.store_id));
+        whereConditions.push(`u.store_id = ${parseInt(filters.store_id)}`);
       }
 
       if (filters.role) {
-        query += ' AND u.role = ?';
-        params.push(filters.role);
+        whereConditions.push(`u.role = '${filters.role.replace(/'/g, "''")}'`);
       }
 
       if (filters.is_active !== undefined) {
-        query += ' AND u.is_active = ?';
-        params.push(filters.is_active ? 1 : 0);
+        whereConditions.push(`u.is_active = ${filters.is_active ? 1 : 0}`);
       }
 
       if (filters.search) {
-        query += ' AND (u.name LIKE ? OR u.email LIKE ?)';
-        params.push(`%${filters.search}%`, `%${filters.search}%`);
+        const searchTerm = filters.search.replace(/'/g, "''");
+        whereConditions.push(`(u.name LIKE '%${searchTerm}%' OR u.email LIKE '%${searchTerm}%')`);
+      }
+
+      if (whereConditions.length > 0) {
+        query += ' AND ' + whereConditions.join(' AND ');
       }
 
       // Ensure limit and offset are proper integers  
       const limitInt = Math.max(1, Math.min(parseInt(limit) || 20, 1000)); // Sanitize: 1-1000 range
       const offsetInt = Math.max(0, parseInt(offset) || 0); // Sanitize: non-negative
       
-      // Use parameterized query to prevent SQL injection
-      query += ` ORDER BY u.date_created DESC LIMIT ? OFFSET ?`;
-      params.push(limitInt, offsetInt);
+      query += ` ORDER BY u.date_created DESC LIMIT ${limitInt} OFFSET ${offsetInt}`;
 
-      const [rows] = await db.execute(query, params);
+      const [rows] = await db.query(query);
       return rows;
     } catch (error) {
       handleDatabaseError(error);

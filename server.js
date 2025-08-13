@@ -10,6 +10,7 @@ const userRoutes = require('./routes/users');
 const drugRoutes = require('./routes/drugs');
 const inventoryRoutes = require('./routes/inventory');
 const auditLogRoutes = require('./routes/auditLog');
+const storeSettingsRoutes = require('./routes/storeSettings');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { sanitizeInput } = require('./middleware/validation');
 const { sanitizeAndTrim, checkDataIntegrity } = require('./middleware/dataVerification');
@@ -25,7 +26,22 @@ const limiter = rateLimit({
 
 app.use(helmet());
 app.use(limiter);
-app.use(cors());
+
+// CORS configuration
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000', 
+    'http://localhost:3001',
+    'http://127.0.0.1:3001'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+app.use(cors(corsOptions));
 
 // Conditional debug logging middleware (disabled in production)
 if (process.env.NODE_ENV !== 'production') {
@@ -69,6 +85,7 @@ app.use('/api/drugs', drugRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/audit', auditLogRoutes);
 app.use('/api/store-access', require('./routes/storeAccess'));
+app.use('/api/stores', storeSettingsRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Server is running' });

@@ -51,32 +51,32 @@ class Store {
         LEFT JOIN users u ON s.admin_user_id = u.id
         WHERE 1=1
       `;
-      const params = [];
+      let whereConditions = [];
 
       if (filters.state) {
-        query += ' AND s.state = ?';
-        params.push(filters.state);
+        whereConditions.push(`s.state = '${filters.state.replace(/'/g, "''")}'`);
       }
 
       if (filters.search) {
-        query += ' AND (s.name LIKE ? OR s.address LIKE ? OR s.dea_registration_number LIKE ? OR s.npi LIKE ?)';
-        params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+        const searchTerm = filters.search.replace(/'/g, "''");
+        whereConditions.push(`(s.name LIKE '%${searchTerm}%' OR s.address LIKE '%${searchTerm}%' OR s.dea_registration_number LIKE '%${searchTerm}%' OR s.npi LIKE '%${searchTerm}%')`);
       }
 
       if (filters.admin_user_id) {
-        query += ' AND s.admin_user_id = ?';
-        params.push(parseInt(filters.admin_user_id));
+        whereConditions.push(`s.admin_user_id = ${parseInt(filters.admin_user_id)}`);
+      }
+
+      if (whereConditions.length > 0) {
+        query += ' AND ' + whereConditions.join(' AND ');
       }
 
       // Ensure limit and offset are proper integers  
       const limitInt = Math.max(1, Math.min(parseInt(limit) || 20, 1000)); // Sanitize: 1-1000 range
       const offsetInt = Math.max(0, parseInt(offset) || 0); // Sanitize: non-negative
       
-      // Use parameterized query to prevent SQL injection
-      query += ` ORDER BY s.date_created DESC LIMIT ? OFFSET ?`;
-      params.push(limitInt, offsetInt);
+      query += ` ORDER BY s.date_created DESC LIMIT ${limitInt} OFFSET ${offsetInt}`;
 
-      const [rows] = await db.execute(query, params);
+      const [rows] = await db.query(query);
       return rows;
     } catch (error) {
       handleDatabaseError(error);
