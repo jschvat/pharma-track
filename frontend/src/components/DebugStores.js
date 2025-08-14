@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { storeAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import '../css/components.css';
 
 const DebugStores = () => {
   const { isAdmin } = useAuth();

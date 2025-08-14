@@ -651,17 +651,23 @@ router.post('/:id/fill-prescription', authenticateToken, requireStoreAdmin, [
 router.post('/:id/return-to-stock', authenticateToken, requireStoreAdmin, [
   verifyId(),
   verifyQuantity('quantity'),
-  body('reason').isLength({ min: 1, max: 500 }).withMessage('Return reason required (1-500 characters)'),
-  body('reference_number').optional().isLength({ min: 1, max: 100 }).withMessage('Reference number must be 1-100 characters')
+  body('reason').optional().isLength({ max: 500 }).withMessage('Return reason must be 500 characters or less'),
+  body('reference_number').optional().isLength({ max: 100 }).withMessage('Reference number must be 100 characters or less')
 ], async (req, res) => {
   try {
+    console.log('📦 Return-to-stock endpoint hit:', { id: req.params.id, body: req.body });
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Return-to-stock validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
+    
+    console.log('✅ Return-to-stock validation passed');
 
     const { id } = req.params;
     const { quantity, reason, reference_number } = req.body;
+    const finalReason = reason && reason.trim() ? reason.trim() : 'Returned to stock';
 
     const inventory = await StoreInventory.findById(id);
     if (!inventory) {
@@ -676,27 +682,33 @@ router.post('/:id/return-to-stock', authenticateToken, requireStoreAdmin, [
     const returned = await StoreInventory.returnToStock(
       id, 
       quantity, 
-      reason, 
+      finalReason, 
       req.user.id, 
       reference_number
     );
 
     if (!returned) {
+      console.log('❌ Return-to-stock FAILED - StoreInventory.returnToStock returned false');
       return res.status(400).json({ error: 'Failed to return to stock' });
     }
+    
+    console.log('✅ Return-to-stock completed successfully');
 
     const updatedInventory = await StoreInventory.findById(id);
 
-    res.json({
+    const response = {
       message: 'Medication returned to stock successfully',
       inventory: updatedInventory,
       transaction: {
         type: 'return_to_stock',
         quantity,
-        reason,
+        reason: finalReason,
         reference_number
       }
-    });
+    };
+    
+    console.log('✅ Return-to-stock SUCCESS - sending response:', { message: response.message });
+    res.json(response);
 
   } catch (error) {
     console.error('Return to stock error:', error);
@@ -711,16 +723,22 @@ router.post('/:id/return-to-stock', authenticateToken, requireStoreAdmin, [
 router.post('/:id/expire', authenticateToken, requireStoreAdmin, [
   verifyId(),
   verifyQuantity('quantity'),
-  body('reason').isLength({ min: 1, max: 500 }).withMessage('Expiration reason required (1-500 characters)')
+  body('reason').optional().isLength({ max: 500 }).withMessage('Expiration reason must be 500 characters or less')
 ], async (req, res) => {
   try {
+    console.log('💊 Expire endpoint hit:', { id: req.params.id, body: req.body });
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
     const { id } = req.params;
     const { quantity, reason } = req.body;
+    const finalReason = reason && reason.trim() ? reason.trim() : 'Medication expired';
+    
+    console.log('✅ Validation passed, proceeding with:', { id, quantity, finalReason });
 
     const inventory = await StoreInventory.findById(id);
     if (!inventory) {
@@ -735,7 +753,7 @@ router.post('/:id/expire', authenticateToken, requireStoreAdmin, [
     const expired = await StoreInventory.expireMedication(
       id, 
       quantity, 
-      reason, 
+      finalReason, 
       req.user.id
     );
 
@@ -751,7 +769,7 @@ router.post('/:id/expire', authenticateToken, requireStoreAdmin, [
       transaction: {
         type: 'expire',
         quantity,
-        reason
+        reason: finalReason
       }
     });
 

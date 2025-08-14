@@ -1,0 +1,95 @@
+/**
+ * Simple Dropdown Hide Fixes
+ * 
+ * A minimal approach that only hides custom dropdowns when not selected,
+ * while leaving native browser behavior for select elements untouched.
+ */
+
+/* === CUSTOM NAVIGATION DROPDOWNS ONLY === */
+
+/* Hide custom nav dropdown menus by default */
+.nav-dropdown-menu {
+  display: none !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateY(-5px) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Show when parent nav-dropdown is open */
+.nav-dropdown.open .nav-dropdown-menu {
+  display: block !important;
+  max-height: 400px !important;
+  overflow-y: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+}
+
+/* === BOOTSTRAP DROPDOWN ENHANCEMENTS === */
+
+/* Smooth transitions for Bootstrap dropdowns */
+.dropdown-menu {
+  transition: opacity 0.15s ease-in-out !important;
+}
+
+/* === ACCESSIBILITY AND KEYBOARD SUPPORT === */
+
+/* Hide dropdowns when tabbing away */
+.nav-dropdown:not(:focus-within) .nav-dropdown-menu {
+  display: none !important;
+  max-height: 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Dropdown arrow rotation for visual feedback */
+.dropdown-toggle::after {
+  transition: transform 0.15s ease-in-out !important;
+}
+
+.dropdown-toggle.show::after,
+.dropdown-toggle[aria-expanded="true"]::after {
+  transform: rotate(180deg) !important;
+}
+
+/* Visual feedback for open state */
+.dropdown-toggle.show,
+.dropdown-toggle[aria-expanded="true"] {
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15) !important;
+}
+
+/* === LEAVE NATIVE ELEMENTS ALONE === */
+
+/* Don't interfere with native select elements */
+select,
+.form-select,
+.form-control {
+  /* Let browser handle everything naturally */
+}
+
+/* Don't interfere with select options */
+select option,
+.form-select option {
+  /* Browser handles visibility automatically */
+}
+
+/* === TOUCH DEVICE SUPPORT === */
+
+@media (hover: none) {
+  /* Prevent hover-based opening on touch devices */
+  .nav-dropdown:hover .nav-dropdown-menu {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+  
+  /* Only show on actual click/tap */
+  .nav-dropdown.open .nav-dropdown-menu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}

@@ -3,7 +3,7 @@ const { validationResult, query, body, param } = require('express-validator');
 const InventoryAuditLog = require('../models/InventoryAuditLog');
 const StoreInventory = require('../models/StoreInventory');
 const Drug = require('../models/Drug');
-const { authenticateToken, requireStoreAdmin, requireRole } = require('../middleware/auth');
+const { authenticateToken, requireStoreAdmin, requireRole, requireAdminRole } = require('../middleware/auth');
 const { verifyId, verifyQuantity, verifyNDC } = require('../middleware/dataVerification');
 
 const router = express.Router();
@@ -218,7 +218,7 @@ router.get('/store/:storeId/stats', authenticateToken, [
 });
 
 // Get recent transactions (admin only)
-router.get('/recent', authenticateToken, requireRole('admin'), [
+router.get('/recent', authenticateToken, requireAdminRole, [
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100').toInt()
 ], async (req, res) => {
   try {

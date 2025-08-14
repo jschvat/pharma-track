@@ -33,17 +33,33 @@ const requireRole = (role) => {
   };
 };
 
+const requireAdminRole = (req, res, next) => {
+  if (req.user.role !== 'admin' && req.user.role !== 'god_mode') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
+
 const requireStoreAdmin = async (req, res, next) => {
-  if (req.user.role !== 'admin') {
+  console.log('🔐 requireStoreAdmin check:', { 
+    userId: req.user.id, 
+    userRole: req.user.role,
+    hasAdminRole: req.user.role === 'admin' || req.user.role === 'god_mode'
+  });
+  
+  if (req.user.role !== 'admin' && req.user.role !== 'god_mode') {
+    console.log('❌ Access denied - user role is not admin or god_mode');
     return res.status(403).json({ error: 'Store admin access required' });
   }
+  
+  console.log('✅ Admin/God mode access granted');
   next();
 };
 
 const requireSameStoreOrAdmin = async (req, res, next) => {
   const targetUserId = req.params.userId || req.body.userId;
   
-  if (req.user.role === 'admin') {
+  if (req.user.role === 'admin' || req.user.role === 'god_mode') {
     return next();
   }
 
@@ -57,17 +73,19 @@ const requireSameStoreOrAdmin = async (req, res, next) => {
   next();
 };
 
-const generateToken = (userId) => {
+const generateToken = (userId, rememberMe = false) => {
+  const expiresIn = rememberMe ? '30d' : (process.env.JWT_EXPIRES_IN || '24h');
   return jwt.sign(
     { userId },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+    { expiresIn }
   );
 };
 
 module.exports = {
   authenticateToken,
   requireRole,
+  requireAdminRole,
   requireStoreAdmin,
   requireSameStoreOrAdmin,
   generateToken

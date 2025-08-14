@@ -1,0 +1,271 @@
+/**
+ * Dropdown Hide Fixes
+ * 
+ * Ensures all dropdown contents are hidden when not selected/focused
+ * and only display when actively being used by the user.
+ */
+
+/* === NATIVE SELECT ELEMENTS === */
+
+/* Native select elements handle option visibility automatically */
+select {
+  /* Let browser handle native behavior */
+  background-clip: padding-box !important;
+}
+
+/* Don't interfere with native select option display */
+/* Browser handles this automatically */
+
+/* === BOOTSTRAP DROPDOWN COMPONENTS === */
+
+/* Let Bootstrap handle dropdown visibility by default */
+/* Only add enhanced hiding for specific cases */
+
+/* Ensure dropdowns are hidden when not in show state */
+.dropdown:not(.show) .dropdown-menu:not(.show) {
+  display: none !important;
+}
+
+/* Enhanced transitions for better UX */
+.dropdown-menu {
+  transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out !important;
+}
+
+.dropdown-menu.show {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+/* NavDropdown specific hiding */
+.nav-dropdown .dropdown-menu {
+  display: none !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  transform: scaleY(0) !important;
+  transform-origin: top !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.nav-dropdown.show .dropdown-menu,
+.nav-dropdown:hover .dropdown-menu,
+.nav-dropdown:focus-within .dropdown-menu {
+  display: block !important;
+  max-height: 300px !important;
+  overflow-y: auto !important;
+  opacity: 1 !important;
+  transform: scaleY(1) !important;
+}
+
+/* === CUSTOM DROPDOWN IMPLEMENTATIONS === */
+
+/* Hide custom navigation dropdown menus */
+.nav-dropdown-menu {
+  display: none !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateY(-5px) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Show when parent nav-dropdown is open */
+.nav-dropdown.open .nav-dropdown-menu {
+  display: block !important;
+  max-height: 400px !important;
+  overflow-y: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+}
+
+/* === FORM SELECT ELEMENTS === */
+
+/* Form.Select and form-select elements (Bootstrap) */
+.form-select {
+  /* Let browser handle native behavior */
+  position: relative !important;
+}
+
+/* Don't interfere with form-select option display - browser handles this */
+
+/* === MULTI-SELECT AND CUSTOM SELECTS === */
+
+/* Let browser handle multi-select behavior */
+select[multiple] {
+  /* Browser handles visibility automatically */
+}
+
+/* === HOVER AND FOCUS STATES === */
+
+/* Prevent accidental dropdown opening on hover for touch devices */
+@media (hover: none) {
+  .dropdown:hover .dropdown-menu,
+  .nav-dropdown:hover .dropdown-menu {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+}
+
+/* Only show on actual click/tap for touch devices */
+@media (hover: none) {
+  .dropdown.show .dropdown-menu,
+  .nav-dropdown.show .dropdown-menu,
+  .dropdown-menu.show {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}
+
+/* === COMPONENT-SPECIFIC HIDING === */
+
+/* Let browser handle native select behavior for all components */
+/* Focus management is handled by React hooks and JavaScript */
+
+/* === DROPDOWN TOGGLE STATES === */
+
+/* Ensure dropdown toggles show proper state */
+.dropdown-toggle:not(.show) {
+  /* Visual indicator that dropdown is closed */
+}
+
+.dropdown-toggle.show {
+  /* Visual indicator that dropdown is open */
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Dropdown arrow rotation for visual feedback */
+.dropdown-toggle::after {
+  transition: transform 0.15s ease-in-out !important;
+}
+
+.dropdown-toggle.show::after {
+  transform: rotate(180deg) !important;
+}
+
+/* === KEYBOARD NAVIGATION === */
+
+/* Hide dropdowns when tabbing away */
+.dropdown:not(:focus-within) .dropdown-menu {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.nav-dropdown:not(:focus-within) .nav-dropdown-menu {
+  display: none !important;
+  max-height: 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* === MODAL AND OVERLAY BEHAVIOR === */
+
+/* Hide dropdowns when modal closes */
+.modal:not(.show) .dropdown-menu {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Hide dropdowns when offcanvas closes */
+.offcanvas:not(.show) .dropdown-menu {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* === CLICK OUTSIDE BEHAVIOR === */
+
+/* Ensure dropdowns close when clicking outside */
+.dropdown-menu {
+  /* Bootstrap handles this automatically with JavaScript */
+}
+
+/* Custom dropdown outside click handling */
+.nav-dropdown-menu {
+  /* Will be handled by JavaScript event listeners */
+}
+
+/* === ANIMATION TIMING === */
+
+/* Smooth hide/show transitions */
+.dropdown-menu,
+.nav-dropdown-menu {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Fast hide, slower show */
+.dropdown-menu:not(.show),
+.nav-dropdown-menu:not(.show) {
+  transition-duration: 0.1s !important;
+}
+
+.dropdown-menu.show,
+.nav-dropdown-menu.show {
+  transition-duration: 0.2s !important;
+}
+
+/* === ACCESSIBILITY === */
+
+/* Screen reader support */
+.dropdown-menu[aria-hidden="true"] {
+  display: none !important;
+}
+
+.dropdown-menu[aria-hidden="false"] {
+  display: block !important;
+}
+
+/* Focus management */
+.dropdown-toggle[aria-expanded="false"] + .dropdown-menu {
+  display: none !important;
+}
+
+.dropdown-toggle[aria-expanded="true"] + .dropdown-menu {
+  display: block !important;
+}
+
+/* === PERFORMANCE OPTIMIZATION === */
+
+/* Use CSS containment for better performance */
+.dropdown,
+.nav-dropdown {
+  contain: layout style !important;
+}
+
+.dropdown-menu,
+.nav-dropdown-menu {
+  contain: layout style paint !important;
+}
+
+/* === FALLBACK RULES === */
+
+/* Fallback for any missed dropdown elements */
+[role="menu"]:not([aria-expanded="true"]) {
+  display: none !important;
+}
+
+[role="listbox"]:not(:focus):not(:active) {
+  /* Handled by browser for native elements */
+}
+
+/* === DEBUGGING === */
+
+/* Uncomment for debugging dropdown visibility */
+/*
+.dropdown-menu.show {
+  border: 2px solid green !important;
+}
+
+.dropdown-menu:not(.show) {
+  border: 2px solid red !important;
+}
+
+.nav-dropdown.open .nav-dropdown-menu {
+  border: 2px solid blue !important;
+}
+*/

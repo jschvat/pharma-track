@@ -12,7 +12,9 @@ import {
   Alert, 
   Spinner,
   InputGroup,
-  Pagination
+  Pagination,
+  Dropdown,
+  ButtonGroup
 } from 'react-bootstrap';
 import { userAPI, storeAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -884,31 +886,55 @@ const UserManagement = () => {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Role *</Form.Label>
-                  <Form.Select
-                    value={createForm.role}
-                    onChange={(e) => setCreateForm({...createForm, role: e.target.value})}
-                    required
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </Form.Select>
+                  <Dropdown>
+                    <Dropdown.Toggle variant="outline-secondary" className="w-100 d-flex justify-content-between align-items-center">
+                      {createForm.role === 'admin' ? 'Admin' : 'User'}
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu className="w-100">
+                      <Dropdown.Item 
+                        onClick={() => setCreateForm({...createForm, role: 'user'})}
+                        active={createForm.role === 'user'}
+                      >
+                        User
+                      </Dropdown.Item>
+                      <Dropdown.Item 
+                        onClick={() => setCreateForm({...createForm, role: 'admin'})}
+                        active={createForm.role === 'admin'}
+                      >
+                        Admin
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
                 </Form.Group>
               </Col>
             </Row>
             <Form.Group className="mb-3">
               <Form.Label>Store *</Form.Label>
-              <Form.Select
-                value={createForm.store_id}
-                onChange={(e) => setCreateForm({...createForm, store_id: e.target.value})}
-                required
-              >
-                <option value="">Select Store</option>
-                {stores.map(store => (
-                  <option key={store.id} value={store.id}>
-                    {store.name} - {store.state}
-                  </option>
-                ))}
-              </Form.Select>
+              <Dropdown>
+                <Dropdown.Toggle variant="outline-secondary" className="w-100 d-flex justify-content-between align-items-center">
+                  {createForm.store_id ? 
+                    stores.find(s => s.id == createForm.store_id)?.name + ' - ' + stores.find(s => s.id == createForm.store_id)?.state 
+                    : 'Select Store'
+                  }
+                </Dropdown.Toggle>
+                <Dropdown.Menu className="w-100" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                  <Dropdown.Item 
+                    onClick={() => setCreateForm({...createForm, store_id: ''})}
+                    active={createForm.store_id === ''}
+                  >
+                    Select Store
+                  </Dropdown.Item>
+                  {stores.map(store => (
+                    <Dropdown.Item 
+                      key={store.id}
+                      onClick={() => setCreateForm({...createForm, store_id: store.id})}
+                      active={createForm.store_id == store.id}
+                    >
+                      {store.name} - {store.state}
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              </Dropdown>
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Address *</Form.Label>
@@ -1003,27 +1029,49 @@ const UserManagement = () => {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Role *</Form.Label>
-                  <Form.Select
-                    value={editForm.role}
-                    onChange={(e) => setEditForm({...editForm, role: e.target.value})}
-                    required
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </Form.Select>
+                  <Dropdown>
+                    <Dropdown.Toggle variant="outline-secondary" className="w-100 d-flex justify-content-between align-items-center">
+                      {editForm.role === 'admin' ? 'Admin' : 'User'}
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu className="w-100">
+                      <Dropdown.Item 
+                        onClick={() => setEditForm({...editForm, role: 'user'})}
+                        active={editForm.role === 'user'}
+                      >
+                        User
+                      </Dropdown.Item>
+                      <Dropdown.Item 
+                        onClick={() => setEditForm({...editForm, role: 'admin'})}
+                        active={editForm.role === 'admin'}
+                      >
+                        Admin
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Status *</Form.Label>
-                  <Form.Select
-                    value={editForm.is_active}
-                    onChange={(e) => setEditForm({...editForm, is_active: e.target.value === 'true'})}
-                    required
-                  >
-                    <option value={true}>Active</option>
-                    <option value={false}>Inactive</option>
-                  </Form.Select>
+                  <Dropdown>
+                    <Dropdown.Toggle variant="outline-secondary" className="w-100 d-flex justify-content-between align-items-center">
+                      {editForm.is_active ? 'Active' : 'Inactive'}
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu className="w-100">
+                      <Dropdown.Item 
+                        onClick={() => setEditForm({...editForm, is_active: true})}
+                        active={editForm.is_active === true}
+                      >
+                        Active
+                      </Dropdown.Item>
+                      <Dropdown.Item 
+                        onClick={() => setEditForm({...editForm, is_active: false})}
+                        active={editForm.is_active === false}
+                      >
+                        Inactive
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
                 </Form.Group>
               </Col>
             </Row>

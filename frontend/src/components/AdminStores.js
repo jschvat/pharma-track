@@ -11,7 +11,8 @@ import {
   Modal, 
   Alert, 
   Spinner,
-  Pagination
+  Pagination,
+  Dropdown
 } from 'react-bootstrap';
 import { storeAPI, userAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';

@@ -1,0 +1,186 @@
+/**
+ * Navigation Icons CSS
+ * 
+ * Styles for NavIcon component and responsive icon behavior
+ * in collapsed and expanded sidebar states.
+ */
+
+/* Base icon container */
+.nav-icon-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+/* Icon spacing and alignment */
+.nav-link .nav-icon-container,
+.nav-link i {
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* Collapsed sidebar icon adjustments */
+.sidebar.collapsed .nav-icon-container,
+.sidebar.collapsed .nav-link i {
+  margin-right: 0;
+  justify-content: center;
+}
+
+/* Ensure icons remain visible in collapsed state */
+.sidebar.collapsed .nav-icon-container {
+  display: inline-flex !important;
+  visibility: visible !important;
+}
+
+.sidebar.collapsed .nav-link i {
+  display: inline-block !important;
+  visibility: visible !important;
+}
+
+/* Collapsed sidebar navigation link adjustments */
+.sidebar.collapsed .nav-link {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem !important;
+}
+
+.sidebar.collapsed .nav-dropdown-toggle {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Override any rules that might hide icons in collapsed state */
+.sidebar.collapsed .nav-icon-container img {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.sidebar.collapsed .nav-dropdown-toggle .nav-icon-container,
+.sidebar.collapsed .nav-dropdown-content .nav-icon-container {
+  display: inline-flex !important;
+  visibility: visible !important;
+}
+
+/* Brand icon specific styling */
+.sidebar-brand .nav-icon-container,
+.sidebar-brand i {
+  margin-right: 0.5rem;
+  color: #ffffff;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+}
+
+.sidebar.collapsed .sidebar-brand .nav-icon-container,
+.sidebar.collapsed .sidebar-brand i {
+  margin-right: 0;
+}
+
+/* Dropdown toggle icon alignment */
+.nav-dropdown-toggle .nav-icon-container,
+.nav-dropdown-toggle i {
+  margin-right: 0.5rem;
+}
+
+/* User dropdown and theme dropdown icons */
+.nav-dropdown-content .nav-icon-container,
+.nav-dropdown-content i {
+  margin-right: 0.5rem;
+}
+
+/* Icon loading states */
+.nav-icon-container img {
+  transition: opacity 0.2s ease;
+}
+
+.nav-icon-container i {
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+/* Hover effects for icons */
+.nav-link:hover .nav-icon-container,
+.nav-link:hover i {
+  transform: translateY(-1px);
+}
+
+.nav-link.active .nav-icon-container,
+.nav-link.active i {
+  filter: brightness(1.1);
+}
+
+/* PNG icon specific styles */
+.nav-icon-container img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+/* Ensure white icons are visible on dark sidebar */
+.sidebar .nav-icon-container img {
+  filter: none; /* Remove any filters that might affect visibility */
+}
+
+/* High DPI display support */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .nav-icon-container img {
+    image-rendering: auto;
+    image-rendering: -webkit-optimize-contrast;
+  }
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .nav-icon-container img {
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)) brightness(0.95);
+}
+
+[data-theme="dark"] .sidebar-brand .nav-icon-container img {
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)) brightness(1.05);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .nav-icon-container,
+  .nav-link i {
+    margin-right: 0.5rem;
+  }
+  
+  .sidebar.mobile-open .nav-icon-container,
+  .sidebar.mobile-open .nav-link i {
+    margin-right: 0.75rem;
+  }
+}
+
+/* Accessibility improvements */
+.nav-icon-container:focus,
+.nav-link:focus .nav-icon-container {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Smooth transitions for state changes */
+.sidebar .nav-icon-container,
+.sidebar i {
+  transition: margin 0.3s ease, transform 0.2s ease, filter 0.2s ease;
+}
+
+/* Loading spinner for PNG icons */
+.nav-icon-container.loading::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

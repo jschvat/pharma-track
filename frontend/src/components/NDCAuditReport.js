@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Table, Alert, Spinner, Badge } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { auditAPI } from '../services/api';
+import '../css/components.css';
 
 const NDCAuditReport = () => {
   const { user, isAdmin } = useAuth();
@@ -389,7 +390,7 @@ const NDCAuditReport = () => {
                           {entry.performed_by_name}
                           <div className="text-muted">{entry.performed_by_role}</div>
                         </td>
-                        <td className="small" style={{ maxWidth: '200px' }}>
+                        <td className="small ndc-audit-table-cell">
                           <div className="text-truncate" title={entry.reason}>
                             {entry.reason}
                           </div>

@@ -29,6 +29,8 @@ import { Container, Row, Col, Card, Table, Button, Badge, Form, InputGroup, Spin
 import { useAuth } from '../contexts/AuthContext';
 import { inventoryAPI, auditAPI } from '../services/api';
 import { useSearchParams } from 'react-router-dom';
+import { TransactionRegisterRow, TransactionModalRow } from './TransactionRow';
+import '../css/components.css';
 
 /**
  * Inventory Component - Main inventory management interface
@@ -405,6 +407,12 @@ const Inventory = () => {
 
       setShowModal(false);
       loadInventory(); // Reload inventory
+      
+      // Only refresh transaction register if it's for the currently viewed drug
+      if (selectedDrug && selectedDrug.id === selectedItem.id) {
+        console.log('🔄 Refreshing transaction register for current drug:', selectedDrug.generic_name);
+        loadTransactionHistory(selectedItem);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Transaction failed');
     } finally {
@@ -465,280 +473,6 @@ const Inventory = () => {
 
   return (
     <>
-      <style>{`
-        .inventory-row:hover {
-          background-color: #f8f9fa !important;
-          transform: scale(1.005);
-          transition: all 0.2s ease;
-        }
-        .inventory-row {
-          transition: all 0.2s ease;
-        }
-        .inventory-sidebar-layout {
-          position: relative;
-        }
-        .transaction-register {
-          background: white;
-          border: 1px solid #dee2e6;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          height: calc(100% - 100px);
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-        .register-header {
-          background: var(--granite-dark, #2c3e50);
-          color: white;
-          padding: 1rem;
-          border-radius: 8px 8px 0 0;
-        }
-        .register-sort-buttons .btn {
-          border-color: rgba(255, 255, 255, 0.3);
-          color: white;
-        }
-        .register-sort-buttons .btn:hover {
-          background-color: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.5);
-        }
-        .register-sort-buttons .btn.btn-primary {
-          background-color: rgba(255, 255, 255, 0.2);
-          border-color: rgba(255, 255, 255, 0.5);
-        }
-        .register-body {
-          flex: 1;
-          overflow: auto !important;
-          padding: 0;
-          min-height: 400px;
-          max-height: calc(100vh - 300px);
-          height: calc(100vh - 300px);
-          scrollbar-width: thin;
-          scrollbar-color: #6c757d #f8f9fa;
-          border: 1px solid #dee2e6;
-          border-radius: 4px;
-        }
-        .register-table {
-          border-collapse: separate !important;
-          border-spacing: 0 !important;
-        }
-        .register-table thead th {
-          position: sticky;
-          top: 0;
-          z-index: 10;
-          background: linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 100%) !important;
-          border-bottom: 2px solid #dee2e6 !important;
-          color: #495057 !important;
-          font-weight: 600 !important;
-          text-align: left;
-          padding: 8px 12px !important;
-          font-size: 0.8rem !important;
-          white-space: nowrap;
-        }
-        .register-table thead th:hover {
-          background: linear-gradient(to bottom, #e9ecef 0%, #dee2e6 100%) !important;
-        }
-        .register-table thead tr:last-child th {
-          background: #f1f3f4 !important;
-          padding: 4px 8px !important;
-        }
-        .register-table tbody td {
-          padding: 6px 12px !important;
-          border-bottom: 1px solid #f1f3f4 !important;
-          vertical-align: middle !important;
-          font-size: 0.8rem !important;
-        }
-        .register-table tbody tr:hover {
-          background-color: rgba(0, 123, 255, 0.05) !important;
-        }
-        .register-table tbody tr:nth-child(even) {
-          background-color: rgba(0, 0, 0, 0.02);
-        }
-        .register-body::-webkit-scrollbar {
-          width: 14px !important;
-          display: block !important;
-          background: #e9ecef;
-        }
-        .register-body::-webkit-scrollbar-track {
-          background: #e9ecef !important;
-          border-radius: 7px;
-        }
-        .register-body::-webkit-scrollbar-thumb {
-          background: #6c757d !important;
-          border-radius: 7px;
-          border: 1px solid #e9ecef;
-          min-height: 30px;
-        }
-        .register-body::-webkit-scrollbar-thumb:hover {
-          background: #495057 !important;
-        }
-        .register-body::-webkit-scrollbar-corner {
-          background: #e9ecef;
-        }
-        .register-entry {
-          border-bottom: 1px solid #e9ecef;
-          padding: 1rem;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-          line-height: 1.4;
-          transition: background-color 0.2s ease;
-        }
-        .register-entry:hover {
-          background-color: #f8f9fa;
-        }
-        .register-date {
-          font-size: 0.75rem;
-          color: #6c757d;
-          font-weight: 500;
-          margin-bottom: 0.5rem;
-        }
-        .register-transaction {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 0.5rem;
-        }
-        .register-description {
-          flex: 1;
-          margin-right: 1rem;
-        }
-        .register-transaction-type {
-          font-weight: 600;
-          font-size: 0.9rem;
-          margin-bottom: 0.25rem;
-        }
-        .register-transaction-type.prescription_fill {
-          color: #0d6efd;
-        }
-        .register-transaction-type.return_to_stock {
-          color: #dc3545;
-        }
-        .register-transaction-type.expire {
-          color: #fd7e14;
-        }
-        .register-transaction-type.audit {
-          color: #6f42c1;
-        }
-        .register-transaction-type.shipment_received {
-          color: #198754;
-        }
-        .register-transaction-type.initial_inventory {
-          color: #20c997;
-        }
-        .register-reference {
-          font-size: 0.8rem;
-          color: #6c757d;
-          font-weight: 500;
-        }
-        .register-amount {
-          font-weight: bold;
-          min-width: 80px;
-          text-align: right;
-          font-size: 1rem;
-        }
-        .register-amount.positive {
-          color: #198754;
-          background-color: #d1e7dd;
-          padding: 0.25rem 0.5rem;
-          border-radius: 4px;
-        }
-        .register-amount.negative {
-          color: #dc3545;
-          background-color: #f8d7da;
-          padding: 0.25rem 0.5rem;
-          border-radius: 4px;
-        }
-        .register-balance {
-          font-weight: bold;
-          color: #495057;
-          text-align: right;
-          border-top: 2px solid #dee2e6;
-          padding-top: 0.5rem;
-          margin-top: 0.5rem;
-          font-size: 1rem;
-          background-color: #f8f9fa;
-          padding: 0.5rem;
-          border-radius: 4px;
-        }
-        .register-reason {
-          font-size: 0.8rem;
-          color: #495057;
-          font-style: italic;
-          margin-top: 0.25rem;
-          line-height: 1.3;
-        }
-        .register-user {
-          font-size: 0.75rem;
-          color: #6c757d;
-          margin-top: 0.25rem;
-        }
-        .inventory-main-content {
-          transition: all 0.3s ease;
-        }
-        .inventory-card {
-          height: calc(100% - 20px);
-          display: flex;
-          flex-direction: column;
-        }
-        .inventory-card .card-body {
-          flex: 1;
-          overflow: hidden;
-          padding: 0;
-          min-height: 0;
-          display: flex;
-          flex-direction: column;
-        }
-        .inventory-table-container {
-          flex: 1;
-          overflow-y: scroll !important;
-          overflow-x: hidden;
-          padding: 1rem;
-          min-height: 400px;
-          max-height: calc(100vh - 300px);
-          height: calc(100vh - 300px);
-          scrollbar-width: thin;
-          scrollbar-color: #6c757d #f8f9fa;
-        }
-        .inventory-table-container::-webkit-scrollbar {
-          width: 14px !important;
-          display: block !important;
-          background: #e9ecef;
-        }
-        .inventory-table-container::-webkit-scrollbar-track {
-          background: #e9ecef !important;
-          border-radius: 7px;
-        }
-        .inventory-table-container::-webkit-scrollbar-thumb {
-          background: #6c757d !important;
-          border-radius: 7px;
-          border: 1px solid #e9ecef;
-          min-height: 30px;
-        }
-        .inventory-table-container::-webkit-scrollbar-thumb:hover {
-          background: #495057 !important;
-        }
-        .inventory-table-container::-webkit-scrollbar-corner {
-          background: #e9ecef;
-        }
-        .table-responsive {
-          min-height: calc(100vh - 350px);
-        }
-        .main-content-expanded {
-          margin-left: -250px;
-          padding-left: 250px;
-          width: calc(100% + 250px);
-        }
-        .main-content-container {
-          height: 80vh;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-        .content-area {
-          flex: 1;
-          min-height: 0;
-          overflow: hidden;
-          padding-bottom: 20px;
-        }
-      `}</style>
       <div className="main-content-container">
         <Container fluid className={`${showHistorySidebar ? 'main-content-expanded' : ''}`}>
 
@@ -1123,63 +857,11 @@ const Inventory = () => {
                         </tr>
                       ) : (
                         getSortedTransactions(transactionHistory).map((transaction, index) => (
-                          <tr key={`${transaction.id}-${index}`} style={{borderBottom: '1px solid #dee2e6'}}>
-                            <td style={{fontSize: '0.8rem', color: '#6c757d', whiteSpace: 'nowrap'}}>
-                              <div>{new Date(transaction.transaction_date).toLocaleDateString()}</div>
-                              <div>{new Date(transaction.transaction_date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</div>
-                            </td>
-                            <td>
-                              <Badge 
-                                bg={
-                                  transaction.transaction_type === 'prescription_fill' ? 'primary' :
-                                  transaction.transaction_type === 'return_to_stock' ? 'danger' :
-                                  transaction.transaction_type === 'expire' ? 'warning' :
-                                  transaction.transaction_type === 'audit' ? 'info' :
-                                  transaction.transaction_type === 'shipment_received' ? 'success' :
-                                  transaction.transaction_type === 'initial_inventory' ? 'dark' :
-                                  'secondary'
-                                }
-                                className="small"
-                                style={{fontSize: '0.7rem'}}
-                              >
-                                {transaction.transaction_type === 'prescription_fill' && '💊'}
-                                {transaction.transaction_type === 'return_to_stock' && '↩️'}
-                                {transaction.transaction_type === 'expire' && '⚠️'}
-                                {transaction.transaction_type === 'audit' && '🔍'}
-                                {transaction.transaction_type === 'shipment_received' && '📦'}
-                                {transaction.transaction_type === 'initial_inventory' && '📦'}
-                                {' '}
-                                {transaction.transaction_type.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                              </Badge>
-                            </td>
-                            <td style={{fontSize: '0.8rem'}}>
-                              {transaction.performed_by_name || 'System'}
-                            </td>
-                            <td style={{fontSize: '0.8rem'}}>
-                              {transaction.reason || '-'}
-                            </td>
-                            <td style={{fontSize: '0.8rem'}}>
-                              {transaction.reference_number ? (
-                                <span style={{
-                                  color: transaction.transaction_type === 'return_to_stock' ? '#dc3545' : 
-                                         transaction.transaction_type === 'shipment_received' ? '#198754' : '#6c757d',
-                                  fontWeight: transaction.transaction_type === 'return_to_stock' || transaction.transaction_type === 'shipment_received' ? '600' : 'normal'
-                                }}>
-                                  {transaction.transaction_type === 'return_to_stock' ? 'Rx# ' :
-                                   transaction.transaction_type === 'shipment_received' ? 'Inv# ' : 
-                                   'Ref# '}{transaction.reference_number}
-                                </span>
-                              ) : '-'}
-                            </td>
-                            <td className="text-end" style={{fontWeight: '600'}}>
-                              <span className={transaction.quantity_change >= 0 ? 'text-success' : 'text-danger'}>
-                                {transaction.quantity_change >= 0 ? '+' : ''}{transaction.quantity_change}
-                              </span>
-                            </td>
-                            <td className="text-end" style={{fontWeight: '600'}}>
-                              {transaction.calculated_running_balance}
-                            </td>
-                          </tr>
+                          <TransactionRegisterRow 
+                            key={`${transaction.id}-${index}`}
+                            transaction={transaction} 
+                            index={index} 
+                          />
                         ))
                       )}
                     </tbody>
@@ -1393,38 +1075,11 @@ const Inventory = () => {
                     </thead>
                     <tbody>
                       {transactionHistory.map((transaction, index) => (
-                        <tr key={index}>
-                          <td className="small">
-                            {new Date(transaction.transaction_date).toLocaleDateString()}
-                            <div className="text-muted" style={{fontSize: '0.7rem'}}>
-                              {new Date(transaction.transaction_date).toLocaleTimeString()}
-                            </div>
-                          </td>
-                          <td>
-                            <Badge 
-                              bg={
-                                transaction.transaction_type === 'prescription_fill' ? 'primary' :
-                                transaction.transaction_type === 'return_to_stock' ? 'danger' :
-                                transaction.transaction_type === 'expire' ? 'warning' :
-                                transaction.transaction_type === 'audit' ? 'info' :
-                                transaction.transaction_type === 'shipment_received' ? 'success' :
-                                transaction.transaction_type === 'initial_inventory' ? 'dark' :
-                                'secondary'
-                              }
-                              className="small"
-                            >
-                              {transaction.transaction_type.replace('_', ' ').toUpperCase()}
-                            </Badge>
-                          </td>
-                          <td>
-                            <span className={transaction.quantity_change >= 0 ? 'text-success' : 'text-danger'}>
-                              {transaction.quantity_change >= 0 ? '+' : ''}{transaction.quantity_change}
-                            </span>
-                          </td>
-                          <td className="fw-bold">{transaction.quantity_after}</td>
-                          <td className="small">{transaction.reason || 'N/A'}</td>
-                          <td className="small">{transaction.performed_by_name || 'System'}</td>
-                        </tr>
+                        <TransactionModalRow 
+                          key={index}
+                          transaction={transaction} 
+                          index={index} 
+                        />
                       ))}
                     </tbody>
                   </Table>

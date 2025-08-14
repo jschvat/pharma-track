@@ -84,8 +84,20 @@ const debugLog = {
         timestamp: new Date().toISOString(),
         method: config.method,
         url: config.url,
-        params: config.params
+        params: config.params,
+        data: config.data
       });
+      
+      // Special debug for login requests with exclamation marks
+      if (config.url?.includes('/auth/login') && config.data?.password?.includes('!')) {
+        console.log('🚨 LOGIN PASSWORD DEBUG:', {
+          originalPassword: config.data.password,
+          passwordLength: config.data.password.length,
+          hasExclamation: config.data.password.includes('!'),
+          jsonStringified: JSON.stringify(config.data),
+          dataType: typeof config.data
+        });
+      }
     }
     config.requestStartTime = Date.now();
     return config;
@@ -277,7 +289,7 @@ api.interceptors.response.use(
 );
 
 export const authAPI = {
-  login: (email, password) => api.post('/auth/login', { email, password }),
+  login: (email, password, rememberMe = false) => api.post('/auth/login', { email, password, rememberMe }),
   register: (userData) => api.post('/auth/register', userData),
   getCurrentUser: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),

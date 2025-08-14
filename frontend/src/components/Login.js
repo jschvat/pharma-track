@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import '../css/components.css';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    rememberMe: false
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -14,9 +16,10 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: type === 'checkbox' ? checked : value
     });
   };
 
@@ -26,7 +29,7 @@ const Login = () => {
     setError('');
 
     try {
-      await login(formData.email, formData.password);
+      await login(formData.email, formData.password, formData.rememberMe);
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
@@ -35,43 +38,35 @@ const Login = () => {
     }
   };
 
-  // Demo credentials removed for security in production
+  // Development mode auto-fill function
+  const handleDemoFill = () => {
+    setFormData({
+      email: 'admin@pharmatrak.com',
+      password: 'Admin123!',
+      rememberMe: false
+    });
+    setError(''); // Clear any existing errors
+  };
+
+  // Check if we're in development mode
+  const isDevelopment = process.env.NODE_ENV === 'development' || process.env.REACT_APP_ENV === 'development';
 
   return (
-    <div className="login-container" style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, var(--granite-dark) 0%, var(--granite-medium) 50%, var(--granite-light) 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem'
-    }}>
-      <div className="login-card" style={{
-        width: '100%',
-        maxWidth: '400px',
-        background: 'var(--bg-secondary)',
-        borderRadius: '16px',
-        boxShadow: 'var(--shadow-lg)',
-        overflow: 'hidden'
-      }}>
+    <div className="login-container">
+      <div className="login-card">
         {/* Header */}
-        <div style={{
-          background: 'linear-gradient(135deg, var(--granite-dark) 0%, var(--granite-medium) 100%)',
-          color: 'var(--text-white)',
-          padding: '2rem',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-            <i className="fas fa-pills" style={{ color: 'var(--granite-accent)' }}></i>
+        <div className="login-header">
+          <div className="login-icon">
+            <i className="fas fa-pills"></i>
           </div>
-          <h2 style={{ margin: 0, fontWeight: '600' }}>PharmaTraK</h2>
-          <p style={{ margin: '0.5rem 0 0 0', opacity: '0.9', fontSize: '0.9rem' }}>
+          <h2 className="login-title">PharmaTraK</h2>
+          <p className="login-subtitle">
             Professional Pharmacy Management
           </p>
         </div>
 
         {/* Body */}
-        <div style={{ padding: '2rem' }}>
+        <div className="login-body">
           {error && (
             <div className="alert alert-danger">
               <i className="fas fa-exclamation-circle me-2"></i>
@@ -79,7 +74,34 @@ const Login = () => {
             </div>
           )}
           
-          {/* Demo credentials section removed for production security */}
+          {/* Development mode demo credentials auto-fill */}
+          {isDevelopment && (
+            <div className="alert alert-info border-0 mb-3" style={{ 
+              background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+              borderLeft: '4px solid #2196f3'
+            }}>
+              <div className="d-flex align-items-center justify-content-between">
+                <small className="mb-0">
+                  <i className="fas fa-code me-2"></i>
+                  <strong>Development Mode</strong>
+                </small>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={handleDemoFill}
+                  style={{
+                    fontSize: '0.75rem',
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '20px',
+                    fontWeight: '600'
+                  }}
+                >
+                  <i className="fas fa-user-cog me-1"></i>
+                  Fill Demo Admin
+                </button>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
@@ -98,7 +120,7 @@ const Login = () => {
               />
             </div>
 
-            <div className="mb-4">
+            <div className="mb-3">
               <label className="form-label">
                 <i className="fas fa-lock me-2"></i>
                 Password
@@ -114,15 +136,27 @@ const Login = () => {
               />
             </div>
 
+            <div className="mb-4">
+              <div className="form-check">
+                <input
+                  type="checkbox"
+                  name="rememberMe"
+                  className="form-check-input"
+                  id="rememberMe"
+                  checked={formData.rememberMe}
+                  onChange={handleChange}
+                />
+                <label className="form-check-label" htmlFor="rememberMe">
+                  <i className="fas fa-clock me-2"></i>
+                  Remember me for 30 days
+                </label>
+              </div>
+            </div>
+
             <button
               type="submit"
-              className="btn btn-primary w-100"
+              className="btn btn-primary w-100 login-submit-btn"
               disabled={loading}
-              style={{ 
-                padding: '0.75rem',
-                fontSize: '1rem',
-                fontWeight: '600'
-              }}
             >
               {loading ? (
                 <>
@@ -138,7 +172,7 @@ const Login = () => {
             </button>
           </form>
 
-          <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-light)' }}>
+          <div className="login-footer">
             <small className="text-muted">
               Secure pharmacy management system
             </small>

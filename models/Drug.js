@@ -36,6 +36,7 @@
 const { pool: db } = require('../config/database');
 const { handleDatabaseError } = require('./ValidationError');
 const fdaService = require('../openfda/fdaService');
+const { withTransaction, createDrugWithInventory } = require('../utils/transactionHelper');
 
 /**
  * Drug Model Class
@@ -48,18 +49,49 @@ class Drug {
    * @returns {number} Drug ID
    */
   static async createFromFDA(fdaData) {
-    try {
+    return withTransaction(async (connection) => {
       const drugData = this.parseFDAData(fdaData);
       
       // Check if drug already exists
-      const existing = await this.findByNDC(drugData.ndc);
-      if (existing) {
-        // Update existing drug
-        await this.update(existing.id, drugData);
+      const [existingRows] = await connection.execute(
+        'SELECT * FROM drugs WHERE ndc = ? OR product_ndc = ?',
+        [drugData.ndc, fdaData.product_ndc]
+      );
+      
+      if (existingRows.length > 0) {
+        // Update existing drug with transaction
+        const existing = existingRows[0];
+        const fields = [];
+        const values = [];
+        
+        const allowedFields = [
+          'generic_name', 'brand_name', 'dosage_form', 'route', 'strength',
+          'manufacturer_name', 'labeler_name', 'substance_name', 'product_type',
+          'marketing_status', 'listing_expiration_date', 'fda_data'
+        ];
+        
+        allowedFields.forEach(field => {
+          if (drugData[field] !== undefined) {
+            fields.push(`${field} = ?`);
+            values.push(field === 'fda_data' && typeof drugData[field] === 'object' 
+              ? JSON.stringify(drugData[field]) 
+              : drugData[field]
+            );
+          }
+        });
+        
+        if (fields.length > 0) {
+          values.push(existing.id);
+          await connection.execute(
+            `UPDATE drugs SET ${fields.join(', ')} WHERE id = ?`,
+            values
+          );
+        }
+        
         return existing.id;
       }
       
-      // Debug: Log all parameters to identify undefined values
+      // Prepare parameters for new drug
       const params = [
         drugData.ndc,
         drugData.product_ndc,
@@ -77,13 +109,11 @@ class Drug {
         JSON.stringify(fdaData)
       ];
       
-      // Debug logging removed for production security
-      
       // Replace undefined values with null
       const safeParams = params.map(param => param === undefined ? null : param);
       
-      // Create new drug
-      const [result] = await db.execute(`
+      // Create new drug within transaction
+      const [result] = await connection.execute(`
         INSERT INTO drugs (
           ndc, product_ndc, generic_name, brand_name, dosage_form, route, strength,
           manufacturer_name, labeler_name, substance_name, product_type, 
@@ -91,10 +121,21 @@ class Drug {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, safeParams);
       
+      // Create audit trail entry
+      await connection.execute(`
+        INSERT INTO audit_trail (
+          table_name, operation, record_id, user_id, changes, timestamp
+        ) VALUES (?, ?, ?, ?, ?, NOW())
+      `, [
+        'drugs',
+        'INSERT',
+        result.insertId,
+        null, // FDA imports don't have user context
+        JSON.stringify({ source: 'FDA', ndc: drugData.ndc })
+      ]);
+      
       return result.insertId;
-    } catch (error) {
-      handleDatabaseError(error);
-    }
+    });
   }
 
   /**
@@ -327,17 +368,80 @@ class Drug {
   }
 
   /**
-   * Delete drug
-   * @param {number} id - Drug ID
-   * @returns {boolean} Success status
+   * Create drug with initial inventory in a single transaction
+   * @param {Object} drugData - Drug information
+   * @param {Object} inventoryData - Initial inventory data
+   * @returns {Object} Created IDs and status
    */
-  static async delete(id) {
+  static async createWithInventory(drugData, inventoryData) {
     try {
-      const [result] = await db.execute('DELETE FROM drugs WHERE id = ?', [id]);
-      return result.affectedRows > 0;
+      // Validate required fields
+      if (!drugData.ndc) {
+        throw new Error('NDC is required for drug creation');
+      }
+      if (!inventoryData.store_id) {
+        throw new Error('Store ID is required for inventory creation');
+      }
+      
+      return await createDrugWithInventory(drugData, inventoryData);
     } catch (error) {
       handleDatabaseError(error);
     }
+  }
+
+  /**
+   * Delete drug (soft delete with audit trail)
+   * @param {number} id - Drug ID
+   * @param {number} userId - User performing the deletion
+   * @returns {boolean} Success status
+   */
+  static async delete(id, userId = null) {
+    return withTransaction(async (connection) => {
+      // Check if drug exists and get current data
+      const [drugRows] = await connection.execute('SELECT * FROM drugs WHERE id = ?', [id]);
+      if (drugRows.length === 0) {
+        throw new Error('Drug not found');
+      }
+      
+      const drug = drugRows[0];
+      
+      // Check if drug is used in any active inventory
+      const [inventoryRows] = await connection.execute(
+        'SELECT COUNT(*) as count FROM store_inventory WHERE drug_id = ? AND is_active = TRUE',
+        [id]
+      );
+      
+      if (inventoryRows[0].count > 0) {
+        throw new Error('Cannot delete drug that is currently in active inventory');
+      }
+      
+      // Soft delete (mark as inactive) instead of hard delete
+      const [result] = await connection.execute(
+        'UPDATE drugs SET is_active = FALSE WHERE id = ?',
+        [id]
+      );
+      
+      // Create audit trail entry
+      await connection.execute(`
+        INSERT INTO audit_trail (
+          table_name, operation, record_id, user_id, changes, timestamp
+        ) VALUES (?, ?, ?, ?, ?, NOW())
+      `, [
+        'drugs',
+        'DELETE',
+        id,
+        userId,
+        JSON.stringify({ 
+          deleted_drug: {
+            ndc: drug.ndc,
+            generic_name: drug.generic_name,
+            brand_name: drug.brand_name
+          }
+        })
+      ]);
+      
+      return result.affectedRows > 0;
+    });
   }
 
   /**
@@ -351,7 +455,9 @@ class Drug {
 
       if (filters.is_active !== undefined) {
         query += ' AND is_active = ?';
-        params.push(filters.is_active);
+        // MySQL BOOLEAN expects TINYINT (0 or 1)
+        const boolValue = filters.is_active === true || filters.is_active === 'true' || filters.is_active === 1;
+        params.push(boolValue ? 1 : 0);
       }
 
       if (filters.manufacturer) {
@@ -365,9 +471,12 @@ class Drug {
       }
 
       query += ' ORDER BY last_updated DESC LIMIT ? OFFSET ?';
-      params.push(limit, offset);
+      const limitInt = parseInt(limit, 10) || 20;
+      const offsetInt = parseInt(offset, 10) || 0;
+      params.push(limitInt);
+      params.push(offsetInt);
 
-      const [rows] = await db.execute(query, params);
+      const [rows] = await db.query(query, params);
       
       return rows.map(drug => {
         if (drug.fda_data && typeof drug.fda_data === 'string') {

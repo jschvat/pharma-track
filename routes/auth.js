@@ -118,7 +118,7 @@ router.post('/login', loginLimiter, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password } = req.body;
+    const { email, password, rememberMe = false } = req.body;
 
     const user = await User.findByEmail(email);
     if (!user || !user.is_active) {
@@ -130,7 +130,7 @@ router.post('/login', loginLimiter, [
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = generateToken(user.id);
+    const token = generateToken(user.id, rememberMe);
 
     res.json({
       message: 'Login successful',

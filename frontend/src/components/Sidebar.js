@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import HamburgerMenu from './HamburgerMenu';
+import NavIcon from './common/NavIcon';
+import '../css/components.css';
+import '../css/nav-icons.css';
 
 const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
   const location = useLocation();
@@ -9,6 +13,29 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
   const { user, logout, isAdmin } = useAuth();
   const { currentTheme, changeTheme, availableThemes } = useTheme();
   const [openDropdowns, setOpenDropdowns] = useState({});
+
+  // Auto-open dropdowns when on a child page
+  React.useEffect(() => {
+    const currentPath = location.pathname;
+    const newOpenDropdowns = {};
+    
+    // Auto-open drugs dropdown if on any drugs page
+    if (currentPath.startsWith('/drugs')) {
+      newOpenDropdowns.drugs = true;
+    }
+    
+    // Auto-open admin dropdown if on any admin page
+    if (currentPath.startsWith('/admin')) {
+      newOpenDropdowns.admin = true;
+    }
+    
+    // Auto-open reports dropdown if on any reports/audit page
+    if (currentPath.startsWith('/audit') || currentPath.startsWith('/reports')) {
+      newOpenDropdowns.reports = true;
+    }
+    
+    setOpenDropdowns(newOpenDropdowns);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -21,17 +48,118 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
     }
   };
 
+  const sidebarRef = useRef(null);
+
   const toggleDropdown = (key) => {
     if (collapsed) return; // Don't allow dropdowns in collapsed mode
-    setOpenDropdowns(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+    console.log('Toggling dropdown:', key); // Debug log
+    setOpenDropdowns(prev => {
+      const newState = {
+        ...prev,
+        [key]: !prev[key]
+      };
+      console.log('New dropdown state:', newState); // Debug log
+      return newState;
+    });
   };
 
+  const closeAllDropdowns = () => {
+    setOpenDropdowns({});
+  };
+
+  // Close specific dropdowns that shouldn't remain open based on current route
+  const closeNonActiveDropdowns = () => {
+    const currentPath = location.pathname;
+    setOpenDropdowns(prev => {
+      const newState = { ...prev };
+      
+      // Keep drugs dropdown open if on any drugs page
+      if (!currentPath.startsWith('/drugs')) {
+        delete newState.drugs;
+      }
+      
+      // Keep admin dropdown open if on any admin page
+      if (!currentPath.startsWith('/admin')) {
+        delete newState.admin;
+      }
+      
+      // Keep reports dropdown open if on any reports/audit page
+      if (!currentPath.startsWith('/audit') && !currentPath.startsWith('/reports')) {
+        delete newState.reports;
+      }
+      
+      // Always close user and theme dropdowns when clicking outside
+      delete newState.user;
+      delete newState.theme;
+      
+      return newState;
+    });
+  };
+
+  // Close dropdowns when clicking outside sidebar
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        closeNonActiveDropdowns();
+      }
+    };
+
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape') {
+        closeAllDropdowns();
+      }
+    };
+
+    // Close dropdowns when window loses focus
+    const handleWindowBlur = () => {
+      closeNonActiveDropdowns();
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscapeKey);
+    window.addEventListener('blur', handleWindowBlur);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  }, [location.pathname]);
+
+  // Close all dropdowns when sidebar collapses
+  useEffect(() => {
+    if (collapsed) {
+      closeAllDropdowns();
+    }
+  }, [collapsed]);
+
+  // Close all dropdowns when mobile menu closes
+  useEffect(() => {
+    if (!mobileOpen) {
+      closeAllDropdowns();
+    }
+  }, [mobileOpen]);
+
   const isActive = (path) => {
-    return location.pathname === path || 
-           (path !== '/dashboard' && location.pathname.startsWith(path));
+    // Exact match for the current path
+    if (location.pathname === path) {
+      return true;
+    }
+    
+    // Special handling for nested routes to avoid conflicts
+    // Only highlight parent if we're not on a more specific sub-route
+    if (path === '/inventory' && location.pathname.startsWith('/inventory/')) {
+      return false; // Don't highlight inventory when on inventory sub-pages
+    }
+    
+    // For dropdown items, don't highlight parent when on child pages
+    // The drugs dropdown should not be highlighted when on /drugs, /drugs/search, etc.
+    if (path === '/drugs' && location.pathname.startsWith('/drugs')) {
+      return false; // Don't highlight drugs dropdown parent when on any drugs page
+    }
+    
+    // For other paths, use startsWith but exclude dashboard
+    return path !== '/dashboard' && location.pathname.startsWith(path);
   };
 
   const navigationItems = [
@@ -55,6 +183,17 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
           label: 'Inventory',
           path: '/inventory'
         },
+        {
+          key: 'state-count',
+          icon: 'fas fa-clipboard-list',
+          label: 'State Count',
+          path: '/inventory/state-count'
+        }
+      ]
+    },
+    {
+      section: 'Drugs',
+      items: [
         {
           key: 'drugs',
           icon: 'fas fa-pills',
@@ -109,7 +248,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
   const NavLink = ({ item, isDropdownItem = false }) => {
     if (item.dropdown) {
       return (
-        <div className={`nav-dropdown ${openDropdowns[item.key] ? 'open' : ''}`}>
+        <div className={`nav-dropdown ${openDropdowns[item.key] ? 'open' : ''}`} data-debug={`${item.key}: ${openDropdowns[item.key] ? 'OPEN' : 'CLOSED'}`}>
           <a
             href="#"
             className="nav-link"
@@ -120,7 +259,12 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
           >
             <div className="nav-dropdown-toggle">
               <span>
-                <i className={item.icon}></i>
+                <NavIcon 
+                  iconKey={item.key} 
+                  fallbackIcon={item.icon} 
+                  collapsed={collapsed}
+                  size="md"
+                />
                 <span className="nav-link-text">{item.label}</span>
               </span>
               <i className="fas fa-chevron-down nav-dropdown-icon"></i>
@@ -158,7 +302,12 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
           }
         }}
       >
-        <i className={item.icon}></i>
+        <NavIcon 
+          iconKey={item.key} 
+          fallbackIcon={item.icon} 
+          collapsed={collapsed}
+          size="md"
+        />
         <span className="nav-link-text">{item.label}</span>
       </a>
     );
@@ -177,19 +326,41 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
       ></div>
 
       {/* Sidebar */}
-      <div className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
+      <div 
+        ref={sidebarRef}
+        className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}
+      >
         {/* Sidebar Header */}
         <div className="sidebar-header">
-          <a href="/dashboard" className="sidebar-brand">
-            <i className="fas fa-pills"></i>
-            <span className="sidebar-brand-text">PharmaTraK</span>
-          </a>
-          <button 
-            className="sidebar-toggle"
-            onClick={onToggle}
-          >
-            <i className={`fas ${collapsed ? 'fa-angle-right' : 'fa-angle-left'}`}></i>
-          </button>
+          <div className="sidebar-header-content">
+            {/* Hamburger Menu Button - Mobile */}
+            <HamburgerMenu
+              className="d-md-none"
+              onClick={onMobileToggle}
+              title="Toggle Menu"
+              ariaLabel="Toggle Menu"
+              isOpen={mobileOpen}
+            />
+            
+            {/* Hamburger Menu Button - Desktop */}
+            <HamburgerMenu
+              className="d-none d-md-flex"
+              onClick={onToggle}
+              title="Toggle Sidebar"
+              ariaLabel="Toggle Sidebar"
+              isOpen={collapsed}
+            />
+            
+            <a href="/dashboard" className="sidebar-brand">
+              <NavIcon 
+                iconKey="brand" 
+                fallbackIcon="fas fa-pills" 
+                collapsed={collapsed}
+                size="lg"
+              />
+              <span className="sidebar-brand-text">PharmaTraK</span>
+            </a>
+          </div>
         </div>
 
         {/* Sidebar Navigation */}
@@ -206,7 +377,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
           ))}
 
           {/* Theme Section - Only show on mobile */}
-          <div className="nav-section d-md-none" style={{ paddingTop: '1rem' }}>
+          <div className="nav-section d-md-none sidebar-nav-section">
             <div className="nav-section-title">Appearance</div>
             <div className="nav-item">
               <div className={`nav-dropdown ${openDropdowns.theme ? 'open' : ''}`}>
@@ -220,7 +391,12 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
                 >
                   <div className="nav-dropdown-content">
                     <span>
-                      <i className="fas fa-palette"></i>
+                      <NavIcon 
+                        iconKey="theme" 
+                        fallbackIcon="fas fa-palette" 
+                        collapsed={collapsed}
+                        size="md"
+                      />
                       <span className="nav-link-text">Theme</span>
                     </span>
                     <i className="fas fa-chevron-down nav-dropdown-icon"></i>
@@ -250,7 +426,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
           </div>
 
           {/* User Section */}
-          <div className="nav-section" style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+          <div className="nav-section sidebar-user-section">
             <div className="nav-section-title">Account</div>
             <div className="nav-item">
               <div className={`nav-dropdown ${openDropdowns.user ? 'open' : ''}`}>
@@ -264,7 +440,12 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
                 >
                   <div className="nav-dropdown-toggle">
                     <span>
-                      <i className="fas fa-user"></i>
+                      <NavIcon 
+                        iconKey="profile" 
+                        fallbackIcon="fas fa-user" 
+                        collapsed={collapsed}
+                        size="md"
+                      />
                       <span className="nav-link-text">{user.name}</span>
                     </span>
                     <i className="fas fa-chevron-down nav-dropdown-icon"></i>

@@ -1,0 +1,326 @@
+/**
+ * Dropdown and Select Element Fixes
+ * 
+ * Ensures all dropdown contents display directly underneath their triggers
+ * with proper positioning, z-index, and overflow handling.
+ */
+
+/* === GENERAL SELECT ELEMENT FIXES === */
+
+/* Standard HTML select elements */
+select,
+.form-control,
+.form-select,
+Form.Control[as="select"],
+.store-select {
+  position: relative !important;
+  z-index: 10 !important;
+  
+  /* Ensure dropdown appears below the input */
+  background-clip: padding-box !important;
+  
+  /* Fix for mobile devices */
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+  appearance: menulist !important;
+}
+
+/* Select dropdown positioning */
+select:focus,
+.form-control:focus,
+.form-select:focus,
+Form.Control[as="select"]:focus {
+  position: relative !important;
+  z-index: 1050 !important; /* Higher than Bootstrap modals */
+}
+
+/* === BOOTSTRAP DROPDOWN FIXES === */
+
+/* Bootstrap NavDropdown fixes */
+.navbar .dropdown-menu,
+.nav-dropdown .dropdown-menu,
+.dropdown-menu {
+  position: absolute !important;
+  top: 100% !important; /* Position directly below trigger */
+  left: 0 !important;
+  right: auto !important;
+  z-index: 1050 !important;
+  margin-top: 2px !important;
+  
+  /* Prevent overflow issues */
+  max-height: 300px !important;
+  overflow-y: auto !important;
+  
+  /* Ensure visibility */
+  opacity: 1 !important;
+  visibility: visible !important;
+  
+  /* Fix positioning in various containers */
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Dropdown toggle button positioning */
+.dropdown-toggle {
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+/* Ensure dropdown doesn't get clipped by parent containers */
+.dropdown,
+.nav-dropdown,
+.btn-group {
+  position: static !important;
+  overflow: visible !important;
+}
+
+/* === REACT-BOOTSTRAP SPECIFIC FIXES === */
+
+/* Form.Select component */
+.form-select {
+  position: relative !important;
+  z-index: 10 !important;
+  background-position: right 0.75rem center !important;
+}
+
+/* Bootstrap dropdown in modals */
+.modal .dropdown-menu {
+  z-index: 1055 !important; /* Higher than modal backdrop */
+}
+
+/* === CUSTOM DROPDOWN FIXES === */
+
+/* God Mode Panel store selector */
+.god-mode-panel .store-select {
+  position: relative !important;
+  z-index: 20 !important;
+}
+
+.god-mode-panel .store-select:focus {
+  z-index: 1060 !important;
+}
+
+/* Custom navigation dropdowns */
+.nav-dropdown-menu {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1040 !important;
+  margin-top: 0 !important;
+  
+  /* Smooth transitions */
+  transition: all 0.2s ease-in-out !important;
+  
+  /* Ensure content is visible */
+  background: var(--bs-dropdown-bg, #ffffff) !important;
+  border: 1px solid var(--bs-border-color, #dee2e6) !important;
+  border-radius: 0.375rem !important;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Navigation dropdown open state */
+.nav-dropdown.open .nav-dropdown-menu {
+  display: block !important;
+  max-height: 400px !important;
+  overflow-y: auto !important;
+}
+
+/* === CONTAINER OVERFLOW FIXES === */
+
+/* Ensure parent containers don't clip dropdowns */
+.container,
+.container-fluid,
+.row,
+.col,
+.card,
+.card-body,
+.form-group,
+.mb-3,
+.input-group,
+.modal-body,
+.modal-content,
+.tab-content,
+.tab-pane {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* Bootstrap grid system fixes */
+[class*="col-"] {
+  overflow: visible !important;
+}
+
+/* Form containers */
+.form-floating,
+.input-group,
+.form-group {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* Specific fixes for common layout containers */
+.main-content,
+.page-content,
+.content-wrapper {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* === MODAL AND OVERLAY FIXES === */
+
+/* Dropdowns inside modals */
+.modal-body .dropdown-menu,
+.modal-body .form-select,
+.modal-body select {
+  z-index: 1055 !important;
+}
+
+/* Dropdowns inside offcanvas */
+.offcanvas .dropdown-menu {
+  z-index: 1045 !important;
+}
+
+/* === RESPONSIVE FIXES === */
+
+/* Mobile dropdown improvements */
+@media (max-width: 768px) {
+  .dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    margin-top: 2px !important;
+  }
+  
+  select,
+  .form-select,
+  .form-control {
+    /* Maintain native behavior on mobile */
+    -webkit-appearance: menulist !important;
+    -moz-appearance: menulist !important;
+    appearance: menulist !important;
+  }
+}
+
+/* === SPECIFIC COMPONENT FIXES === */
+
+/* FDASearch component selects */
+.fda-search select,
+.fda-search .form-control,
+.fda-search .form-select,
+.fda-search-select,
+.fda-package-select {
+  position: relative !important;
+  z-index: 25 !important;
+}
+
+/* StoreSettings component selects */
+.store-settings select,
+.store-settings .form-select {
+  position: relative !important;
+  z-index: 15 !important;
+}
+
+/* UserManagement component selects */
+.user-management select,
+.user-management .form-select {
+  position: relative !important;
+  z-index: 15 !important;
+}
+
+/* NDCAuditReport component selects */
+.ndc-audit-report select,
+.ndc-audit-report .form-select {
+  position: relative !important;
+  z-index: 15 !important;
+}
+
+/* Header dropdowns (theme switcher) */
+.header-theme-toggle,
+.header .dropdown-menu {
+  z-index: 1055 !important;
+}
+
+/* Ensure all dropdown parents are positioned correctly */
+.dropdown,
+.nav-dropdown,
+.btn-group,
+.input-group {
+  position: relative !important;
+}
+
+/* === THEME COMPATIBILITY === */
+
+/* Ensure dropdowns work with all themes */
+[data-bs-theme="dark"] .dropdown-menu,
+[data-bs-theme="dark"] .form-select {
+  background-color: var(--bs-dark) !important;
+  border-color: var(--bs-border-color-translucent) !important;
+  color: var(--bs-body-color) !important;
+}
+
+/* === ACCESSIBILITY FIXES === */
+
+/* Ensure dropdown indicators are visible */
+.form-select:not([multiple]):not([size]) {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.75rem center !important;
+  background-size: 16px 12px !important;
+}
+
+/* Focus states for accessibility */
+select:focus,
+.form-select:focus,
+.dropdown-toggle:focus {
+  outline: 2px solid var(--bs-primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* === CATCH-ALL FIXES === */
+
+/* Final catch-all rule for any missed select elements */
+select,
+[role="combobox"],
+[role="listbox"] {
+  position: relative !important;
+  z-index: auto !important;
+}
+
+/* Ensure all dropdown menus are positioned correctly */
+[class*="dropdown"],
+[class*="select"],
+[class*="combobox"] {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* Force proper stacking for all form controls */
+.form-control,
+.form-select,
+.form-check,
+.input-group {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* === DEBUGGING HELPERS (remove in production) === */
+
+/* Uncomment for debugging dropdown positioning issues */
+/*
+.dropdown-menu {
+  border: 2px solid red !important;
+}
+
+select,
+.form-select {
+  border: 2px solid blue !important;
+}
+
+.dropdown,
+.nav-dropdown {
+  border: 2px solid green !important;
+}
+*/

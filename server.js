@@ -8,9 +8,13 @@ const authRoutes = require('./routes/auth');
 const storeRoutes = require('./routes/stores');
 const userRoutes = require('./routes/users');
 const drugRoutes = require('./routes/drugs');
+const drugTransactionalRoutes = require('./routes/drugsTransactional');
 const inventoryRoutes = require('./routes/inventory');
+const inventorySnapshotRoutes = require('./routes/inventorySnapshot');
 const auditLogRoutes = require('./routes/auditLog');
 const storeSettingsRoutes = require('./routes/storeSettings');
+const reportsRoutes = require('./routes/reports');
+const godModeRoutes = require('./routes/godMode');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { sanitizeInput } = require('./middleware/validation');
 const { sanitizeAndTrim, checkDataIntegrity } = require('./middleware/dataVerification');
@@ -38,10 +42,39 @@ const corsOptions = {
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With',
+    'Content-Type',
+    'Accept',
+    'Authorization',
+    'Cache-Control',
+    'X-Access-Token'
+  ],
+  exposedHeaders: ['X-Total-Count']
 };
 
 app.use(cors(corsOptions));
+
+// Additional CORS headers for preflight requests
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT,DELETE,PATCH');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, X-Access-Token');
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
+// CORS debugging middleware
+app.use((req, res, next) => {
+  console.log(`🌐 CORS: ${req.method} ${req.path} from origin: ${req.headers.origin || 'no-origin'}`);
+  next();
+});
 
 // Conditional debug logging middleware (disabled in production)
 if (process.env.NODE_ENV !== 'production') {
@@ -73,7 +106,16 @@ app.use(express.json({
   }
 }));
 
+// Middleware error catching
+app.use((err, req, res, next) => {
+  if (req.path.includes('/inventory/') && (req.path.includes('/expire') || req.path.includes('/return-to-stock'))) {
+    console.log('❌ MIDDLEWARE ERROR for inventory operation:', err.message);
+  }
+  next(err);
+});
+
 app.use(express.urlencoded({ extended: true }));
+
 app.use(sanitizeAndTrim());
 app.use(checkDataIntegrity());
 app.use(sanitizeInput);
@@ -82,10 +124,14 @@ app.use('/api/auth', authRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/drugs', drugRoutes);
+app.use('/api/drugs-tx', drugTransactionalRoutes); // Transaction-protected drug operations
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/inventory-snapshot', inventorySnapshotRoutes); // Real-time inventory with transaction safety
 app.use('/api/audit', auditLogRoutes);
 app.use('/api/store-access', require('./routes/storeAccess'));
 app.use('/api/stores', storeSettingsRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/god-mode', godModeRoutes); // God mode super administrator routes
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Server is running' });

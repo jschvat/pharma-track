@@ -17,6 +17,7 @@ import {
 import { storeSettingsAPI } from '../services/storeSettingsAPI';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import '../css/components.css';
 
 const StoreSettings = () => {
   const { user, isStoreAdmin } = useAuth();
@@ -468,7 +469,7 @@ const StoreSettings = () => {
                                   )}
                                 </td>
                                 <td>{setting.description}</td>
-                                <td style={{ minWidth: '200px' }}>
+                                <td className="store-settings-table-cell">
                                   {renderSettingInput(setting)}
                                 </td>
                                 <td>

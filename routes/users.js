@@ -2,7 +2,7 @@ const express = require('express');
 const { validationResult, query, body } = require('express-validator');
 const User = require('../models/User');
 const Store = require('../models/Store');
-const { authenticateToken, requireStoreAdmin, requireSameStoreOrAdmin, requireRole } = require('../middleware/auth');
+const { authenticateToken, requireStoreAdmin, requireSameStoreOrAdmin, requireRole, requireAdminRole } = require('../middleware/auth');
 const { 
   verifyName, 
   verifyEmail, 
@@ -46,7 +46,7 @@ router.get('/available-stores', authenticateToken, requireStoreAdmin, async (req
   }
 });
 
-router.post('/', authenticateToken, requireRole('admin'), [
+router.post('/', authenticateToken, requireAdminRole, [
   verifyName(),
   verifyEmail(),
   verifyPhoneNumber(),
@@ -116,7 +116,7 @@ router.post('/', authenticateToken, requireRole('admin'), [
 });
 
 // Get all users (with filtering and pagination) - Admin access to all users
-router.get('/', authenticateToken, requireRole('admin'), [
+router.get('/', authenticateToken, requireAdminRole, [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100').toInt(),
   query('store_id').optional().isInt({ min: 1 }).withMessage('Store ID must be positive integer').toInt(),
@@ -158,7 +158,7 @@ router.get('/', authenticateToken, requireRole('admin'), [
 });
 
 // Get all users across all stores (super admin only)
-router.get('/all', authenticateToken, requireRole('admin'), [
+router.get('/all', authenticateToken, requireAdminRole, [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100').toInt(),
   query('store_id').optional().isInt({ min: 1 }).withMessage('Store ID must be positive integer').toInt(),
@@ -199,7 +199,7 @@ router.get('/all', authenticateToken, requireRole('admin'), [
   }
 });
 
-router.get('/:id', authenticateToken, requireRole('admin'), [verifyId()], async (req, res) => {
+router.get('/:id', authenticateToken, requireAdminRole, [verifyId()], async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findById(id);
@@ -227,7 +227,7 @@ router.get('/:id', authenticateToken, requireRole('admin'), [verifyId()], async 
   }
 });
 
-router.put('/:id', authenticateToken, requireRole('admin'), [
+router.put('/:id', authenticateToken, requireAdminRole, [
   verifyId(),
   verifyName().optional(),
   verifyPhoneNumber().optional(),
@@ -284,7 +284,7 @@ router.put('/:id', authenticateToken, requireRole('admin'), [
 });
 
 // Update user password
-router.put('/:id/password', authenticateToken, requireRole('admin'), [
+router.put('/:id/password', authenticateToken, requireAdminRole, [
   verifyId(),
   verifyPassword('new_password')
 ], async (req, res) => {
@@ -315,7 +315,7 @@ router.put('/:id/password', authenticateToken, requireRole('admin'), [
   }
 });
 
-router.delete('/:id', authenticateToken, requireRole('admin'), [verifyId()], async (req, res) => {
+router.delete('/:id', authenticateToken, requireAdminRole, [verifyId()], async (req, res) => {
   try {
     const { id } = req.params;
 

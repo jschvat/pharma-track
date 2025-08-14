@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Alert, Button, Badge } from 'react-bootstrap
 import { useAuth } from '../contexts/AuthContext';
 import { inventoryAPI, auditAPI, drugAPI, storeAPI } from '../services/api';
 import { Link } from 'react-router-dom';
+import '../css/components.css';
 
 const Dashboard = () => {
   const { user, isAdmin } = useAuth();
@@ -84,7 +85,7 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+      <div className="dashboard-loading">
         <div className="spinner-border text-primary" role="status">
           <span className="sr-only">Loading...</span>
         </div>

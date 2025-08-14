@@ -1,0 +1,25 @@
+/**
+ * Clean Dropdown Fixes
+ * 
+ * Minimal fixes for dropdown positioning without breaking functionality
+ * NO !important rules, NO interference with native behavior
+ */
+
+/* Only fix container overflow to prevent clipping */
+.container,
+.container-fluid,
+.card-body {
+  overflow: visible;
+}
+
+/* Only ensure dropdowns appear above other content */
+.dropdown-menu {
+  z-index: 1050;
+}
+
+/* Higher z-index for dropdowns in modals */
+.modal .dropdown-menu {
+  z-index: 1055;
+}
+
+/* That's literally it - no other interference */

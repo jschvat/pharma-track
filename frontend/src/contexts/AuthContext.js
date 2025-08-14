@@ -44,12 +44,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, rememberMe = false) => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await authAPI.login(email, password);
+      const response = await authAPI.login(email, password, rememberMe);
       const { token, user: userData } = response.data;
       
       localStorage.setItem('token', token);
@@ -107,12 +107,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAdmin = () => {
-    return user?.role === 'admin';
+    return user?.role === 'admin' || user?.role === 'god_mode';
   };
 
   const isStoreAdmin = (storeId = null) => {
-    // System admin can access any store
-    if (user?.role === 'admin') {
+    // System admin and god mode can access any store
+    if (user?.role === 'admin' || user?.role === 'god_mode') {
       return true;
     }
     

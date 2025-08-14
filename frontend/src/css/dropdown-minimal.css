@@ -1,0 +1,30 @@
+/**
+ * Minimal Dropdown Fixes
+ * 
+ * Only essential fixes without breaking basic dropdown functionality
+ */
+
+/* === ESSENTIAL POSITIONING ONLY === */
+
+/* Ensure dropdowns appear below their triggers */
+.dropdown-menu {
+  top: 100%;
+  left: 0;
+  z-index: 1050;
+}
+
+/* Ensure parent containers don't clip dropdowns */
+.container,
+.container-fluid,
+.row,
+.col,
+.card-body {
+  overflow: visible;
+}
+
+/* Modal dropdowns need higher z-index */
+.modal .dropdown-menu {
+  z-index: 1055;
+}
+
+/* That's it - let everything else work naturally */

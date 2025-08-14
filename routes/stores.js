@@ -2,7 +2,7 @@ const express = require('express');
 const { validationResult, query, body } = require('express-validator');
 const Store = require('../models/Store');
 const User = require('../models/User');
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { authenticateToken, requireRole, requireAdminRole } = require('../middleware/auth');
 const { 
   verifyName, 
   verifyAddress, 
@@ -17,7 +17,7 @@ const {
 
 const router = express.Router();
 
-router.post('/', authenticateToken, requireRole('admin'), [
+router.post('/', authenticateToken, requireAdminRole, [
   verifyName(),
   verifyAddress(),
   verifyState(),
@@ -79,7 +79,7 @@ router.post('/', authenticateToken, requireRole('admin'), [
 });
 
 // Get all stores with filtering and pagination
-router.get('/', authenticateToken, requireRole('admin'), [
+router.get('/', authenticateToken, requireAdminRole, [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100').toInt(),
   query('state').optional().isLength({ min: 2, max: 2 }).withMessage('State must be 2 characters'),
@@ -121,7 +121,7 @@ router.get('/', authenticateToken, requireRole('admin'), [
 });
 
 // Get store statistics
-router.get('/stats', authenticateToken, requireRole('admin'), async (req, res) => {
+router.get('/stats', authenticateToken, requireAdminRole, async (req, res) => {
   try {
     const stats = await Store.getStats();
     res.json({ stats });
@@ -151,7 +151,7 @@ router.get('/:id', authenticateToken, [verifyId()], async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, requireRole('admin'), [
+router.put('/:id', authenticateToken, requireAdminRole, [
   verifyId(),
   verifyName().optional(),
   verifyAddress().optional(),
@@ -226,7 +226,7 @@ router.put('/:id', authenticateToken, requireRole('admin'), [
   }
 });
 
-router.delete('/:id', authenticateToken, requireRole('admin'), [verifyId()], async (req, res) => {
+router.delete('/:id', authenticateToken, requireAdminRole, [verifyId()], async (req, res) => {
   try {
     const { id } = req.params;
 

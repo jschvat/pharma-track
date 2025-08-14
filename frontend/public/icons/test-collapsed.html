@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collapsed Sidebar Icon Test</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            background: #f5f5f5; 
+            display: flex;
+        }
+        
+        /* Import the actual sidebar styles */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            height: 100vh;
+            transition: width 0.3s ease;
+            padding: 20px 0;
+        }
+        
+        .sidebar.collapsed {
+            width: 80px;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link-text {
+            margin-left: 12px;
+        }
+        
+        .sidebar.collapsed .nav-link-text {
+            display: none;
+        }
+        
+        .sidebar.collapsed .nav-link {
+            justify-content: center;
+            padding: 12px;
+        }
+        
+        /* NavIcon styles */
+        .nav-icon-container {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar.collapsed .nav-icon-container {
+            display: inline-flex !important;
+            visibility: visible !important;
+            margin-right: 0;
+        }
+        
+        .sidebar.collapsed .nav-icon-container img {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .toggle-btn {
+            position: fixed;
+            top: 20px;
+            left: 300px;
+            z-index: 1000;
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .sidebar.collapsed ~ .toggle-btn {
+            left: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h3 id="title">PharmaTraK Icons Test</h3>
+        </div>
+        
+        <a href="#" class="nav-link">
+            <div class="nav-icon-container">
+                <img src="dashboard.png" alt="Dashboard" width="24" height="24" 
+                     style="filter: brightness(0) invert(1);"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block'">
+                <i class="fas fa-tachometer-alt" style="display: none; font-size: 1.2rem;"></i>
+            </div>
+            <span class="nav-link-text">Dashboard</span>
+        </a>
+        
+        <a href="#" class="nav-link">
+            <div class="nav-icon-container">
+                <img src="inventory.png" alt="Inventory" width="24" height="24"
+                     style="filter: brightness(0) invert(1);"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block'">
+                <i class="fas fa-boxes" style="display: none; font-size: 1.2rem;"></i>
+            </div>
+            <span class="nav-link-text">Inventory</span>
+        </a>
+        
+        <a href="#" class="nav-link">
+            <div class="nav-icon-container">
+                <img src="drugs.png" alt="Drugs" width="24" height="24"
+                     style="filter: brightness(0) invert(1);"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block'">
+                <i class="fas fa-pills" style="display: none; font-size: 1.2rem;"></i>
+            </div>
+            <span class="nav-link-text">Drugs</span>
+        </a>
+        
+        <a href="#" class="nav-link">
+            <div class="nav-icon-container">
+                <img src="reports.png" alt="Reports" width="24" height="24"
+                     style="filter: brightness(0) invert(1);"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block'">
+                <i class="fas fa-chart-bar" style="display: none; font-size: 1.2rem;"></i>
+            </div>
+            <span class="nav-link-text">Reports</span>
+        </a>
+    </div>
+    
+    <button class="toggle-btn" onclick="toggleSidebar()">Toggle Sidebar</button>
+    
+    <div class="main-content">
+        <h1>Icon Visibility Test</h1>
+        <p>Click "Toggle Sidebar" to test collapsed state.</p>
+        <p><strong>Expected behavior:</strong></p>
+        <ul>
+            <li>Expanded: Icons + text labels visible</li>
+            <li>Collapsed: Only icons visible, text hidden</li>
+            <li>Icons should always be visible in both states</li>
+        </ul>
+        
+        <div id="status"></div>
+    </div>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const title = document.getElementById('title');
+            const status = document.getElementById('status');
+            
+            sidebar.classList.toggle('collapsed');
+            
+            if (sidebar.classList.contains('collapsed')) {
+                title.style.display = 'none';
+                status.innerHTML = '<p style="color: green;"><strong>Status:</strong> Sidebar is COLLAPSED - icons should be visible, text hidden</p>';
+            } else {
+                title.style.display = 'block';
+                status.innerHTML = '<p style="color: blue;"><strong>Status:</strong> Sidebar is EXPANDED - both icons and text should be visible</p>';
+            }
+        }
+        
+        // Check if images loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            const images = document.querySelectorAll('.nav-icon-container img');
+            let loadedCount = 0;
+            
+            images.forEach(img => {
+                if (img.complete) {
+                    loadedCount++;
+                } else {
+                    img.onload = () => loadedCount++;
+                }
+            });
+            
+            setTimeout(() => {
+                document.getElementById('status').innerHTML = 
+                    `<p><strong>Icons loaded:</strong> ${loadedCount}/${images.length} PNG icons</p>` +
+                    '<p style="color: blue;"><strong>Status:</strong> Sidebar is EXPANDED - both icons and text should be visible</p>';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Card, Button, Spinner, Alert, Row, Col, Badge } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { storeAccessAPI } from '../services/api';
+import '../css/components.css';
 
 const StoreSelector = ({ show, onStoreSelected, onClose }) => {
   const { user, refreshUser } = useAuth();
