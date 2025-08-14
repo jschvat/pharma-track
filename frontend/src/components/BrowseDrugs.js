@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Spinner, Alert, Badge, Row, Col, Form, InputGroup } from 'react-bootstrap';
 import { inventoryAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import DataTable from './common/DataTable';
+import SearchFilterBar from './common/SearchFilterBar';
+import CardHeader from './common/CardHeader';
 import '../css/components.css';
 
 const BrowseDrugs = () => {
@@ -11,6 +14,80 @@ const BrowseDrugs = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredDrugs, setFilteredDrugs] = useState([]);
+
+  // Column definitions for DataTable
+  const columns = [
+    {
+      key: 'generic_name',
+      label: 'Drug Name',
+      sortable: true,
+      render: (value, row) => (
+        <div>
+          <strong>{row.generic_name}</strong>
+          {row.brand_name && row.brand_name !== row.generic_name && (
+            <div className="text-muted small">({row.brand_name})</div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'ndc',
+      label: 'NDC',
+      sortable: true,
+      className: 'font-monospace small'
+    },
+    {
+      key: 'strength',
+      label: 'Strength',
+      render: (value) => value || 'N/A',
+      className: 'small'
+    },
+    {
+      key: 'dosage_form',
+      label: 'Dosage Form',
+      render: (value) => value || 'N/A',
+      className: 'small'
+    },
+    {
+      key: 'route',
+      label: 'Route',
+      render: (value) => value || 'N/A',
+      className: 'small'
+    },
+    {
+      key: 'manufacturer_name',
+      label: 'Manufacturer',
+      render: (value) => value || 'N/A',
+      className: 'small'
+    },
+    {
+      key: 'quantity_on_hand',
+      label: 'Quantity',
+      render: (value) => (
+        <div className="text-center">
+          <Badge bg={value > 0 ? 'success' : 'warning'}>
+            {value || 0}
+          </Badge>
+        </div>
+      )
+    },
+    {
+      key: 'is_active',
+      label: 'Status',
+      render: (value) => (
+        <Badge bg={value ? 'success' : 'secondary'}>
+          {value ? 'Active' : 'Inactive'}
+        </Badge>
+      )
+    },
+    {
+      key: 'date_created',
+      label: 'Added',
+      sortable: true,
+      render: (value) => value ? new Date(value).toLocaleDateString() : 'N/A',
+      className: 'small text-muted'
+    }
+  ];
 
   useEffect(() => {
     loadDrugsData();
@@ -130,100 +207,38 @@ const BrowseDrugs = () => {
         </Alert>
       )}
 
-      {/* Search Bar */}
-      <Card className="mb-4">
-        <Card.Body>
-          <Row>
-            <Col md={6}>
-              <InputGroup>
-                <InputGroup.Text>
-                  <i className="fas fa-search"></i>
-                </InputGroup.Text>
-                <Form.Control
-                  type="text"
-                  placeholder="Search by name, NDC, or manufacturer..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </InputGroup>
-            </Col>
-            <Col md={6} className="text-end">
-              <Badge bg="secondary" className="fs-6">
-                {filteredDrugs.length} of {drugs.length} drugs
-              </Badge>
-            </Col>
-          </Row>
-        </Card.Body>
-      </Card>
+      <SearchFilterBar
+        searchPlaceholder="Search by name, NDC, or manufacturer..."
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        additionalActions={
+          <Badge bg="secondary" className="fs-6">
+            {filteredDrugs.length} of {drugs.length} drugs
+          </Badge>
+        }
+      />
 
       {/* Drugs Table */}
       <Card>
-        <Card.Header>
-          <div className="d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">Drugs Database</h5>
-            <Badge bg="secondary">{filteredDrugs.length} drugs</Badge>
-          </div>
-        </Card.Header>
+        <CardHeader
+          title="Drugs Database"
+          badgeText={`${filteredDrugs.length} drugs`}
+        />
         <Card.Body className="p-0">
-          <div className="table-responsive">
-            <Table striped hover className="mb-0">
-              <thead>
-                <tr>
-                  <th>Drug Name</th>
-                  <th>NDC</th>
-                  <th>Strength</th>
-                  <th>Dosage Form</th>
-                  <th>Route</th>
-                  <th>Manufacturer</th>
-                  <th>Quantity</th>
-                  <th>Status</th>
-                  <th>Added</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDrugs.map((drug, index) => (
-                  <tr key={drug.id || index}>
-                    <td>
-                      <div>
-                        <strong>{drug.generic_name}</strong>
-                        {drug.brand_name && drug.brand_name !== drug.generic_name && (
-                          <div className="text-muted small">({drug.brand_name})</div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="font-monospace small">{drug.ndc}</td>
-                    <td className="small">{drug.strength || 'N/A'}</td>
-                    <td className="small">{drug.dosage_form || 'N/A'}</td>
-                    <td className="small">{drug.route || 'N/A'}</td>
-                    <td className="small">{drug.manufacturer_name || 'N/A'}</td>
-                    <td className="text-center">
-                      <Badge bg={drug.quantity_on_hand <= (drug.reorder_level || 0) ? 'warning' : 'success'}>
-                        {drug.quantity_on_hand || 0}
-                      </Badge>
-                    </td>
-                    <td>
-                      <Badge bg={drug.is_active ? 'success' : 'secondary'}>
-                        {drug.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </td>
-                    <td className="text-muted small">
-                      {formatDate(drug.created_at)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-          
-          {filteredDrugs.length === 0 && !loading && (
-            <div className="text-center py-5">
-              <i className="fas fa-pills fa-3x text-muted mb-3"></i>
-              <h5>No Drugs Found</h5>
-              <p className="text-muted">
-                {searchTerm ? 'No drugs match your search criteria.' : 'No drugs in the database.'}
-              </p>
-            </div>
-          )}
+          <DataTable
+            columns={columns}
+            data={filteredDrugs}
+            striped
+            hover
+            emptyMessage={
+              searchTerm 
+                ? "No drugs match your search criteria" 
+                : "No drugs in your store inventory yet"
+            }
+            loading={loading}
+            loadingContent="Loading drugs database..."
+            responsive
+          />
         </Card.Body>
       </Card>
 

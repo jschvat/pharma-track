@@ -16,6 +16,10 @@ import {
 } from 'react-bootstrap';
 import { storeAPI, userAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import FormField from './common/FormField';
+import FormModal from './common/FormModal';
+import ActionButtonGroup from './common/ActionButtonGroup';
+import CardHeader from './common/CardHeader';
 
 // Custom CSS for professional solid buttons
 const buttonStyles = `
@@ -280,6 +284,37 @@ const AdminStores = () => {
     setError('');
   };
 
+  // Helper functions for form handling
+  const handleCreateFormChange = (e) => {
+    const { name, value } = e.target;
+    setCreateForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Helper function to generate action buttons for each store row
+  const getStoreActions = (store) => {
+    return [
+      {
+        label: 'Edit',
+        icon: 'fas fa-edit',
+        onClick: () => openEditModal(store),
+        variant: 'edit',
+        title: 'Edit Store'
+      },
+      {
+        label: 'Delete',
+        icon: 'fas fa-trash',
+        onClick: () => openDeleteModal(store),
+        variant: 'delete',
+        title: 'Delete Store'
+      }
+    ];
+  };
+
   useEffect(() => {
     if (error) {
       const timer = setTimeout(() => setError(''), 5000);
@@ -317,15 +352,16 @@ const AdminStores = () => {
       <Row>
         <Col>
           <Card>
-            <Card.Header className="d-flex justify-content-between align-items-center">
-              <div>
-                <h4 className="mb-0">My Store Management</h4>
-                <small className="text-muted">Manage stores you administer</small>
-              </div>
-              <Button variant="primary" onClick={openCreateModal}>
-                <i className="fas fa-plus me-2"></i>Add Store
-              </Button>
-            </Card.Header>
+            <CardHeader
+              title="My Store Management"
+              subtitle="Manage stores you administer"
+              action={{
+                label: "Add Store",
+                icon: "fas fa-plus",
+                onClick: openCreateModal,
+                variant: "primary"
+              }}
+            />
             
             <Card.Body>
               {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
@@ -377,24 +413,7 @@ const AdminStores = () => {
                             )}
                           </td>
                           <td>
-                            <div className="d-flex gap-2 flex-wrap">
-                              <button
-                                onClick={() => openEditModal(store)}
-                                title="Edit Store"
-                                className="btn-gradient-edit"
-                                type="button"
-                              >
-                                <i className="fas fa-edit me-1"></i>Edit
-                              </button>
-                              <button
-                                onClick={() => openDeleteModal(store)}
-                                title="Delete Store"
-                                className="btn-gradient-delete"
-                                type="button"
-                              >
-                                <i className="fas fa-trash me-1"></i>Delete
-                              </button>
-                            </div>
+                            <ActionButtonGroup actions={getStoreActions(store)} />
                           </td>
                         </tr>
                       ))}

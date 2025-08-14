@@ -30,6 +30,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { inventoryAPI, auditAPI } from '../services/api';
 import { useSearchParams } from 'react-router-dom';
 import { TransactionRegisterRow, TransactionModalRow } from './TransactionRow';
+import DataTable from './common/DataTable';
+import SearchFilterBar from './common/SearchFilterBar';
+import CardHeader from './common/CardHeader';
+import ActionButtonGroup from './common/ActionButtonGroup';
+import FormField from './common/FormField';
+import FormModal from './common/FormModal';
 import '../css/components.css';
 
 /**
@@ -471,6 +477,48 @@ const Inventory = () => {
     return null;
   };
 
+  // Helper function to get inventory actions
+  const getInventoryActions = (item) => [
+    {
+      type: 'custom',
+      label: 'Fill Rx',
+      variant: 'primary',
+      disabled: item.quantity_on_hand <= 0,
+      onClick: (e) => {
+        e.stopPropagation();
+        openTransactionModal('prescription', item);
+      }
+    },
+    {
+      type: 'custom',
+      label: 'Return',
+      variant: 'success',
+      onClick: (e) => {
+        e.stopPropagation();
+        openTransactionModal('return', item);
+      }
+    },
+    {
+      type: 'custom',
+      label: 'Expire',
+      variant: 'warning',
+      disabled: item.quantity_on_hand <= 0,
+      onClick: (e) => {
+        e.stopPropagation();
+        openTransactionModal('expire', item);
+      }
+    },
+    {
+      type: 'custom',
+      label: 'Audit',
+      variant: 'secondary',
+      onClick: (e) => {
+        e.stopPropagation();
+        openTransactionModal('audit', item);
+      }
+    }
+  ];
+
   return (
     <>
       <div className="main-content-container">
@@ -486,58 +534,39 @@ const Inventory = () => {
         </Row>
       )}
 
-      {/* Filters */}
-      <Card className="mb-4">
-        <Card.Body>
-          <Row>
-            <Col md={4}>
-              <InputGroup>
-                <Form.Control
-                  type="text"
-                  placeholder="Search drugs..."
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
-                />
-                <Button variant="outline-secondary" onClick={loadInventory}>
-                  Search
-                </Button>
-              </InputGroup>
-            </Col>
-            <Col md={2}>
-              <Form.Check
-                type="switch"
-                id="active-switch"
-                label="Active Only"
-                checked={filters.active}
-                onChange={(e) => handleFilterChange('active', e.target.checked)}
-              />
-            </Col>
-            <Col md={2}>
-              <Form.Check
-                type="switch"
-                id="low-stock-switch"
-                label="Low Stock"
-                checked={filters.low_stock}
-                onChange={(e) => handleFilterChange('low_stock', e.target.checked)}
-              />
-            </Col>
-            <Col md={2}>
-              <Form.Check
-                type="switch"
-                id="expiring-switch"
-                label="Expiring"
-                checked={filters.expiring}
-                onChange={(e) => handleFilterChange('expiring', e.target.checked)}
-              />
-            </Col>
-            <Col md={2}>
-              <Button variant="primary" onClick={loadInventory} disabled={loading}>
-                {loading ? <Spinner animation="border" size="sm" /> : 'Refresh'}
-              </Button>
-            </Col>
-          </Row>
-        </Card.Body>
-      </Card>
+      <SearchFilterBar
+        searchPlaceholder="Search drugs..."
+        searchValue={filters.search}
+        onSearchChange={(value) => handleFilterChange('search', value)}
+        filters={[
+          {
+            key: 'active',
+            label: 'Active Only',
+            type: 'switch',
+            value: filters.active,
+            onChange: (value) => handleFilterChange('active', value)
+          },
+          {
+            key: 'low_stock',
+            label: 'Low Stock',
+            type: 'switch',
+            value: filters.low_stock,
+            onChange: (value) => handleFilterChange('low_stock', value)
+          },
+          {
+            key: 'expiring',
+            label: 'Expiring',
+            type: 'switch',
+            value: filters.expiring,
+            onChange: (value) => handleFilterChange('expiring', value)
+          }
+        ]}
+        additionalActions={
+          <Button variant="primary" onClick={loadInventory} disabled={loading}>
+            {loading ? <Spinner animation="border" size="sm" /> : 'Refresh'}
+          </Button>
+        }
+      />
 
       <div className="content-area">
         {/* Main Content Layout - Side by Side */}
@@ -545,14 +574,10 @@ const Inventory = () => {
         {/* Inventory Table Column */}
         <Col lg={showHistorySidebar ? 6 : 12}>
           <Card className="inventory-card">
-            <Card.Header>
-              <div className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Inventory Items ({pagination.total || 0})</h5>
-                <div className="text-muted small">
-                  💡 Click on any row to view transaction history
-                </div>
-              </div>
-            </Card.Header>
+            <CardHeader
+              title={`Inventory Items (${pagination.total || 0})`}
+              subtitle="💡 Click on any row to view transaction history"
+            />
             <Card.Body>
               {loading ? (
                 <div className="text-center py-4">
@@ -606,54 +631,11 @@ const Inventory = () => {
                           </tr>
                           <tr>
                             <td colSpan="5" className="py-1 border-top-0" style={{backgroundColor: '#f8f9fa'}}>
-                              <div className="d-flex gap-1 justify-content-center">
-                                <Button
-                                  size="sm"
-                                  variant="primary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openTransactionModal('prescription', item);
-                                  }}
-                                  disabled={item.quantity_on_hand <= 0}
-                                  style={{fontSize: '0.75rem', padding: '0.25rem 0.5rem'}}
-                                >
-                                  Fill Rx
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="success"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openTransactionModal('return', item);
-                                  }}
-                                  style={{fontSize: '0.75rem', padding: '0.25rem 0.5rem'}}
-                                >
-                                  Return
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="warning"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openTransactionModal('expire', item);
-                                  }}
-                                  disabled={item.quantity_on_hand <= 0}
-                                  style={{fontSize: '0.75rem', padding: '0.25rem 0.5rem'}}
-                                >
-                                  Expire
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openTransactionModal('audit', item);
-                                  }}
-                                  style={{fontSize: '0.75rem', padding: '0.25rem 0.5rem'}}
-                                >
-                                  Audit
-                                </Button>
-                              </div>
+                              <ActionButtonGroup
+                                actions={getInventoryActions(item)}
+                                size="sm"
+                                className="d-flex gap-1 justify-content-center"
+                              />
                             </td>
                           </tr>
                         </React.Fragment>
@@ -895,117 +877,104 @@ const Inventory = () => {
 
               {modalType === 'audit' ? (
                 <>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Actual Quantity</Form.Label>
-                    <Form.Control
-                      type="number"
-                      value={transactionForm.actual_quantity}
-                      onChange={(e) => setTransactionForm({...transactionForm, actual_quantity: e.target.value})}
-                      min="0"
-                      required
-                    />
-                    <Form.Text className="text-muted">
-                      Enter the actual counted quantity during physical inventory
-                    </Form.Text>
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Audit Reason</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={transactionForm.reason}
-                      onChange={(e) => setTransactionForm({...transactionForm, reason: e.target.value})}
-                      placeholder="Physical inventory count, cycle count, etc."
-                      required
-                    />
-                    <Form.Text className="text-muted">
-                      Provide a reason for this inventory audit
-                    </Form.Text>
-                  </Form.Group>
+                  <FormField
+                    label="Actual Quantity"
+                    name="actual_quantity"
+                    type="number"
+                    value={transactionForm.actual_quantity}
+                    onChange={(e) => setTransactionForm({...transactionForm, actual_quantity: e.target.value})}
+                    inputProps={{ min: 0 }}
+                    required
+                    helpText="Enter the actual counted quantity during physical inventory"
+                  />
+                  <FormField
+                    label="Audit Reason"
+                    name="reason"
+                    value={transactionForm.reason}
+                    onChange={(e) => setTransactionForm({...transactionForm, reason: e.target.value})}
+                    placeholder="Physical inventory count, cycle count, etc."
+                    required
+                    helpText="Provide a reason for this inventory audit"
+                  />
                 </>
               ) : (
-                <Form.Group className="mb-3">
-                  <Form.Label>Quantity</Form.Label>
-                  <Form.Control
-                    type="number"
-                    value={transactionForm.quantity}
-                    onChange={(e) => setTransactionForm({...transactionForm, quantity: e.target.value})}
-                    min="1"
-                    max={modalType === 'prescription' || modalType === 'expire' ? selectedItem.quantity_on_hand : undefined}
-                    required
-                  />
-                </Form.Group>
+                <FormField
+                  label="Quantity"
+                  name="quantity"
+                  type="number"
+                  value={transactionForm.quantity}
+                  onChange={(e) => setTransactionForm({...transactionForm, quantity: e.target.value})}
+                  inputProps={{
+                    min: 1,
+                    max: modalType === 'prescription' || modalType === 'expire' ? selectedItem.quantity_on_hand : undefined
+                  }}
+                  required
+                />
               )}
 
               {modalType === 'prescription' && (
-                <Form.Group className="mb-3">
-                  <Form.Label>Prescription Number</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={transactionForm.prescription_number}
-                    onChange={(e) => setTransactionForm({...transactionForm, prescription_number: e.target.value})}
-                    required
-                  />
-                </Form.Group>
+                <FormField
+                  label="Prescription Number"
+                  name="prescription_number"
+                  value={transactionForm.prescription_number}
+                  onChange={(e) => setTransactionForm({...transactionForm, prescription_number: e.target.value})}
+                  required
+                />
               )}
 
               {modalType === 'return' && (
                 <>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Select Prescription to Return</Form.Label>
-                    <Form.Select
-                      value={transactionForm.reference_number}
-                      onChange={(e) => {
-                        const selectedRx = availablePrescriptions.find(rx => rx.prescription_number === e.target.value);
-                        setTransactionForm({
-                          ...transactionForm, 
-                          reference_number: e.target.value,
-                          quantity: selectedRx ? selectedRx.available_for_return.toString() : ''
-                        });
-                      }}
-                      required
-                    >
-                      <option value="">Choose a prescription...</option>
-                      {availablePrescriptions.map(rx => (
-                        <option key={rx.prescription_number} value={rx.prescription_number}>
-                          Rx# {rx.prescription_number} - {rx.available_for_return} units available 
-                          (Filled: {new Date(rx.fill_date).toLocaleDateString()})
-                        </option>
-                      ))}
-                    </Form.Select>
-                    <Form.Text className="text-muted">
-                      Only prescriptions that were previously filled can be returned.
-                    </Form.Text>
-                  </Form.Group>
+                  <FormField
+                    label="Select Prescription to Return"
+                    name="reference_number"
+                    type="select"
+                    value={transactionForm.reference_number}
+                    onChange={(e) => {
+                      const selectedRx = availablePrescriptions.find(rx => rx.prescription_number === e.target.value);
+                      setTransactionForm({
+                        ...transactionForm, 
+                        reference_number: e.target.value,
+                        quantity: selectedRx ? selectedRx.available_for_return.toString() : ''
+                      });
+                    }}
+                    options={[
+                      { value: '', label: 'Choose a prescription...' },
+                      ...availablePrescriptions.map(rx => ({
+                        value: rx.prescription_number,
+                        label: `Rx# ${rx.prescription_number} - ${rx.available_for_return} units available (Filled: ${new Date(rx.fill_date).toLocaleDateString()})`
+                      }))
+                    ]}
+                    required
+                    helpText="Only prescriptions that were previously filled can be returned."
+                  />
                   
                   {transactionForm.reference_number && (
-                    <Form.Group className="mb-3">
-                      <Form.Label>Return Quantity</Form.Label>
-                      <Form.Control
-                        type="number"
-                        value={transactionForm.quantity}
-                        onChange={(e) => setTransactionForm({...transactionForm, quantity: e.target.value})}
-                        min="1"
-                        max={availablePrescriptions.find(rx => rx.prescription_number === transactionForm.reference_number)?.available_for_return || 1}
-                        required
-                      />
-                      <Form.Text className="text-muted">
-                        Maximum returnable: {availablePrescriptions.find(rx => rx.prescription_number === transactionForm.reference_number)?.available_for_return || 0} units
-                      </Form.Text>
-                    </Form.Group>
+                    <FormField
+                      label="Return Quantity"
+                      name="quantity"
+                      type="number"
+                      value={transactionForm.quantity}
+                      onChange={(e) => setTransactionForm({...transactionForm, quantity: e.target.value})}
+                      inputProps={{
+                        min: 1,
+                        max: availablePrescriptions.find(rx => rx.prescription_number === transactionForm.reference_number)?.available_for_return || 1
+                      }}
+                      required
+                      helpText={`Maximum returnable: ${availablePrescriptions.find(rx => rx.prescription_number === transactionForm.reference_number)?.available_for_return || 0} units`}
+                    />
                   )}
                 </>
               )}
 
-              <Form.Group className="mb-3">
-                <Form.Label>Reason</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  value={transactionForm.reason}
-                  onChange={(e) => setTransactionForm({...transactionForm, reason: e.target.value})}
-                  required
-                />
-              </Form.Group>
+              <FormField
+                label="Reason"
+                name="reason"
+                type="textarea"
+                rows={3}
+                value={transactionForm.reason}
+                onChange={(e) => setTransactionForm({...transactionForm, reason: e.target.value})}
+                required
+              />
             </div>
           )}
         </Modal.Body>

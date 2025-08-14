@@ -22,6 +22,8 @@ import React, { useState } from 'react';
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
 import { drugAPI } from '../services/api';
 import DOMPurify from 'dompurify';
+import FormField from './common/FormField';
+import FormModal from './common/FormModal';
 
 /**
  * FDASearch Component - Main component for FDA drug database searches

@@ -17,6 +17,11 @@ import {
 import { storeSettingsAPI } from '../services/storeSettingsAPI';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import FormField from './common/FormField';
+import FormModal from './common/FormModal';
+import CardHeader from './common/CardHeader';
+import ActionButtonGroup from './common/ActionButtonGroup';
+import DataTable from './common/DataTable';
 import '../css/components.css';
 
 const StoreSettings = () => {
@@ -270,6 +275,47 @@ const StoreSettings = () => {
     }
   };
 
+  // Column definitions for history table
+  const historyColumns = [
+    {
+      key: 'changed_at',
+      label: 'Date',
+      sortable: true,
+      render: (value) => new Date(value).toLocaleString(),
+      className: 'small'
+    },
+    {
+      key: 'setting_key',
+      label: 'Setting',
+      sortable: true,
+      className: 'small'
+    },
+    {
+      key: 'changed_by_name',
+      label: 'Changed By',
+      sortable: true,
+      className: 'small'
+    },
+    {
+      key: 'old_value',
+      label: 'Old Value',
+      render: (value) => <code className="small">{JSON.stringify(value)}</code>,
+      className: 'small'
+    },
+    {
+      key: 'new_value',
+      label: 'New Value',
+      render: (value) => <code className="small">{JSON.stringify(value)}</code>,
+      className: 'small'
+    },
+    {
+      key: 'change_reason',
+      label: 'Reason',
+      render: (value) => value || '-',
+      className: 'small'
+    }
+  ];
+
   // Auto-clear alerts
   useEffect(() => {
     if (error) {
@@ -323,29 +369,26 @@ const StoreSettings = () => {
       <Row>
         <Col>
           <Card>
-            <Card.Header className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Store Configuration</h5>
-              <div>
-                <Button 
-                  variant="outline-secondary" 
-                  size="sm" 
-                  onClick={() => handleShowHistory(null)}
-                  className="me-2"
-                >
-                  <i className="fas fa-history me-1"></i>
-                  View History
-                </Button>
-                <Button 
-                  variant="outline-info" 
-                  size="sm" 
-                  onClick={handleInitializeDefaults}
-                  disabled={loading}
-                >
-                  <i className="fas fa-cog me-1"></i>
-                  Initialize Defaults
-                </Button>
-              </div>
-            </Card.Header>
+            <CardHeader
+              title="Store Configuration"
+              actions={[
+                {
+                  type: 'custom',
+                  icon: 'fas fa-history',
+                  label: 'View History',
+                  variant: 'outline-secondary',
+                  onClick: () => handleShowHistory(null)
+                },
+                {
+                  type: 'custom',
+                  icon: 'fas fa-cog',
+                  label: 'Initialize Defaults',
+                  variant: 'outline-info',
+                  disabled: loading,
+                  onClick: handleInitializeDefaults
+                }
+              ]}
+            />
             <Card.Body>
               {loading ? (
                 <div className="text-center py-4">
@@ -370,13 +413,27 @@ const StoreSettings = () => {
                             .filter(s => ['default_theme', 'default_font_family', 'default_font_size'].includes(s.setting_key))
                             .map(setting => (
                               <Col md={4} key={setting.id} className="mb-3">
-                                <Form.Group>
-                                  <Form.Label>{setting.description || setting.setting_key}</Form.Label>
-                                  {renderSettingInput(setting)}
-                                  <Form.Text className="text-muted">
-                                    Type: {setting.data_type}
-                                  </Form.Text>
-                                </Form.Group>
+                                <FormField
+                                  label={setting.description || setting.setting_key}
+                                  name={setting.setting_key}
+                                  type={setting.data_type === 'boolean' ? 'switch' : 
+                                       setting.data_type === 'number' ? 'number' : 
+                                       setting.setting_key === 'default_theme' ? 'select' :
+                                       setting.setting_key === 'default_font_family' ? 'select' :
+                                       setting.setting_key === 'default_font_size' ? 'select' : 'text'}
+                                  value={settingValues[setting.setting_key] ?? setting.setting_value}
+                                  onChange={(e) => {
+                                    const value = setting.data_type === 'boolean' ? e.target.checked : e.target.value;
+                                    handleSettingChange(setting.setting_key, value, setting.data_type);
+                                    if (setting.setting_key === 'default_theme') changeTheme(value);
+                                    if (setting.setting_key === 'default_font_family') changeFontFamily(value);
+                                    if (setting.setting_key === 'default_font_size') changeFontSize(value);
+                                  }}
+                                  options={setting.setting_key === 'default_theme' ? availableThemes :
+                                          setting.setting_key === 'default_font_family' ? availableFonts :
+                                          setting.setting_key === 'default_font_size' ? availableFontSizes : []}
+                                  helpText={`Type: ${setting.data_type}`}
+                                />
                               </Col>
                             ))}
                         </Row>
@@ -391,13 +448,18 @@ const StoreSettings = () => {
                             .filter(s => ['session_timeout_hours', 'require_prescription_verification'].includes(s.setting_key))
                             .map(setting => (
                               <Col md={6} key={setting.id} className="mb-3">
-                                <Form.Group>
-                                  <Form.Label>{setting.description || setting.setting_key}</Form.Label>
-                                  {renderSettingInput(setting)}
-                                  <Form.Text className="text-muted">
-                                    Type: {setting.data_type}
-                                  </Form.Text>
-                                </Form.Group>
+                                <FormField
+                                  label={setting.description || setting.setting_key}
+                                  name={setting.setting_key}
+                                  type={setting.data_type === 'boolean' ? 'switch' : 
+                                       setting.data_type === 'number' ? 'number' : 'text'}
+                                  value={settingValues[setting.setting_key] ?? setting.setting_value}
+                                  onChange={(e) => {
+                                    const value = setting.data_type === 'boolean' ? e.target.checked : e.target.value;
+                                    handleSettingChange(setting.setting_key, value, setting.data_type);
+                                  }}
+                                  helpText={`Type: ${setting.data_type}`}
+                                />
                               </Col>
                             ))}
                         </Row>
@@ -412,13 +474,18 @@ const StoreSettings = () => {
                             .filter(s => ['low_stock_threshold', 'expiration_alert_days'].includes(s.setting_key))
                             .map(setting => (
                               <Col md={6} key={setting.id} className="mb-3">
-                                <Form.Group>
-                                  <Form.Label>{setting.description || setting.setting_key}</Form.Label>
-                                  {renderSettingInput(setting)}
-                                  <Form.Text className="text-muted">
-                                    Type: {setting.data_type}
-                                  </Form.Text>
-                                </Form.Group>
+                                <FormField
+                                  label={setting.description || setting.setting_key}
+                                  name={setting.setting_key}
+                                  type={setting.data_type === 'boolean' ? 'switch' : 
+                                       setting.data_type === 'number' ? 'number' : 'text'}
+                                  value={settingValues[setting.setting_key] ?? setting.setting_value}
+                                  onChange={(e) => {
+                                    const value = setting.data_type === 'boolean' ? e.target.checked : e.target.value;
+                                    handleSettingChange(setting.setting_key, value, setting.data_type);
+                                  }}
+                                  helpText={`Type: ${setting.data_type}`}
+                                />
                               </Col>
                             ))}
                         </Row>
@@ -433,13 +500,18 @@ const StoreSettings = () => {
                             .filter(s => ['auto_backup_enabled'].includes(s.setting_key))
                             .map(setting => (
                               <Col md={6} key={setting.id} className="mb-3">
-                                <Form.Group>
-                                  <Form.Label>{setting.description || setting.setting_key}</Form.Label>
-                                  {renderSettingInput(setting)}
-                                  <Form.Text className="text-muted">
-                                    Type: {setting.data_type}
-                                  </Form.Text>
-                                </Form.Group>
+                                <FormField
+                                  label={setting.description || setting.setting_key}
+                                  name={setting.setting_key}
+                                  type={setting.data_type === 'boolean' ? 'switch' : 
+                                       setting.data_type === 'number' ? 'number' : 'text'}
+                                  value={settingValues[setting.setting_key] ?? setting.setting_value}
+                                  onChange={(e) => {
+                                    const value = setting.data_type === 'boolean' ? e.target.checked : e.target.value;
+                                    handleSettingChange(setting.setting_key, value, setting.data_type);
+                                  }}
+                                  helpText={`Type: ${setting.data_type}`}
+                                />
                               </Col>
                             ))}
                         </Row>
@@ -476,13 +548,15 @@ const StoreSettings = () => {
                                   <Badge bg="info">{setting.data_type}</Badge>
                                 </td>
                                 <td>
-                                  <Button
-                                    variant="outline-secondary"
+                                  <ActionButtonGroup
+                                    actions={[{
+                                      type: 'custom',
+                                      icon: 'fas fa-history',
+                                      variant: 'outline-secondary',
+                                      onClick: () => handleShowHistory(setting)
+                                    }]}
                                     size="sm"
-                                    onClick={() => handleShowHistory(setting)}
-                                  >
-                                    <i className="fas fa-history"></i>
-                                  </Button>
+                                  />
                                 </td>
                               </tr>
                             ))}
@@ -516,38 +590,16 @@ const StoreSettings = () => {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {history.length === 0 ? (
-            <p>No history available.</p>
-          ) : (
-            <Table responsive striped>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Setting</th>
-                  <th>Changed By</th>
-                  <th>Old Value</th>
-                  <th>New Value</th>
-                  <th>Reason</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.map(entry => (
-                  <tr key={entry.id}>
-                    <td>{new Date(entry.changed_at).toLocaleString()}</td>
-                    <td>{entry.setting_key}</td>
-                    <td>{entry.changed_by_name}</td>
-                    <td>
-                      <code>{JSON.stringify(entry.old_value)}</code>
-                    </td>
-                    <td>
-                      <code>{JSON.stringify(entry.new_value)}</code>
-                    </td>
-                    <td>{entry.change_reason || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          )}
+          <DataTable
+            columns={historyColumns}
+            data={history}
+            striped
+            hover
+            responsive
+            size="sm"
+            emptyMessage="No history available."
+            sorting
+          />
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowHistory(false)}>

@@ -16,6 +16,9 @@ import { storeAPI, userAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import StoreSettings from './StoreSettings';
+import FormField from './common/FormField';
+import CardHeader from './common/CardHeader';
+import ActionButtonGroup from './common/ActionButtonGroup';
 
 const AdminSettings = () => {
   const { user, isAdmin, isStoreAdmin } = useAuth();
@@ -145,9 +148,7 @@ const AdminSettings = () => {
         {/* System Statistics */}
         <Col lg={6}>
           <Card className="mb-4">
-            <Card.Header>
-              <h5 className="mb-0">System Statistics</h5>
-            </Card.Header>
+            <CardHeader title="System Statistics" />
             <Card.Body>
               {loading ? (
                 <div className="text-center py-4">
@@ -203,28 +204,41 @@ const AdminSettings = () => {
         {/* Quick Actions */}
         <Col lg={6}>
           <Card className="mb-4">
-            <Card.Header>
-              <h5 className="mb-0">Quick Actions</h5>
-            </Card.Header>
+            <CardHeader title="Quick Actions" />
             <Card.Body>
-              <div className="d-grid gap-2">
-                <Button variant="outline-primary" onClick={loadStats}>
-                  <i className="fas fa-sync-alt me-2"></i>
-                  Refresh Statistics
-                </Button>
-                <Button variant="outline-info" disabled>
-                  <i className="fas fa-download me-2"></i>
-                  Export System Report
-                </Button>
-                <Button variant="outline-warning" disabled>
-                  <i className="fas fa-database me-2"></i>
-                  Backup Database
-                </Button>
-                <Button variant="outline-success" disabled>
-                  <i className="fas fa-chart-line me-2"></i>
-                  View Analytics
-                </Button>
-              </div>
+              <ActionButtonGroup
+                actions={[
+                  {
+                    type: 'custom',
+                    icon: 'fas fa-sync-alt',
+                    label: 'Refresh Statistics',
+                    variant: 'outline-primary',
+                    onClick: loadStats
+                  },
+                  {
+                    type: 'custom',
+                    icon: 'fas fa-download',
+                    label: 'Export System Report',
+                    variant: 'outline-info',
+                    disabled: true
+                  },
+                  {
+                    type: 'custom',
+                    icon: 'fas fa-database',
+                    label: 'Backup Database',
+                    variant: 'outline-warning',
+                    disabled: true
+                  },
+                  {
+                    type: 'custom',
+                    icon: 'fas fa-chart-line',
+                    label: 'View Analytics',
+                    variant: 'outline-success',
+                    disabled: true
+                  }
+                ]}
+                className="d-grid gap-2"
+              />
             </Card.Body>
           </Card>
         </Col>
@@ -233,9 +247,7 @@ const AdminSettings = () => {
       <Row>
         <Col>
           <Card>
-            <Card.Header>
-              <h5 className="mb-0">System Configuration</h5>
-            </Card.Header>
+            <CardHeader title="System Configuration" />
             <Card.Body>
               <Accordion>
                 <Accordion.Item eventKey="0">
@@ -244,60 +256,44 @@ const AdminSettings = () => {
                     <Form onSubmit={handleSaveSettings}>
                       <Row>
                         <Col md={6}>
-                          <Form.Group className="mb-3">
-                            <Form.Check
-                              type="switch"
-                              id="maintenanceMode"
-                              label="Maintenance Mode"
-                              checked={systemSettings.maintenanceMode}
-                              onChange={(e) => handleSettingChange('maintenanceMode', e.target.checked)}
-                            />
-                            <Form.Text className="text-muted">
-                              When enabled, only admins can access the system
-                            </Form.Text>
-                          </Form.Group>
+                          <FormField
+                            label="Maintenance Mode"
+                            name="maintenanceMode"
+                            type="switch"
+                            checked={systemSettings.maintenanceMode}
+                            onChange={(e) => handleSettingChange('maintenanceMode', e.target.checked)}
+                            helpText="When enabled, only admins can access the system"
+                          />
 
-                          <Form.Group className="mb-3">
-                            <Form.Check
-                              type="switch"
-                              id="allowRegistration"
-                              label="Allow New User Registration"
-                              checked={systemSettings.allowRegistration}
-                              onChange={(e) => handleSettingChange('allowRegistration', e.target.checked)}
-                            />
-                            <Form.Text className="text-muted">
-                              Allow new users to register accounts
-                            </Form.Text>
-                          </Form.Group>
+                          <FormField
+                            label="Allow New User Registration"
+                            name="allowRegistration"
+                            type="switch"
+                            checked={systemSettings.allowRegistration}
+                            onChange={(e) => handleSettingChange('allowRegistration', e.target.checked)}
+                            helpText="Allow new users to register accounts"
+                          />
                         </Col>
                         <Col md={6}>
-                          <Form.Group className="mb-3">
-                            <Form.Label>Max Users Per Store</Form.Label>
-                            <Form.Control
-                              type="number"
-                              min="1"
-                              max="200"
-                              value={systemSettings.maxUsersPerStore}
-                              onChange={(e) => handleSettingChange('maxUsersPerStore', parseInt(e.target.value))}
-                            />
-                            <Form.Text className="text-muted">
-                              Maximum number of users allowed per store
-                            </Form.Text>
-                          </Form.Group>
+                          <FormField
+                            label="Max Users Per Store"
+                            name="maxUsersPerStore"
+                            type="number"
+                            value={systemSettings.maxUsersPerStore}
+                            onChange={(e) => handleSettingChange('maxUsersPerStore', parseInt(e.target.value))}
+                            inputProps={{ min: 1, max: 200 }}
+                            helpText="Maximum number of users allowed per store"
+                          />
 
-                          <Form.Group className="mb-3">
-                            <Form.Label>Session Timeout (hours)</Form.Label>
-                            <Form.Control
-                              type="number"
-                              min="1"
-                              max="168"
-                              value={systemSettings.sessionTimeout}
-                              onChange={(e) => handleSettingChange('sessionTimeout', parseInt(e.target.value))}
-                            />
-                            <Form.Text className="text-muted">
-                              How long users stay logged in
-                            </Form.Text>
-                          </Form.Group>
+                          <FormField
+                            label="Session Timeout (hours)"
+                            name="sessionTimeout"
+                            type="number"
+                            value={systemSettings.sessionTimeout}
+                            onChange={(e) => handleSettingChange('sessionTimeout', parseInt(e.target.value))}
+                            inputProps={{ min: 1, max: 168 }}
+                            helpText="How long users stay logged in"
+                          />
                         </Col>
                       </Row>
                     </Form>
@@ -323,18 +319,19 @@ const AdminSettings = () => {
                 <Accordion.Item eventKey="2">
                   <Accordion.Header>Backup & Recovery</Accordion.Header>
                   <Accordion.Body>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Backup Schedule</Form.Label>
-                      <Form.Select
-                        value={systemSettings.backupSchedule}
-                        onChange={(e) => handleSettingChange('backupSchedule', e.target.value)}
-                      >
-                        <option value="hourly">Hourly</option>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                      </Form.Select>
-                    </Form.Group>
+                    <FormField
+                      label="Backup Schedule"
+                      name="backupSchedule"
+                      type="select"
+                      value={systemSettings.backupSchedule}
+                      onChange={(e) => handleSettingChange('backupSchedule', e.target.value)}
+                      options={[
+                        { value: 'hourly', label: 'Hourly' },
+                        { value: 'daily', label: 'Daily' },
+                        { value: 'weekly', label: 'Weekly' },
+                        { value: 'monthly', label: 'Monthly' }
+                      ]}
+                    />
                     
                     <Alert variant="warning">
                       <i className="fas fa-exclamation-triangle me-2"></i>

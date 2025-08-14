@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Table, Alert, Spinner, Badge } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { auditAPI } from '../services/api';
+import FormField from './common/FormField';
+import DataTable from './common/DataTable';
+import CardHeader from './common/CardHeader';
 import '../css/components.css';
 
 const NDCAuditReport = () => {
@@ -97,6 +100,64 @@ const NDCAuditReport = () => {
     return <Badge bg={badge.bg}>{badge.text}</Badge>;
   };
 
+  // Column definitions for audit report table
+  const reportColumns = [
+    {
+      key: 'transaction_date',
+      label: 'Date',
+      sortable: true,
+      render: (value) => new Date(value).toLocaleDateString(),
+      className: 'small'
+    },
+    {
+      key: 'transaction_type',
+      label: 'Type',
+      render: (value) => getTransactionBadge(value)
+    },
+    {
+      key: 'quantity_change',
+      label: 'Qty Change',
+      render: (value) => (
+        <span className={value >= 0 ? 'text-success' : 'text-danger'}>
+          {value >= 0 ? '+' : ''}{value}
+        </span>
+      ),
+      className: 'text-end small'
+    },
+    {
+      key: 'quantity_before',
+      label: 'Before',
+      className: 'text-end small'
+    },
+    {
+      key: 'quantity_after',
+      label: 'After',
+      className: 'text-end small'
+    },
+    {
+      key: 'running_total',
+      label: 'Running Total',
+      className: 'text-end small fw-bold'
+    },
+    {
+      key: 'user_name',
+      label: 'User',
+      className: 'small'
+    },
+    {
+      key: 'reason',
+      label: 'Reason',
+      className: 'small ndc-audit-table-cell',
+      render: (value) => value || '—'
+    },
+    {
+      key: 'reference_number',
+      label: 'Reference',
+      className: 'small',
+      render: (value) => value || '—'
+    }
+  ];
+
   return (
     <Container className="mt-4">
       <Row className="mb-4">
@@ -118,9 +179,9 @@ const NDCAuditReport = () => {
 
       {/* Report Form */}
       <Card className="mb-4">
-        <Card.Header>
-          <h5 className="mb-0">Report Parameters</h5>
-        </Card.Header>
+        <CardHeader
+          title="Report Parameters"
+        />
         <Card.Body>
           <Row>
             <Col md={6}>
@@ -150,20 +211,15 @@ const NDCAuditReport = () => {
                 )}
               </Form.Group>
 
-              <Form.Group className="mb-3">
-                <Form.Label>NDC (National Drug Code)</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="ndc"
-                  value={formData.ndc}
-                  onChange={handleInputChange}
-                  placeholder="e.g., 12345-678-90 or 1234567890"
-                  required
-                />
-                <Form.Text className="text-muted">
-                  Enter NDC with or without dashes
-                </Form.Text>
-              </Form.Group>
+              <FormField
+                label="NDC (National Drug Code)"
+                name="ndc"
+                value={formData.ndc}
+                onChange={handleInputChange}
+                placeholder="e.g., 12345-678-90 or 1234567890"
+                required
+                helpText="Enter NDC with or without dashes"
+              />
 
               <Form.Group className="mb-3">
                 <Form.Check
@@ -177,32 +233,24 @@ const NDCAuditReport = () => {
             </Col>
 
             <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Audit Point Date (Start Date)</Form.Label>
-                <Form.Control
-                  type="date"
-                  name="audit_point_date"
-                  value={formData.audit_point_date}
-                  onChange={handleInputChange}
-                />
-                <Form.Text className="text-muted">
-                  Leave blank to include all historical data
-                </Form.Text>
-              </Form.Group>
+              <FormField
+                label="Audit Point Date (Start Date)"
+                name="audit_point_date"
+                type="date"
+                value={formData.audit_point_date}
+                onChange={handleInputChange}
+                helpText="Leave blank to include all historical data"
+              />
 
-              <Form.Group className="mb-3">
-                <Form.Label>Restrict to Future Date (End Date)</Form.Label>
-                <Form.Control
-                  type="date"
-                  name="restrict_to_future_date"
-                  value={formData.restrict_to_future_date}
-                  onChange={handleInputChange}
-                  min={formData.audit_point_date || undefined}
-                />
-                <Form.Text className="text-muted">
-                  Leave blank for no end date restriction
-                </Form.Text>
-              </Form.Group>
+              <FormField
+                label="Restrict to Future Date (End Date)"
+                name="restrict_to_future_date"
+                type="date"
+                value={formData.restrict_to_future_date}
+                onChange={handleInputChange}
+                helpText="Leave blank for no end date restriction"
+                inputProps={{ min: formData.audit_point_date || undefined }}
+              />
 
               <div className="d-grid">
                 <Button
@@ -356,59 +404,15 @@ const NDCAuditReport = () => {
               <h6 className="mb-0">Detailed Transaction History</h6>
             </Card.Header>
             <Card.Body>
-              <div className="table-responsive">
-                <Table striped hover size="sm">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Type</th>
-                      <th>Qty Change</th>
-                      <th>Before</th>
-                      <th>After</th>
-                      <th>Running Total</th>
-                      <th>User</th>
-                      <th>Reason</th>
-                      <th>Reference</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {reportData.audit_entries.map((entry, index) => (
-                      <tr key={index}>
-                        <td className="small">
-                          {new Date(entry.transaction_date).toLocaleDateString()}
-                        </td>
-                        <td>{getTransactionBadge(entry.transaction_type)}</td>
-                        <td>
-                          <span className={entry.quantity_change < 0 ? 'text-danger' : 'text-success'}>
-                            {entry.quantity_change > 0 ? '+' : ''}{entry.quantity_change}
-                          </span>
-                        </td>
-                        <td>{entry.quantity_before}</td>
-                        <td>{entry.quantity_after}</td>
-                        <td><strong>{entry.running_total}</strong></td>
-                        <td className="small">
-                          {entry.performed_by_name}
-                          <div className="text-muted">{entry.performed_by_role}</div>
-                        </td>
-                        <td className="small ndc-audit-table-cell">
-                          <div className="text-truncate" title={entry.reason}>
-                            {entry.reason}
-                          </div>
-                        </td>
-                        <td className="small">
-                          {entry.reference_number || 'N/A'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-
-                {reportData.audit_entries.length === 0 && (
-                  <div className="text-center py-4 text-muted">
-                    No transactions found for the specified criteria
-                  </div>
-                )}
-              </div>
+              <DataTable
+                columns={reportColumns}
+                data={reportData.audit_entries}
+                striped
+                hover
+                size="sm"
+                emptyMessage="No transactions found for the specified criteria"
+                responsive
+              />
             </Card.Body>
           </Card>
 

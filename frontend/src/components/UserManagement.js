@@ -19,6 +19,12 @@ import {
 import { userAPI, storeAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import DraggableDialog from './DraggableDialog';
+import FormField from './common/FormField';
+import FormModal from './common/FormModal';
+import DataTable from './common/DataTable';
+import ActionButtonGroup from './common/ActionButtonGroup';
+import SearchFilterBar from './common/SearchFilterBar';
+import CardHeader from './common/CardHeader';
 
 // Custom CSS for professional solid buttons
 const buttonStyles = `
@@ -569,6 +575,118 @@ const UserManagement = () => {
     setError('');
   };
 
+  // Helper function for form field changes
+  const handleCreateFormChange = (e) => {
+    const { name, value } = e.target;
+    setCreateForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Helper function to generate action buttons for each user row
+  const getUserActions = (user) => {
+    const isCurrentUser = user.id === currentUser.id;
+    const isLastAdminInStore = user.role === 'admin' && user.store_name && 
+      users.filter(u => u.role === 'admin' && u.store_name === user.store_name && u.is_active).length <= 1;
+    
+    const actions = [
+      {
+        label: 'Edit',
+        icon: 'fas fa-edit',
+        onClick: () => openEditModal(user),
+        variant: 'edit',
+        title: 'Edit User'
+      },
+      {
+        label: 'Password',
+        icon: 'fas fa-key',
+        onClick: () => openPasswordModal(user),
+        variant: 'password',
+        title: 'Change Password'
+      },
+      {
+        label: 'Delete',
+        icon: 'fas fa-trash',
+        onClick: () => openDeleteModal(user),
+        variant: 'delete',
+        title: isCurrentUser ? "Cannot delete your own account" : 
+               isLastAdminInStore ? "Cannot delete - last admin for this store" : 
+               "Delete User",
+        disabled: isCurrentUser || isLastAdminInStore
+      }
+    ];
+
+    return actions;
+  };
+
+  // Column definitions for DataTable
+  const userColumns = [
+    {
+      key: 'name',
+      label: 'Name',
+      sortable: true,
+      render: (value, row) => (
+        <div>
+          <strong>{row.name}</strong>
+          <div className="text-muted small">{row.email}</div>
+        </div>
+      )
+    },
+    {
+      key: 'phone',
+      label: 'Phone',
+      sortable: true
+    },
+    {
+      key: 'store_name',
+      label: 'Store',
+      sortable: true,
+      render: (value, row) => (
+        <div>
+          <span>{row.store_name}</span>
+          {row.store_state && (
+            <div className="text-muted small">{row.store_state}</div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'role',
+      label: 'Role',
+      sortable: true,
+      render: (value) => (
+        <Badge bg={value === 'admin' ? 'primary' : 'secondary'}>
+          {value === 'admin' ? 'Admin' : 'User'}
+        </Badge>
+      )
+    },
+    {
+      key: 'is_active',
+      label: 'Status',
+      sortable: true,
+      render: (value) => (
+        <Badge bg={value ? 'success' : 'danger'}>
+          {value ? 'Active' : 'Inactive'}
+        </Badge>
+      )
+    },
+    {
+      key: 'date_created',
+      label: 'Created',
+      sortable: true,
+      render: (value) => new Date(value).toLocaleDateString(),
+      className: 'small text-muted'
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (_, row) => <ActionButtonGroup actions={getUserActions(row)} />
+    }
+  ];
+
   const openEditModal = (user) => {
     setSelectedUser(user);
     setEditForm({
@@ -639,55 +757,49 @@ const UserManagement = () => {
       <Row>
         <Col>
           <Card>
-            <Card.Header className="d-flex justify-content-between align-items-center">
-              <div>
-                <h4 className="mb-0">User Management</h4>
-                <small className="text-muted">Manage users in your store</small>
-              </div>
-              <Button variant="primary" onClick={openCreateModal}>
-                <i className="fas fa-plus me-2"></i>Add User
-              </Button>
-            </Card.Header>
+            <CardHeader
+              title="User Management"
+              subtitle="Manage users in your store"
+              action={{
+                label: "Add User",
+                icon: "fas fa-plus",
+                onClick: openCreateModal,
+                variant: "primary"
+              }}
+            />
             
             <Card.Body>
               {/* Alerts */}
               {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
               {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
               
-              {/* Filters */}
-              <Row className="mb-3">
-                <Col md={4}>
-                  <InputGroup>
-                    <InputGroup.Text><i className="fas fa-search"></i></InputGroup.Text>
-                    <Form.Control
-                      type="text"
-                      placeholder="Search users..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </InputGroup>
-                </Col>
-                <Col md={3}>
-                  <Form.Select
-                    value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
-                  >
-                    <option value="">All Roles</option>
-                    <option value="admin">Admin</option>
-                    <option value="user">User</option>
-                  </Form.Select>
-                </Col>
-                <Col md={3}>
-                  <Form.Select
-                    value={activeFilter}
-                    onChange={(e) => setActiveFilter(e.target.value)}
-                  >
-                    <option value="">All Status</option>
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
-                  </Form.Select>
-                </Col>
-                <Col md={2}>
+              <SearchFilterBar
+                searchPlaceholder="Search users..."
+                searchValue={searchTerm}
+                onSearchChange={setSearchTerm}
+                filters={[
+                  {
+                    label: "Role",
+                    value: roleFilter,
+                    onChange: setRoleFilter,
+                    options: [
+                      { value: "", label: "All Roles" },
+                      { value: "admin", label: "Admin" },
+                      { value: "user", label: "User" }
+                    ]
+                  },
+                  {
+                    label: "Status",
+                    value: activeFilter,
+                    onChange: setActiveFilter,
+                    options: [
+                      { value: "", label: "All Status" },
+                      { value: "true", label: "Active" },
+                      { value: "false", label: "Inactive" }
+                    ]
+                  }
+                ]}
+                additionalActions={
                   <Button 
                     variant="outline-secondary" 
                     onClick={() => {
@@ -699,290 +811,136 @@ const UserManagement = () => {
                   >
                     Clear
                   </Button>
-                </Col>
-              </Row>
+                }
+                showCard={false}
+              />
 
-              {/* Users Table */}
-              {loading ? (
-                <div className="text-center py-4">
-                  <Spinner animation="border" />
-                  <p className="mt-2">Loading users...</p>
-                </div>
-              ) : (
-                <>
-                  <Table responsive hover>
-                    <thead>
-                      <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Store</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.map((user) => (
-                        <tr key={user.id}>
-                          <td>
-                            <strong>{user.name}</strong>
-                          </td>
-                          <td>{user.email}</td>
-                          <td>{user.phone}</td>
-                          <td>
-                            {user.store_name ? (
-                              <span className="text-muted">{user.store_name}</span>
-                            ) : (
-                              <Badge bg="warning">No Store</Badge>
-                            )}
-                          </td>
-                          <td>
-                            <Badge bg={user.role === 'admin' ? 'primary' : 'secondary'}>
-                              {user.role}
-                            </Badge>
-                          </td>
-                          <td>
-                            <Badge bg={user.is_active ? 'success' : 'danger'}>
-                              {user.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </td>
-                          <td>{new Date(user.date_created).toLocaleDateString()}</td>
-                          <td>
-                            <div className="d-flex gap-2 flex-wrap">
-                              <button
-                                onClick={() => openEditModal(user)}
-                                title="Edit User"
-                                className="btn-gradient-edit"
-                                type="button"
-                              >
-                                <i className="fas fa-edit me-1"></i>Edit
-                              </button>
-                              <button
-                                onClick={() => openPasswordModal(user)}
-                                title="Change Password"
-                                className="btn-gradient-password"
-                                type="button"
-                              >
-                                <i className="fas fa-key me-1"></i>Password
-                              </button>
-                              {(() => {
-                                const isCurrentUser = user.id === currentUser.id;
-                                const isLastAdminInStore = user.role === 'admin' && user.store_name && 
-                                  users.filter(u => u.role === 'admin' && u.store_name === user.store_name && u.is_active).length <= 1;
-                                
-                                if (isCurrentUser || isLastAdminInStore) {
-                                  return (
-                                    <button
-                                      disabled
-                                      title={isCurrentUser ? "Cannot delete your own account" : "Cannot delete - last admin for this store"}
-                                      className="btn-gradient-disabled"
-                                      type="button"
-                                    >
-                                      <i className="fas fa-trash me-1"></i>Delete
-                                    </button>
-                                  );
-                                } else {
-                                  return (
-                                    <button
-                                      onClick={() => openDeleteModal(user)}
-                                      title="Delete User"
-                                      className="btn-gradient-delete"
-                                      type="button"
-                                    >
-                                      <i className="fas fa-trash me-1"></i>Delete
-                                    </button>
-                                  );
-                                }
-                              })()}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-
-                  {users.length === 0 && (
-                    <div className="text-center py-4">
-                      <p className="text-muted">No users found</p>
-                    </div>
-                  )}
-
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="d-flex justify-content-center">
-                      <Pagination>
-                        <Pagination.Prev
-                          disabled={currentPage === 1}
-                          onClick={() => setCurrentPage(currentPage - 1)}
-                        />
-                        {[...Array(totalPages)].map((_, i) => (
-                          <Pagination.Item
-                            key={i + 1}
-                            active={currentPage === i + 1}
-                            onClick={() => setCurrentPage(i + 1)}
-                          >
-                            {i + 1}
-                          </Pagination.Item>
-                        ))}
-                        <Pagination.Next
-                          disabled={currentPage === totalPages}
-                          onClick={() => setCurrentPage(currentPage + 1)}
-                        />
-                      </Pagination>
-                    </div>
-                  )}
-                </>
-              )}
+              <DataTable
+                columns={userColumns}
+                data={users}
+                striped
+                hover
+                responsive
+                emptyMessage="No users found"
+                loading={loading}
+                loadingContent="Loading users..."
+                pagination={{
+                  currentPage: currentPage,
+                  totalPages: totalPages,
+                  onPageChange: setCurrentPage
+                }}
+              />
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
       {/* Create User Modal */}
-      <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Add New User</Modal.Title>
-        </Modal.Header>
-        <Form onSubmit={handleCreateUser}>
-          <Modal.Body>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Name *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={createForm.name}
-                    onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Email *</Form.Label>
-                  <Form.Control
-                    type="email"
-                    value={createForm.email}
-                    onChange={(e) => setCreateForm({...createForm, email: e.target.value})}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Phone *</Form.Label>
-                  <Form.Control
-                    type="tel"
-                    value={createForm.phone}
-                    onChange={(e) => setCreateForm({...createForm, phone: e.target.value})}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Role *</Form.Label>
-                  <Dropdown>
-                    <Dropdown.Toggle variant="outline-secondary" className="w-100 d-flex justify-content-between align-items-center">
-                      {createForm.role === 'admin' ? 'Admin' : 'User'}
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu className="w-100">
-                      <Dropdown.Item 
-                        onClick={() => setCreateForm({...createForm, role: 'user'})}
-                        active={createForm.role === 'user'}
-                      >
-                        User
-                      </Dropdown.Item>
-                      <Dropdown.Item 
-                        onClick={() => setCreateForm({...createForm, role: 'admin'})}
-                        active={createForm.role === 'admin'}
-                      >
-                        Admin
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </Form.Group>
-              </Col>
-            </Row>
-            <Form.Group className="mb-3">
-              <Form.Label>Store *</Form.Label>
-              <Dropdown>
-                <Dropdown.Toggle variant="outline-secondary" className="w-100 d-flex justify-content-between align-items-center">
-                  {createForm.store_id ? 
-                    stores.find(s => s.id == createForm.store_id)?.name + ' - ' + stores.find(s => s.id == createForm.store_id)?.state 
-                    : 'Select Store'
-                  }
-                </Dropdown.Toggle>
-                <Dropdown.Menu className="w-100" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                  <Dropdown.Item 
-                    onClick={() => setCreateForm({...createForm, store_id: ''})}
-                    active={createForm.store_id === ''}
-                  >
-                    Select Store
-                  </Dropdown.Item>
-                  {stores.map(store => (
-                    <Dropdown.Item 
-                      key={store.id}
-                      onClick={() => setCreateForm({...createForm, store_id: store.id})}
-                      active={createForm.store_id == store.id}
-                    >
-                      {store.name} - {store.state}
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Address *</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={2}
-                value={createForm.address}
-                onChange={(e) => setCreateForm({...createForm, address: e.target.value})}
-                required
-              />
-            </Form.Group>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Password *</Form.Label>
-                  <Form.Control
-                    type="password"
-                    value={createForm.password}
-                    onChange={(e) => setCreateForm({...createForm, password: e.target.value})}
-                    required
-                    minLength={8}
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Confirm Password *</Form.Label>
-                  <Form.Control
-                    type="password"
-                    value={createForm.confirmPassword}
-                    onChange={(e) => setCreateForm({...createForm, confirmPassword: e.target.value})}
-                    required
-                    minLength={8}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" type="submit" disabled={loading}>
-              {loading ? <Spinner animation="border" size="sm" /> : 'Create User'}
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
+      <FormModal
+        show={showCreateModal}
+        onHide={() => setShowCreateModal(false)}
+        title="Add New User"
+        size="lg"
+        onSubmit={handleCreateUser}
+        loading={loading}
+        submitText="Create User"
+      >
+        <Row>
+          <Col md={6}>
+            <FormField
+              label="Name"
+              name="name"
+              value={createForm.name}
+              onChange={handleCreateFormChange}
+              required
+            />
+          </Col>
+          <Col md={6}>
+            <FormField
+              label="Email"
+              name="email"
+              type="email"
+              value={createForm.email}
+              onChange={handleCreateFormChange}
+              required
+            />
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <FormField
+              label="Phone"
+              name="phone"
+              type="tel"
+              value={createForm.phone}
+              onChange={handleCreateFormChange}
+              required
+            />
+          </Col>
+          <Col md={6}>
+            <FormField
+              label="Role"
+              name="role"
+              type="select"
+              value={createForm.role}
+              onChange={handleCreateFormChange}
+              options={[
+                { value: 'user', label: 'User' },
+                { value: 'admin', label: 'Admin' }
+              ]}
+              required
+            />
+          </Col>
+        </Row>
+        <FormField
+          label="Store"
+          name="store_id"
+          type="select"
+          value={createForm.store_id}
+          onChange={handleCreateFormChange}
+          options={[
+            { value: '', label: 'Select Store' },
+            ...stores.map(store => ({
+              value: store.id,
+              label: `${store.name} - ${store.state}`
+            }))
+          ]}
+          required
+        />
+        <FormField
+          label="Address"
+          name="address"
+          type="textarea"
+          rows={2}
+          value={createForm.address}
+          onChange={handleCreateFormChange}
+          required
+        />
+        <Row>
+          <Col md={6}>
+            <FormField
+              label="Password"
+              name="password"
+              type="password"
+              value={createForm.password}
+              onChange={handleCreateFormChange}
+              inputProps={{ minLength: 8 }}
+              required
+            />
+          </Col>
+          <Col md={6}>
+            <FormField
+              label="Confirm Password"
+              name="confirmPassword"
+              type="password"
+              value={createForm.confirmPassword}
+              onChange={handleCreateFormChange}
+              inputProps={{ minLength: 8 }}
+              required
+            />
+          </Col>
+        </Row>
+      </FormModal>
 
       {/* Edit User Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
