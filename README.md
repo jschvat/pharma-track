@@ -1,155 +1,379 @@
-# PharmaTraK - Pharmacy Management System
+# PharmaTraK - Pharmacy Inventory Management System
 
-A comprehensive Node.js backend application for pharmacy store management with authentication, inventory tracking, and audit capabilities.
+## 🎯 Overview
+PharmaTraK is a comprehensive pharmacy inventory management system built with React (frontend) and Node.js/Express (backend). Features include inventory tracking, user management, FDA drug integration, audit logging, and role-based access control.
 
-## Features
+## 🏗️ Architecture
+- **Frontend**: React with Bootstrap UI and real-time debug logging
+- **Backend**: Node.js/Express RESTful API with JWT authentication  
+- **Database**: MySQL with comprehensive audit trails
+- **Integration**: OpenFDA API for drug information
+- **Testing**: Comprehensive test suites for all components
 
-- JWT-based authentication
-- Store management (admin only)
-- User management with role-based access control
-- Inventory management and tracking
-- Audit logging and transaction history
-- OpenFDA integration for drug information
-- MySQL database integration
-- Input validation and sanitization
-- Rate limiting and security middleware
+## ✨ Key Features
 
-## Project Structure
+### 🔐 Authentication & Security
+- JWT-based authentication with role-based access control
+- Password hashing with bcrypt (12 rounds)
+- CORS configuration for secure cross-origin requests
+- Input validation and SQL injection prevention
+
+### 📦 Inventory Management
+- Real-time inventory tracking across multiple stores
+- Low stock and expiration alerts
+- Batch/lot number tracking with cost analysis
+- Comprehensive transaction history with audit trails
+
+### 👥 User Management
+- Role-based access: Admin, Store Manager, Staff
+- Multi-store user access control
+- User activity tracking and session management
+
+### 💊 FDA Integration
+- OpenFDA API integration for drug information
+- NDC validation and lookup
+- Automatic drug database population
+- Intelligent caching for performance
+
+### 📊 Reporting & Analytics
+- Inventory statistics and trends
+- NDC audit reports with PDF generation
+- Low stock and expiration reports
+- User activity and transaction reports
+
+### 🔧 Development Tools
+- Comprehensive debug logging system
+- Component lifecycle monitoring
+- API call tracking with timing
+- Real-time error reporting
+
+## 🗂️ Project Structure
 
 ```
 pharmatrak/
-├── config/           # Database and app configuration
-├── database/         # SQL schemas and migrations
-├── docker/           # Docker containerization files
-├── docs/             # Documentation (deployment, frontend, testing)
-├── debug/            # Debug JSON files and logs
-├── frontend/         # React frontend application
-├── logs/             # Application log files
-├── middleware/       # Express middleware (auth, validation, etc.)
-├── models/           # Database models and business logic
-├── nginx/            # Nginx configuration
-├── openfda/          # FDA API integration service
-├── routes/           # Express API routes
-├── scripts/          # Setup and maintenance scripts
-├── tests/            # Test files (unit, integration, frontend, api)
-├── utilities/        # Utility scripts (check, debug)
-├── server.js         # Main application entry point
-└── README.md         # This file
+├── 📁 frontend/                 # React frontend application
+│   ├── src/components/          # React components
+│   │   ├── common/              # Reusable UI components
+│   │   ├── Dashboard.js         # Main dashboard
+│   │   ├── Inventory.js         # Inventory management
+│   │   └── UserManagement.js    # User administration
+│   ├── src/contexts/            # React contexts (Auth, Theme, Debug)
+│   ├── src/services/            # API communication services
+│   └── src/utils/               # Utility functions and helpers
+├── 📁 routes/                   # Express API routes
+├── 📁 models/                   # Database models & business logic
+├── 📁 middleware/               # Express middleware functions
+├── 📁 database/                 # SQL schemas and migrations
+├── 📁 services/                 # Business services (PDF, etc.)
+├── 📁 tests/                    # Comprehensive test suites
+├── 📁 docs/                     # Documentation
+├── 📁 scripts/                  # Setup and utility scripts
+└── server.js                    # Main Express server
 ```
 
-## Setup
+## 🚀 Quick Start
 
-1. Install dependencies:
-```bash
-npm install
-```
+### Prerequisites
+- **Node.js** 16+ 
+- **MySQL** 8.0+
+- **npm** or **yarn**
 
-2. Set up environment variables:
-```bash
-cp .env.example .env
-```
-Edit the `.env` file with your database credentials and JWT secret.
+### Installation
 
-3. Create MySQL database and run schema:
-```bash
-mysql -u root -p < database/schema.sql
-```
+1. **Clone and Install**
+   ```bash
+   git clone <repository-url>
+   cd pharmatrak
+   npm install
+   ```
 
-4. Start the server:
-```bash
-# Development
-npm run dev
+2. **Database Setup**
+   ```bash
+   # Create database
+   mysql -u root -p -e "CREATE DATABASE pharmatrak;"
+   
+   # Run schema
+   mysql -u root -p pharmatrak < database/schema.sql
+   
+   # Create admin user
+   mysql -u root -p pharmatrak < database/seed_admin.sql
+   ```
 
-# Production
-npm start
-```
+3. **Environment Configuration**
+   ```bash
+   # Backend environment
+   export DB_HOST=localhost
+   export DB_USER=pharmatrak_user
+   export DB_PASSWORD=pharmatrak_password
+   export DB_NAME=pharmatrak
+   export JWT_SECRET=your-secret-key
+   ```
 
-## API Endpoints
+4. **Start Services**
+   ```bash
+   # Start backend (Terminal 1)
+   node server.js
+   
+   # Start frontend (Terminal 2)  
+   cd frontend && npm start
+   ```
+
+5. **Access Application**
+   - **Frontend**: http://localhost:3000
+   - **Backend API**: http://localhost:3001
+   - **Debug Panel**: http://localhost:3000/debug/logging
+
+### Default Credentials
+- **Email**: `admin@pharmatrak.com`
+- **Password**: `Admin123!`
+
+## 🌐 API Documentation
 
 ### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - User login
-- `GET /api/auth/profile` - Get user profile
-- `PUT /api/auth/profile` - Update user profile
+```bash
+# Login
+POST /api/auth/login
+{
+  "email": "admin@pharmatrak.com",
+  "password": "Admin123!"
+}
 
-### Stores (Admin only)
-- `POST /api/stores` - Create store
-- `GET /api/stores` - Get all stores
-- `GET /api/stores/:id` - Get store by ID
-- `PUT /api/stores/:id` - Update store
-- `DELETE /api/stores/:id` - Delete store
+# Get current user
+GET /api/auth/me
+Authorization: Bearer <token>
+```
 
-### Users (Store admin only)
-- `POST /api/users` - Create user
-- `GET /api/users` - Get store users
-- `GET /api/users/:id` - Get user by ID
-- `PUT /api/users/:id` - Update user
-- `DELETE /api/users/:id` - Delete user
+### Key Endpoints
+- **Users**: `/api/users/` - User management (CRUD)
+- **Stores**: `/api/stores/` - Store management
+- **Inventory**: `/api/inventory/store/:id` - Inventory operations
+- **Drugs**: `/api/drugs/` - Drug information and FDA search
+- **Audit**: `/api/audit/` - Transaction history and reports
 
-### Drugs & Inventory
-- `GET /api/drugs/search/fda` - Search FDA database
-- `GET /api/drugs/search` - Search local drug database
-- `GET /api/drugs/:id` - Get drug by ID
-- `POST /api/drugs/add-from-fda` - Add drug from FDA to local database
-- `GET /api/drugs/inventory/:storeId` - Get store inventory
-- `POST /api/drugs/inventory` - Add drug to inventory
-- `PUT /api/drugs/inventory/:id` - Update inventory item
-- `GET /api/drugs/inventory/:storeId/low-stock` - Get low stock items
-- `GET /api/drugs/inventory/:storeId/expiring` - Get expiring items
-- `GET /api/drugs/inventory/:storeId/stats` - Get inventory statistics
+**📖 Complete API Documentation**: See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
 
-## Database Schema
+## 🧩 Component Architecture
 
-### Stores
-- **id**: Auto-increment primary key
-- **name**: VARCHAR(100) - Store name (2-100 chars, letters/numbers/spaces/basic punctuation)
-- **address**: VARCHAR(500) - Street address (5-500 chars)
-- **state**: CHAR(2) - US state abbreviation (validated against all US states/territories)
-- **zipcode**: VARCHAR(10) - ZIP code (5 digits or 5+4 format)
-- **phone**: VARCHAR(11) - Phone number (10-11 digits only)
-- **fax**: VARCHAR(11) - Fax number (10-11 digits, optional)
-- **dea_registration_number**: CHAR(9) - DEA number with check digit validation (Format: AB1234567)
-- **npi**: CHAR(10) - NPI number with Luhn algorithm validation (10 digits)
-- **admin_user_id**: INT - Foreign key to users table
-- **date_created, updated_at**: Timestamps
+### Reusable Components
+- **FormField**: Universal form input component
+- **FormModal**: Standardized modal dialogs  
+- **DataTable**: Advanced tables with sorting/pagination
+- **ActionButtonGroup**: Consistent button layouts
+- **SearchFilterBar**: Search and filter interfaces
 
-### Users
-- **id**: Auto-increment primary key
-- **name**: VARCHAR(100) - User name (2-100 chars, letters/spaces/basic punctuation)
-- **email**: VARCHAR(255) - Unique email with format validation
-- **phone**: VARCHAR(11) - Phone number (10-11 digits only)
-- **password**: VARCHAR(255) - bcrypt hash (minimum 60 chars for bcrypt)
-- **address**: VARCHAR(500) - Street address (5-500 chars)
-- **store_id**: INT - Foreign key to stores table
-- **role**: ENUM('admin', 'user') - User role
-- **is_active**: BOOLEAN - Account status
-- **date_created, updated_at**: Timestamps
+### Page Components
+- **Dashboard**: Overview with key metrics and alerts
+- **Inventory**: Comprehensive inventory management
+- **UserManagement**: User administration interface
+- **BrowseDrugs**: Drug catalog and FDA search
+- **AdminSettings**: System configuration
 
-### Drugs & Inventory
-- **drugs**: NDC, generic/brand names, dosage forms, manufacturers, FDA data
-- **store_inventory**: Quantities, costs, expiration dates, lot numbers, suppliers
-- **fda_search_history**: Search analytics and caching optimization
+**📖 Frontend Documentation**: See [frontend/README.md](./frontend/README.md)
 
-### Database Constraints
-- **CHECK constraints** enforce data format validation at database level
-- **UNIQUE constraints** on email, DEA, NPI numbers, and NDC codes
-- **FOREIGN KEY constraints** with CASCADE/SET NULL actions
-- **REGEX validation** for phone numbers, emails, DEA/NPI/NDC formats
-- **State validation** against complete US state/territory list
-- **Full-text search** indexes for drug names and substances
+## 🗄️ Database Schema
 
-## OpenFDA Integration
+### Core Tables
+- **users**: User accounts with role-based permissions
+- **stores**: Pharmacy store information and settings
+- **drugs**: Master drug database with FDA integration
+- **store_inventory**: Inventory levels with batch tracking
+- **inventory_audit_log**: Complete transaction history
 
-The system integrates with the OpenFDA NDC endpoint to provide:
-- **Real-time drug lookups** from FDA database
-- **NDC validation** and formatting
-- **Comprehensive drug information** including ingredients, manufacturers, dosage forms
-- **Intelligent caching** to reduce API calls and improve performance
-- **Local drug database** for frequently accessed medications
+### Key Features
+- **Foreign Key Constraints**: Data integrity enforcement
+- **CHECK Constraints**: Format validation at database level
+- **Full-Text Search**: Optimized drug name searching
+- **Audit Triggers**: Automatic transaction logging
 
-### FDA Features
-- Search by NDC, generic name, brand name, or manufacturer
-- Automatic data synchronization with FDA database
-- Advanced search with multiple criteria
-- Response caching with TTL management
-- Rate limit handling and error recovery
+**📖 Database Documentation**: See [BACKEND_README.md](./BACKEND_README.md)
+
+## 🧪 Testing
+
+### Test Suites
+```bash
+# Frontend tests
+cd frontend && npm test
+
+# Backend API tests  
+node tests/test-api.js
+
+# Integration tests
+node tests/integration/test_admin_stores.js
+
+# FDA integration tests
+node tests/manual-fda-test.js
+```
+
+### Test Coverage
+- **Frontend**: Component testing with React Testing Library
+- **Backend**: API endpoint testing with comprehensive scenarios
+- **Integration**: End-to-end workflow testing
+- **Manual**: FDA API integration testing
+
+## 🔧 Development Tools
+
+### Debug Logging System
+- **Access**: Visit `/debug/logging` for interactive debug panel
+- **Features**: API tracking, component lifecycle, user interactions
+- **Keyboard Shortcuts**:
+  - `Ctrl+Shift+D` - Toggle debug panel
+  - `Ctrl+Shift+L` - Export logs to JSON
+  - `Ctrl+Shift+C` - Clear logs
+
+### Development Commands
+```bash
+# Backend development
+npm run dev                    # Start with nodemon
+npm run lint                   # ESLint code checking
+npm run test                   # Run test suites
+
+# Frontend development  
+cd frontend
+npm start                      # Development server
+npm run build                  # Production build
+npm test                       # Component tests
+```
+
+## 🔐 Security Features
+
+### Authentication & Authorization
+- **JWT Tokens**: Secure authentication with configurable expiration
+- **Role-Based Access**: Admin, Store Manager, Staff permissions
+- **Password Security**: bcrypt hashing with salt rounds 12
+- **Session Management**: Automatic token refresh and logout
+
+### Data Protection
+- **SQL Injection Prevention**: Parameterized queries throughout
+- **Input Validation**: Comprehensive server-side validation
+- **CORS Configuration**: Secure cross-origin request handling
+- **Error Handling**: Secure error messages without data leakage
+
+## 📊 Performance & Monitoring
+
+### Database Optimization
+- **Connection Pooling**: MySQL2 connection pool management
+- **Query Optimization**: Efficient JOIN queries with proper indexing
+- **Caching Strategy**: FDA API response caching with TTL
+
+### Monitoring
+- **Health Checks**: System status endpoints
+- **Request Logging**: Comprehensive API request tracking
+- **Error Tracking**: Centralized error logging and reporting
+- **Performance Metrics**: Response time monitoring
+
+## 🚀 Deployment
+
+### Production Setup
+```bash
+# Build frontend
+cd frontend && npm run build
+
+# Set production environment
+export NODE_ENV=production
+
+# Start with PM2 (recommended)
+pm2 start server.js --name pharmatrak
+
+# Or start directly
+npm run start
+```
+
+### Docker Deployment
+```bash
+# Build and start services
+docker-compose up -d
+
+# Check status
+docker-compose ps
+
+# View logs
+docker-compose logs -f
+```
+
+**📖 Deployment Guide**: See [docs/deployment/](./docs/deployment/)
+
+## 🛠️ Maintenance
+
+### Database Maintenance
+```bash
+# Run migrations
+node scripts/run_migration.js
+
+# Backup database
+bash scripts/db-backup.sh
+
+# Restore database  
+bash scripts/db-restore.sh
+```
+
+### System Updates
+```bash
+# Update dependencies
+npm update
+
+# Security audit
+npm audit --audit-level high
+
+# Test after updates
+npm test
+```
+
+## 📚 Documentation
+
+### Project Documentation
+- **[PROJECT_GUIDE.md](./PROJECT_GUIDE.md)**: Complete navigation guide
+- **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)**: Full API reference
+- **[BACKEND_README.md](./BACKEND_README.md)**: Backend architecture
+- **[frontend/README.md](./frontend/README.md)**: Frontend components
+- **[CLEANUP_GUIDE.md](./CLEANUP_GUIDE.md)**: Code organization guide
+
+### Component Documentation
+- Individual components include JSDoc headers
+- Usage examples in component files
+- Props documentation for all reusable components
+
+## 🤝 Contributing
+
+### Development Workflow
+1. **Code Standards**: ESLint + Prettier configuration
+2. **Testing**: Add tests for all new features
+3. **Documentation**: Update relevant documentation
+4. **Security**: Follow security best practices
+
+### Code Organization
+- **Naming**: PascalCase for components, camelCase for utilities
+- **Imports**: Organized by React, third-party, internal
+- **Structure**: Consistent component and function organization
+
+## 🚨 Troubleshooting
+
+### Common Issues
+- **Port Conflicts**: Backend (3001), Frontend (3000)
+- **Database Connection**: Check MySQL credentials and service
+- **Authentication**: Clear localStorage and re-login
+- **CORS Errors**: Verify origin configuration
+
+### Debug Tools
+- **Frontend Debug Panel**: `/debug/logging`
+- **Browser DevTools**: Network tab for API issues
+- **Server Logs**: Console output for backend errors
+- **Database Logs**: MySQL error logs for data issues
+
+### Performance Issues
+- **Slow Loading**: Check network tab and API response times
+- **High Memory**: Monitor component re-renders and memory leaks
+- **Database**: Review query performance and indexing
+
+## 📄 License
+MIT License - See LICENSE file for details
+
+## 👥 Support
+- **Issues**: GitHub Issues for bug reports
+- **Documentation**: Check docs/ directory for detailed guides
+- **API Reference**: See API_DOCUMENTATION.md for endpoint details
+
+---
+
+**Last Updated**: August 2025  
+**Version**: 1.0.0  
+**Maintainer**: PharmaTraK Development Team

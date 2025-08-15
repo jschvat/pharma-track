@@ -1,5 +1,0 @@
-{
-  "icon:setup": "node scripts/setup-icons.js",
-  "icon:download": "node scripts/download-icons.js", 
-  "icon:convert": "node scripts/svg-to-png.js"
-}

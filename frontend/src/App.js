@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { initializeAllDropdownEnhancements, closeAllDropdowns } from './utils/dropdownUtils';
+import { DebugProvider } from './contexts/DebugContext';
+import { DebugErrorBoundary } from './utils/withDebugLogging';
+// import { initializeAllDropdownEnhancements, closeAllDropdowns } from './utils/dropdownUtils';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -17,7 +19,12 @@ import UserManagement from './components/UserManagement';
 import AdminStores from './components/AdminStores';
 import AdminSettings from './components/AdminSettings';
 import DebugStores from './components/DebugStores';
-import DropdownRouteHandler from './components/DropdownRouteHandler';
+import DebugExample from './components/DebugExample';
+// import DropdownRouteHandler from './components/DropdownRouteHandler';
+
+// Import debug utilities (development only) - using safe version to avoid React Router conflicts
+import './utils/safeDebugLogger';
+
 import './App.css';
 import './theme.css';
 import './css/dropdown-clean.css';
@@ -54,56 +61,61 @@ function App() {
   };
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Router>
-          <div className="app-container">
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route 
-                path="/*" 
-                element={
-                  <ProtectedRoute>
-                    <div className="app-container">
-                      <Sidebar 
-                        collapsed={sidebarCollapsed}
-                        onToggle={toggleSidebar}
-                        mobileOpen={mobileMenuOpen}
-                        onMobileToggle={toggleMobileMenu}
-                      />
-                      <div className="main-content">
-                        <Header 
-                          onMenuToggle={toggleMobileMenu}
-                          onSidebarToggle={toggleSidebar}
-                        />
-                        <div className="content-area">
-                          <Routes>
-                            <Route path="/dashboard" element={<Dashboard />} />
-                            <Route path="/inventory" element={<Inventory />} />
-                            <Route path="/inventory/state-count" element={<StateCount />} />
-                            <Route path="/drugs" element={<BrowseDrugs />} />
-                            <Route path="/drugs/add" element={<FDASearch />} />
-                            <Route path="/audit/ndc" element={<NDCAuditReport />} />
-                            <Route path="/drugs/search" element={<FDASearch />} />
-                            <Route path="/admin/users" element={<UserManagement />} />
-                            <Route path="/admin/stores" element={<AdminStores />} />
-                            <Route path="/admin/settings" element={<AdminSettings />} />
-                            <Route path="/debug/stores" element={<DebugStores />} />
-                            {/* Catch all route */}
-                            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                          </Routes>
+    <DebugErrorBoundary>
+      <DebugProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <Router>
+              <div className="app-container">
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route 
+                    path="/*" 
+                    element={
+                      <ProtectedRoute>
+                        <div className="app-container">
+                          <Sidebar 
+                            collapsed={sidebarCollapsed}
+                            onToggle={toggleSidebar}
+                            mobileOpen={mobileMenuOpen}
+                            onMobileToggle={toggleMobileMenu}
+                          />
+                          <div className="main-content">
+                            <Header 
+                              onMenuToggle={toggleMobileMenu}
+                              onSidebarToggle={toggleSidebar}
+                            />
+                            <div className="content-area">
+                              <Routes>
+                                <Route path="/dashboard" element={<Dashboard />} />
+                                <Route path="/inventory" element={<Inventory />} />
+                                <Route path="/inventory/state-count" element={<StateCount />} />
+                                <Route path="/drugs" element={<BrowseDrugs />} />
+                                <Route path="/drugs/add" element={<FDASearch />} />
+                                <Route path="/audit/ndc" element={<NDCAuditReport />} />
+                                <Route path="/drugs/search" element={<FDASearch />} />
+                                <Route path="/admin/users" element={<UserManagement />} />
+                                <Route path="/admin/stores" element={<AdminStores />} />
+                                <Route path="/admin/settings" element={<AdminSettings />} />
+                                <Route path="/debug/stores" element={<DebugStores />} />
+                                <Route path="/debug/logging" element={<DebugExample />} />
+                                {/* Catch all route */}
+                                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                              </Routes>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </ProtectedRoute>
-                } 
-              />
-            </Routes>
-          </div>
-        </Router>
-      </AuthProvider>
-    </ThemeProvider>
+                      </ProtectedRoute>
+                    } 
+                  />
+                </Routes>
+              </div>
+            </Router>
+          </AuthProvider>
+        </ThemeProvider>
+      </DebugProvider>
+    </DebugErrorBoundary>
   );
 }
 

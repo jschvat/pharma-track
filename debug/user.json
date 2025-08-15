@@ -1,9 +1,0 @@
-{
-  "name": "Test User",
-  "email": "test@example.com",
-  "phone": "5551234567",
-  "password": "TestPass123@",
-  "address": "123 Test Ave", 
-  "role": "user",
-  "store_id": 1
-}
