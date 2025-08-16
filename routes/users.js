@@ -202,7 +202,7 @@ router.get('/all', authenticateToken, requireAdminRole, [
 router.get('/:id', authenticateToken, requireAdminRole, [verifyId()], async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id);
+    const user = await User.findById(id, true); // Include inactive users for admin management
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -244,7 +244,7 @@ router.put('/:id', authenticateToken, requireAdminRole, [
     const { id } = req.params;
     const { name, phone, address, role, is_active } = req.body;
 
-    const user = await User.findById(id);
+    const user = await User.findById(id, true); // Include inactive users for admin management
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -297,7 +297,7 @@ router.put('/:id/password', authenticateToken, requireAdminRole, [
     const { id } = req.params;
     const { new_password } = req.body;
 
-    const user = await User.findById(id);
+    const user = await User.findById(id, true); // Include inactive users for admin password management
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -319,7 +319,7 @@ router.delete('/:id', authenticateToken, requireAdminRole, [verifyId()], async (
   try {
     const { id } = req.params;
 
-    const user = await User.findById(id);
+    const user = await User.findById(id, true); // Include inactive users for deletion validation
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -329,20 +329,33 @@ router.delete('/:id', authenticateToken, requireAdminRole, [verifyId()], async (
       return res.status(400).json({ error: 'Cannot delete your own account' });
     }
 
-    // If trying to delete an admin, check if they're the last admin in their store
-    if (user.role === 'admin' && user.store_id) {
-      const adminsInStore = await User.findWithFilters({ 
-        role: 'admin', 
-        store_id: user.store_id,
-        is_active: true 
-      }, 100, 0);
-      
-      const activeAdminsInStore = adminsInStore.filter(admin => admin.is_active);
-      
-      if (activeAdminsInStore.length <= 1) {
-        return res.status(400).json({ 
-          error: 'Cannot delete the last admin for this store. Each store must have at least one admin.' 
+    // Check if current user is god_mode
+    const isGodMode = req.user.role === 'god_mode';
+
+    // If trying to delete an admin user
+    if (user.role === 'admin') {
+      // Only god_mode users can delete admins
+      if (!isGodMode) {
+        return res.status(403).json({ 
+          error: 'Admin users cannot be deleted. To remove admin access, change their role to user instead.' 
         });
+      }
+
+      // For god_mode users: check if deleting admin would leave store without any admins
+      if (user.store_id) {
+        const adminsInStore = await User.findWithFilters({ 
+          role: 'admin', 
+          store_id: user.store_id,
+          is_active: true 
+        }, 100, 0);
+        
+        const activeAdminsInStore = adminsInStore.filter(admin => admin.is_active && admin.id !== user.id);
+        
+        if (activeAdminsInStore.length === 0) {
+          return res.status(400).json({ 
+            error: 'Cannot delete the last admin for this store. Each store must have at least one admin.' 
+          });
+        }
       }
     }
 
@@ -351,7 +364,7 @@ router.delete('/:id', authenticateToken, requireAdminRole, [verifyId()], async (
       return res.status(400).json({ error: 'Failed to delete user' });
     }
 
-    res.json({ message: 'User deleted successfully' });
+    res.json({ message: 'User deactivated successfully' });
 
   } catch (error) {
     console.error('User deletion error:', error);

@@ -22,7 +22,8 @@ class User {
     }
   }
 
-  static async findById(id) {
+  static async findById(id, includeInactive = false) {
+    const whereClause = includeInactive ? 'WHERE u.id = ?' : 'WHERE u.id = ? AND u.is_active = TRUE';
     const [rows] = await db.execute(`
       SELECT 
         u.id, u.name, u.email, u.phone, u.address, u.store_id, u.role, 
@@ -32,13 +33,14 @@ class User {
       FROM users u 
       LEFT JOIN stores s ON u.store_id = s.id
       LEFT JOIN stores active_s ON u.active_store_id = active_s.id
-      WHERE u.id = ?`,
+      ${whereClause}`,
       [id]
     );
     return rows[0];
   }
 
-  static async findByEmail(email) {
+  static async findByEmail(email, includeInactive = false) {
+    const whereClause = includeInactive ? 'WHERE u.email = ?' : 'WHERE u.email = ? AND u.is_active = TRUE';
     const [rows] = await db.execute(`
       SELECT 
         u.*, 
@@ -47,15 +49,16 @@ class User {
       FROM users u 
       LEFT JOIN stores s ON u.store_id = s.id
       LEFT JOIN stores active_s ON u.active_store_id = active_s.id
-      WHERE u.email = ?`,
+      ${whereClause}`,
       [email]
     );
     return rows[0];
   }
 
-  static async findByStoreId(store_id) {
+  static async findByStoreId(store_id, includeInactive = false) {
+    const whereClause = includeInactive ? 'WHERE store_id = ?' : 'WHERE store_id = ? AND is_active = TRUE';
     const [rows] = await db.execute(
-      'SELECT id, name, email, phone, address, role, is_active, date_created FROM users WHERE store_id = ?',
+      `SELECT id, name, email, phone, address, role, is_active, date_created FROM users ${whereClause}`,
       [store_id]
     );
     return rows;
@@ -81,6 +84,9 @@ class User {
 
       if (filters.is_active !== undefined) {
         whereConditions.push(`u.is_active = ${filters.is_active ? 1 : 0}`);
+      } else {
+        // Default to only active users unless explicitly requesting all
+        whereConditions.push('u.is_active = 1');
       }
 
       if (filters.search) {
@@ -123,6 +129,9 @@ class User {
       if (filters.is_active !== undefined) {
         query += ' AND u.is_active = ?';
         params.push(filters.is_active ? 1 : 0);
+      } else {
+        // Default to only active users unless explicitly requesting all
+        query += ' AND u.is_active = 1';
       }
 
       if (filters.search) {
@@ -176,7 +185,12 @@ class User {
 
   static async delete(id) {
     try {
-      const [result] = await db.execute('DELETE FROM users WHERE id = ?', [id]);
+      // Soft delete: mark user as inactive instead of hard delete
+      // This preserves foreign key relationships and audit trails
+      const [result] = await db.execute(
+        'UPDATE users SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
+        [id]
+      );
       return result.affectedRows > 0;
     } catch (error) {
       handleDatabaseError(error);

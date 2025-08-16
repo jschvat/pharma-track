@@ -94,7 +94,7 @@ describe('FDAService', () => {
 
     test('should search by generic name', async () => {
       axios.get.mockResolvedValue(mockFDAResponse);
-
+─
       const result = await fdaService.searchByGenericName('acetaminophen', 5);
 
       expect(axios.get).toHaveBeenCalledWith(
@@ -265,7 +265,7 @@ describe('FDAService', () => {
           status: 500,
           data: { error: { message: 'Internal server error' } }
         }
-      };
+      };─
       axios.get.mockRejectedValue(error500);
 
       await expect(fdaService.searchByNDC('0069-2587-10')).rejects.toThrow('FDA API is currently unavailable');
@@ -329,7 +329,7 @@ describe('FDAService', () => {
     });
   });
 
-  describe('Edge Cases', () => {
+  describe('Edge Cases', () => {─
     test('should handle empty search results', async () => {
       const emptyResponse = {
         data: {

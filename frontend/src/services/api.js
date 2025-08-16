@@ -311,6 +311,7 @@ export const userAPI = {
   create: (userData) => api.post('/users', userData),
   update: (id, userData) => api.put(`/users/${id}`, userData),
   updatePassword: (id, passwordData) => api.put(`/users/${id}/password`, passwordData),
+  // Note: Admin users cannot be deleted. Only regular users can be deleted.
   delete: (id) => api.delete(`/users/${id}`),
 };
 

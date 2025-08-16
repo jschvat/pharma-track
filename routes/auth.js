@@ -159,7 +159,7 @@ router.post('/login', loginLimiter, [
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     // Get fresh user data from database
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id, true); // Include inactive users for auth validation
     
     if (!user || !user.is_active) {
       return res.status(401).json({ error: 'User account not found or inactive' });

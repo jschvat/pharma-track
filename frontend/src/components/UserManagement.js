@@ -329,7 +329,7 @@ if (typeof document !== 'undefined') {
 }
 
 const UserManagement = () => {
-  const { user: currentUser, isAdmin } = useAuth();
+  const { user: currentUser, isAdmin, isGodMode } = useAuth();
   
   
   // Force style injection on component mount
@@ -555,7 +555,7 @@ const UserManagement = () => {
     try {
       setLoading(true);
       await userAPI.delete(selectedUser.id);
-      setSuccess('User deleted successfully');
+      setSuccess('User deactivated successfully');
       setShowDeleteModal(false);
       loadUsers();
     } catch (err) {
@@ -589,8 +589,8 @@ const UserManagement = () => {
   // Helper function to generate action buttons for each user row
   const getUserActions = (user) => {
     const isCurrentUser = user.id === currentUser.id;
-    const isLastAdminInStore = user.role === 'admin' && user.store_name && 
-      users.filter(u => u.role === 'admin' && u.store_name === user.store_name && u.is_active).length <= 1;
+    const isAdminUser = user.role === 'admin';
+    const currentUserIsGodMode = isGodMode();
     
     const actions = [
       {
@@ -606,8 +606,31 @@ const UserManagement = () => {
         onClick: () => openPasswordModal(user),
         variant: 'password',
         title: 'Change Password'
-      },
-      {
+      }
+    ];
+
+    // Add delete button logic:
+    // - Always show for non-admin users (regular users)
+    // - Show for admin users only if current user is god_mode
+    // - Never show for god_mode users (they should not be deletable)
+    const shouldShowDelete = (
+      (!isAdminUser) || // Regular users can always be deleted
+      (isAdminUser && currentUserIsGodMode && user.role !== 'god_mode') // God mode can delete admins but not other god_mode users
+    );
+
+    if (shouldShowDelete) {
+      // For admin users, check if they're the last admin in their store
+      let isLastAdminInStore = false;
+      if (isAdminUser && user.store_name) {
+        const adminsInSameStore = users.filter(u => 
+          u.role === 'admin' && 
+          u.store_name === user.store_name && 
+          u.is_active
+        );
+        isLastAdminInStore = adminsInSameStore.length <= 1;
+      }
+
+      actions.push({
         label: 'Delete',
         icon: 'fas fa-trash',
         onClick: () => openDeleteModal(user),
@@ -616,8 +639,8 @@ const UserManagement = () => {
                isLastAdminInStore ? "Cannot delete - last admin for this store" : 
                "Delete User",
         disabled: isCurrentUser || isLastAdminInStore
-      }
-    ];
+      });
+    }
 
     return actions;
   };
@@ -712,8 +735,8 @@ const UserManagement = () => {
     setShowDeleteModal(true);
     setError('');
     
-    // Pre-validate admin deletion restrictions
-    if (user.role === 'admin' && user.store_name) {
+    // Pre-validate admin deletion restrictions for god_mode users
+    if (user.role === 'admin' && user.store_name && isGodMode()) {
       // Count active admins in the same store
       const adminsInSameStore = users.filter(u => 
         u.role === 'admin' && 
@@ -1097,10 +1120,7 @@ const UserManagement = () => {
             <Button 
               variant="danger" 
               onClick={handleDeleteUser} 
-              disabled={loading || selectedUser?.id === currentUser.id || 
-                (selectedUser?.role === 'admin' && selectedUser?.store_name && 
-                 users.filter(u => u.role === 'admin' && u.store_name === selectedUser.store_name && u.is_active).length <= 1)
-              }
+              disabled={loading || selectedUser?.id === currentUser.id}
             >
               {loading ? <Spinner animation="border" size="sm" /> : 'Delete User'}
             </Button>
@@ -1119,8 +1139,8 @@ const UserManagement = () => {
             <strong>Blocked:</strong> You cannot delete your own account.
           </Alert>
         )}
-        
-        {selectedUser?.role === 'admin' && selectedUser?.store_name && (
+
+        {selectedUser?.role === 'admin' && selectedUser?.store_name && isGodMode() && (
           (() => {
             const adminsInSameStore = users.filter(u => 
               u.role === 'admin' && 
@@ -1140,18 +1160,18 @@ const UserManagement = () => {
               return (
                 <Alert variant="info">
                   <i className="fas fa-info-circle me-2"></i>
-                  <strong>Note:</strong> Deleting this admin will leave {adminsInSameStore.length - 1} other admin(s) 
-                  for {selectedUser.store_name}.
+                  <strong>God Mode Privilege:</strong> Deleting this admin will leave {adminsInSameStore.length - 1} other admin(s) 
+                  for {selectedUser.store_name}. This action is only allowed for god_mode users.
                 </Alert>
               );
             }
           })()
         )}
-        
-        {selectedUser?.role === 'admin' && !selectedUser?.store_name && (
-          <Alert variant="warning">
+
+        {selectedUser?.role === 'admin' && !isGodMode() && (
+          <Alert variant="danger">
             <i className="fas fa-user-shield me-2"></i>
-            <strong>Admin User:</strong> This user has administrative privileges.
+            <strong>Access Denied:</strong> Admin users can only be deleted by god_mode users.
           </Alert>
         )}
       </DraggableDialog>

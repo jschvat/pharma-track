@@ -110,6 +110,10 @@ export const AuthProvider = ({ children }) => {
     return user?.role === 'admin' || user?.role === 'god_mode';
   };
 
+  const isGodMode = () => {
+    return user?.role === 'god_mode';
+  };
+
   const isStoreAdmin = (storeId = null) => {
     // System admin and god mode can access any store
     if (user?.role === 'admin' || user?.role === 'god_mode') {
@@ -163,6 +167,7 @@ export const AuthProvider = ({ children }) => {
     requiresStoreSelection,
     hasStoreAccess,
     isAdmin,
+    isGodMode,
     isStoreAdmin,
     setError,
   };

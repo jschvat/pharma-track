@@ -105,34 +105,38 @@ const Login = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label className="form-label">
+              <label htmlFor="email" className="form-label">
                 <i className="fas fa-envelope me-2"></i>
                 Email Address
               </label>
               <input
                 type="email"
+                id="email"
                 name="email"
                 className="form-control"
                 value={formData.email}
                 onChange={handleChange}
                 required
                 placeholder="Enter your email"
+                autoComplete="email"
               />
             </div>
 
             <div className="mb-3">
-              <label className="form-label">
+              <label htmlFor="password" className="form-label">
                 <i className="fas fa-lock me-2"></i>
                 Password
               </label>
               <input
                 type="password"
+                id="password"
                 name="password"
                 className="form-control"
                 value={formData.password}
                 onChange={handleChange}
                 required
                 placeholder="Enter your password"
+                autoComplete="current-password"
               />
             </div>
 

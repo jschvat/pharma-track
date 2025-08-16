@@ -25,7 +25,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Button, Badge, Form, InputGroup, Spinner, Alert, Modal } from 'react-bootstrap';
+import { Container, Row, Col, Card, Table, Button, Badge, Form, InputGroup, Spinner, Alert, Modal, Dropdown } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { inventoryAPI, auditAPI } from '../services/api';
 import { useSearchParams } from 'react-router-dom';
@@ -36,6 +36,7 @@ import CardHeader from './common/CardHeader';
 import ActionButtonGroup from './common/ActionButtonGroup';
 import FormField from './common/FormField';
 import FormModal from './common/FormModal';
+import DraggableDialog from './DraggableDialog';
 import '../css/components.css';
 
 /**
@@ -68,6 +69,8 @@ const Inventory = () => {
     reference_number: '',
     actual_quantity: ''
   });
+  const [validationErrors, setValidationErrors] = useState({});
+  const [showValidationWarning, setShowValidationWarning] = useState(false);
 
   // Transaction History Modal & Sidebar
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -219,6 +222,25 @@ const Inventory = () => {
     setSearchParams(newParams);
   };
 
+  // Helper function to format date (MMM-DD-YYYY)
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[date.getMonth()];
+    const day = date.getDate().toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}-${day}-${year}`;
+  };
+
+  // Helper function to format time (HH:MM:SS)
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  };
+
   // Helper function to get available prescriptions for return
   const getAvailablePrescriptions = (transactions) => {
     // Get all prescription fills with reference numbers
@@ -245,7 +267,8 @@ const Inventory = () => {
         fill_date: fill.transaction_date,
         filled_quantity: fillQuantity,
         returned_quantity: 0,
-        available_for_return: fillQuantity
+        available_for_return: fillQuantity,
+        filled_by: fill.performed_by_name || 'System'
       });
     });
     
@@ -330,13 +353,21 @@ const Inventory = () => {
   const openTransactionModal = async (type, item) => {
     setModalType(type);
     setSelectedItem(item);
+    
+    // Set default values based on transaction type
+    const defaultReason = type === 'prescription' ? 'Prescription fill' : '';
+    
     setTransactionForm({
       quantity: '',
-      reason: '',
+      reason: defaultReason,
       prescription_number: '',
       reference_number: '',
       actual_quantity: type === 'audit' ? item.quantity_on_hand : ''
     });
+    
+    // Reset validation state
+    setValidationErrors({});
+    setShowValidationWarning(false);
     
     // For return transactions, get available prescriptions
     if (type === 'return') {
@@ -361,20 +392,89 @@ const Inventory = () => {
     setShowModal(true);
   };
 
+  // Validation function
+  const validateForm = () => {
+    const errors = {};
+    
+    if (modalType === 'prescription') {
+      if (!transactionForm.quantity || transactionForm.quantity === '' || parseInt(transactionForm.quantity) <= 0) {
+        errors.quantity = 'Quantity is required and must be greater than 0';
+      } else if (parseInt(transactionForm.quantity) > selectedItem?.quantity_on_hand) {
+        errors.quantity = `Cannot exceed available quantity (${selectedItem.quantity_on_hand})`;
+      }
+      
+      if (!transactionForm.prescription_number || transactionForm.prescription_number.trim() === '') {
+        errors.prescription_number = 'Prescription number is required';
+      }
+      
+      if (!transactionForm.reason || transactionForm.reason.trim() === '') {
+        errors.reason = 'Reason is required';
+      }
+    } else if (modalType === 'return') {
+      if (!transactionForm.reference_number || transactionForm.reference_number.trim() === '') {
+        errors.reference_number = 'Prescription selection is required';
+      }
+      
+      if (!transactionForm.quantity || transactionForm.quantity === '' || parseInt(transactionForm.quantity) <= 0) {
+        errors.quantity = 'Return quantity is required and must be greater than 0';
+      }
+      
+      if (!transactionForm.reason || transactionForm.reason.trim() === '') {
+        errors.reason = 'Return reason is required';
+      }
+    } else if (modalType === 'expire') {
+      if (!transactionForm.quantity || transactionForm.quantity === '' || parseInt(transactionForm.quantity) <= 0) {
+        errors.quantity = 'Quantity is required and must be greater than 0';
+      } else if (parseInt(transactionForm.quantity) > selectedItem?.quantity_on_hand) {
+        errors.quantity = `Cannot exceed available quantity (${selectedItem.quantity_on_hand})`;
+      }
+      
+      if (!transactionForm.reason || transactionForm.reason.trim() === '') {
+        errors.reason = 'Expiration reason is required';
+      }
+    } else if (modalType === 'audit') {
+      if (!transactionForm.actual_quantity || transactionForm.actual_quantity === '' || parseInt(transactionForm.actual_quantity) < 0) {
+        errors.actual_quantity = 'Valid actual quantity is required (0 or greater)';
+      }
+      
+      if (!transactionForm.reason || transactionForm.reason.trim() === '') {
+        errors.reason = 'Audit reason is required';
+      }
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  
+  // Real-time validation effect
+  useEffect(() => {
+    if (showModal && modalType) {
+      // Run validation whenever form values change
+      validateForm();
+    }
+  }, [transactionForm, modalType, showModal, selectedItem]);
+  
+  // Check if form is valid for button state
+  const isFormValid = () => {
+    return Object.keys(validationErrors).length === 0 && 
+           Object.values(transactionForm).some(value => value !== '') && // At least one field filled
+           modalType; // Modal type is set
+  };
+
   const handleTransaction = async () => {
     if (!selectedItem) return;
 
-    // Validate required fields
-    if (modalType === 'audit') {
-      if (!transactionForm.reason || transactionForm.reason.trim() === '') {
-        setError('Audit reason is required');
-        return;
-      }
-      if (!transactionForm.actual_quantity || transactionForm.actual_quantity === '' || parseInt(transactionForm.actual_quantity) < 0) {
-        setError('Valid actual quantity is required');
-        return;
-      }
+    // Validate all required fields
+    const isValid = validateForm();
+    if (!isValid) {
+      setShowValidationWarning(true);
+      setError('Please correct the highlighted fields before submitting.');
+      return;
     }
+    
+    // Clear any previous validation warnings
+    setShowValidationWarning(false);
+    setValidationErrors({});
 
     try {
       setLoading(true);
@@ -856,17 +956,177 @@ const Inventory = () => {
       </Row>
       </div>
 
-      {/* Transaction Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {modalType === 'prescription' && 'Fill Prescription'}
-            {modalType === 'return' && 'Return to Stock'}
-            {modalType === 'expire' && 'Expire Medication'}
-            {modalType === 'audit' && 'Audit Inventory'}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
+      {/* Prescription Fill Dialog - Using DraggableDialog */}
+      {modalType === 'prescription' && (
+        <DraggableDialog
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          title="Fill Prescription"
+          width={500}
+          height={600}
+          footer={
+            <>
+              <div className="d-flex justify-content-between align-items-start w-100">
+                <div className="me-3 flex-grow-1">
+                  <Button variant="secondary" onClick={() => setShowModal(false)} className="me-2">
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="primary" 
+                    onClick={handleTransaction}
+                    disabled={loading || !isFormValid()}
+                  >
+                    {loading ? <Spinner animation="border" size="sm" /> : 'Confirm'}
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Validation Errors below buttons */}
+              {(showValidationWarning || Object.keys(validationErrors).some(key => validationErrors[key])) && (
+                <Alert variant="warning" className="mt-3 mb-0">
+                  <Alert.Heading className="h6 mb-2">
+                    <i className="fas fa-exclamation-triangle me-2"></i>
+                    Please correct the following errors:
+                  </Alert.Heading>
+                  <ul className="mb-0 ps-3">
+                    {Object.entries(validationErrors).map(([field, error]) => 
+                      error && (
+                        <li key={field} className="small">
+                          <strong>{field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {error}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </Alert>
+              )}
+            </>
+          }
+        >
+          {selectedItem && (
+            <div>
+              <div className="mb-3">
+                <strong>{selectedItem.generic_name}</strong>
+                {selectedItem.brand_name && <div className="text-muted">{selectedItem.brand_name}</div>}
+                <div className="small text-muted">Current Stock: {selectedItem.quantity_on_hand}</div>
+              </div>
+              
+              <FormField
+                label="Quantity"
+                name="quantity"
+                type="number"
+                value={transactionForm.quantity}
+                onChange={(e) => {
+                  setTransactionForm({...transactionForm, quantity: e.target.value});
+                  // Clear validation error when user starts typing
+                  if (validationErrors.quantity) {
+                    setValidationErrors({...validationErrors, quantity: undefined});
+                  }
+                }}
+                inputProps={{
+                  min: 1,
+                  max: selectedItem.quantity_on_hand
+                }}
+                required
+                error={validationErrors.quantity}
+                className={validationErrors.quantity ? 'is-invalid' : ''}
+              />
+
+              <FormField
+                label="Prescription Number"
+                name="prescription_number"
+                value={transactionForm.prescription_number}
+                onChange={(e) => {
+                  const prescriptionNumber = e.target.value;
+                  const updatedReason = prescriptionNumber 
+                    ? `Prescription fill - Rx# ${prescriptionNumber}`
+                    : 'Prescription fill';
+                  
+                  setTransactionForm({
+                    ...transactionForm, 
+                    prescription_number: prescriptionNumber,
+                    reason: updatedReason
+                  });
+                  
+                  // Clear validation error when user starts typing
+                  if (validationErrors.prescription_number) {
+                    setValidationErrors({...validationErrors, prescription_number: undefined});
+                  }
+                }}
+                required
+                placeholder="Enter prescription number (e.g., RX123456)"
+                error={validationErrors.prescription_number}
+                className={validationErrors.prescription_number ? 'is-invalid' : ''}
+              />
+
+              <FormField
+                label="Reason"
+                name="reason"
+                type="textarea"
+                rows={3}
+                value={transactionForm.reason}
+                onChange={(e) => {
+                  setTransactionForm({...transactionForm, reason: e.target.value});
+                  // Clear validation error when user starts typing
+                  if (validationErrors.reason) {
+                    setValidationErrors({...validationErrors, reason: undefined});
+                  }
+                }}
+                required
+                helpText="Reason auto-populated from prescription number. You can edit if needed."
+                error={validationErrors.reason}
+                className={validationErrors.reason ? 'is-invalid' : ''}
+              />
+            </div>
+          )}
+        </DraggableDialog>
+      )}
+
+      {/* Return to Stock Dialog - Using DraggableDialog */}
+      {modalType === 'return' && (
+        <DraggableDialog
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          title="Return to Stock"
+          width={550}
+          height={650}
+          footer={
+            <>
+              <div className="d-flex justify-content-between align-items-start w-100">
+                <div className="me-3 flex-grow-1">
+                  <Button variant="secondary" onClick={() => setShowModal(false)} className="me-2">
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="primary" 
+                    onClick={handleTransaction}
+                    disabled={loading || !isFormValid()}
+                  >
+                    {loading ? <Spinner animation="border" size="sm" /> : 'Confirm'}
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Validation Errors below buttons */}
+              {(showValidationWarning || Object.keys(validationErrors).some(key => validationErrors[key])) && (
+                <Alert variant="warning" className="mt-3 mb-0">
+                  <Alert.Heading className="h6 mb-2">
+                    <i className="fas fa-exclamation-triangle me-2"></i>
+                    Please correct the following errors:
+                  </Alert.Heading>
+                  <ul className="mb-0 ps-3">
+                    {Object.entries(validationErrors).map(([field, error]) => 
+                      error && (
+                        <li key={field} className="small">
+                          <strong>{field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {error}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </Alert>
+              )}
+            </>
+          }
+        >
           {selectedItem && (
             <div>
               <div className="mb-3">
@@ -875,122 +1135,341 @@ const Inventory = () => {
                 <div className="small text-muted">Current Stock: {selectedItem.quantity_on_hand}</div>
               </div>
 
-              {modalType === 'audit' ? (
-                <>
-                  <FormField
-                    label="Actual Quantity"
-                    name="actual_quantity"
-                    type="number"
-                    value={transactionForm.actual_quantity}
-                    onChange={(e) => setTransactionForm({...transactionForm, actual_quantity: e.target.value})}
-                    inputProps={{ min: 0 }}
-                    required
-                    helpText="Enter the actual counted quantity during physical inventory"
-                  />
-                  <FormField
-                    label="Audit Reason"
-                    name="reason"
-                    value={transactionForm.reason}
-                    onChange={(e) => setTransactionForm({...transactionForm, reason: e.target.value})}
-                    placeholder="Physical inventory count, cycle count, etc."
-                    required
-                    helpText="Provide a reason for this inventory audit"
-                  />
-                </>
-              ) : (
+              {/* Custom Prescription Selector using Bootstrap Dropdown */}
+              <div className="mb-3">
+                <Form.Label>
+                  Select Prescription to Return <span className="text-danger">*</span>
+                </Form.Label>
+                <Dropdown>
+                  <Dropdown.Toggle 
+                    variant={validationErrors.reference_number ? 'outline-danger' : 'outline-secondary'} 
+                    id="prescription-dropdown"
+                    className={`w-100 text-start ${validationErrors.reference_number ? 'is-invalid' : ''}`}
+                    style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      minHeight: '38px'
+                    }}
+                  >
+                    {transactionForm.reference_number ? 
+                      (() => {
+                        const selectedRx = availablePrescriptions.find(rx => rx.prescription_number === transactionForm.reference_number);
+                        return selectedRx ? 
+                          <span className="prescription-info">
+                            <span className="rx-bold">Rx #{selectedRx.prescription_number}</span>, {formatDate(selectedRx.fill_date)}, {formatTime(selectedRx.fill_date)}, {selectedRx.filled_by || 'Unknown'}, qty: {selectedRx.available_for_return}
+                          </span>
+                          : 'Choose a prescription...';
+                      })()
+                      : 'Choose a prescription...'
+                    }
+                  </Dropdown.Toggle>
+
+                  <Dropdown.Menu className="w-100" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    <Dropdown.Item 
+                      onClick={() => {
+                        setTransactionForm({
+                          ...transactionForm, 
+                          reference_number: '',
+                          quantity: ''
+                        });
+                        if (validationErrors.reference_number) {
+                          setValidationErrors({...validationErrors, reference_number: undefined});
+                        }
+                      }}
+                      className="text-muted"
+                    >
+                      Choose a prescription...
+                    </Dropdown.Item>
+                    {availablePrescriptions.map(rx => (
+                      <Dropdown.Item 
+                        key={rx.prescription_number}
+                        onClick={() => {
+                          setTransactionForm({
+                            ...transactionForm, 
+                            reference_number: rx.prescription_number,
+                            quantity: rx.available_for_return.toString()
+                          });
+                          // Clear validation error when user makes selection
+                          if (validationErrors.reference_number) {
+                            setValidationErrors({...validationErrors, reference_number: undefined});
+                          }
+                        }}
+                        active={transactionForm.reference_number === rx.prescription_number}
+                      >
+                        <div className="prescription-table">
+                          <div className="prescription-row">
+                            <div className="prescription-cell rx-number">Rx #{rx.prescription_number}</div>
+                            <div className="prescription-cell date">{formatDate(rx.fill_date)}</div>
+                            <div className="prescription-cell time">{formatTime(rx.fill_date)}</div>
+                            <div className="prescription-cell user">{rx.filled_by || 'Unknown'}</div>
+                            <div className="prescription-cell quantity">Qty: {rx.available_for_return}</div>
+                          </div>
+                        </div>
+                      </Dropdown.Item>
+                    ))}
+                  </Dropdown.Menu>
+                </Dropdown>
+                {validationErrors.reference_number && (
+                  <div className="invalid-feedback d-block">
+                    {validationErrors.reference_number}
+                  </div>
+                )}
+                <Form.Text className="text-muted">
+                  Only prescriptions that were previously filled can be returned.
+                </Form.Text>
+              </div>
+              
+              {transactionForm.reference_number && (
                 <FormField
-                  label="Quantity"
+                  label="Return Quantity"
                   name="quantity"
                   type="number"
                   value={transactionForm.quantity}
-                  onChange={(e) => setTransactionForm({...transactionForm, quantity: e.target.value})}
+                  onChange={(e) => {
+                    setTransactionForm({...transactionForm, quantity: e.target.value});
+                    // Clear validation error when user starts typing
+                    if (validationErrors.quantity) {
+                      setValidationErrors({...validationErrors, quantity: undefined});
+                    }
+                  }}
                   inputProps={{
                     min: 1,
-                    max: modalType === 'prescription' || modalType === 'expire' ? selectedItem.quantity_on_hand : undefined
+                    max: availablePrescriptions.find(rx => rx.prescription_number === transactionForm.reference_number)?.available_for_return || 1
                   }}
                   required
+                  helpText={`Maximum returnable: ${availablePrescriptions.find(rx => rx.prescription_number === transactionForm.reference_number)?.available_for_return || 0} units`}
+                  error={validationErrors.quantity}
+                  className={validationErrors.quantity ? 'is-invalid' : ''}
                 />
-              )}
-
-              {modalType === 'prescription' && (
-                <FormField
-                  label="Prescription Number"
-                  name="prescription_number"
-                  value={transactionForm.prescription_number}
-                  onChange={(e) => setTransactionForm({...transactionForm, prescription_number: e.target.value})}
-                  required
-                />
-              )}
-
-              {modalType === 'return' && (
-                <>
-                  <FormField
-                    label="Select Prescription to Return"
-                    name="reference_number"
-                    type="select"
-                    value={transactionForm.reference_number}
-                    onChange={(e) => {
-                      const selectedRx = availablePrescriptions.find(rx => rx.prescription_number === e.target.value);
-                      setTransactionForm({
-                        ...transactionForm, 
-                        reference_number: e.target.value,
-                        quantity: selectedRx ? selectedRx.available_for_return.toString() : ''
-                      });
-                    }}
-                    options={[
-                      { value: '', label: 'Choose a prescription...' },
-                      ...availablePrescriptions.map(rx => ({
-                        value: rx.prescription_number,
-                        label: `Rx# ${rx.prescription_number} - ${rx.available_for_return} units available (Filled: ${new Date(rx.fill_date).toLocaleDateString()})`
-                      }))
-                    ]}
-                    required
-                    helpText="Only prescriptions that were previously filled can be returned."
-                  />
-                  
-                  {transactionForm.reference_number && (
-                    <FormField
-                      label="Return Quantity"
-                      name="quantity"
-                      type="number"
-                      value={transactionForm.quantity}
-                      onChange={(e) => setTransactionForm({...transactionForm, quantity: e.target.value})}
-                      inputProps={{
-                        min: 1,
-                        max: availablePrescriptions.find(rx => rx.prescription_number === transactionForm.reference_number)?.available_for_return || 1
-                      }}
-                      required
-                      helpText={`Maximum returnable: ${availablePrescriptions.find(rx => rx.prescription_number === transactionForm.reference_number)?.available_for_return || 0} units`}
-                    />
-                  )}
-                </>
               )}
 
               <FormField
-                label="Reason"
+                label="Return Reason"
                 name="reason"
                 type="textarea"
                 rows={3}
                 value={transactionForm.reason}
-                onChange={(e) => setTransactionForm({...transactionForm, reason: e.target.value})}
+                onChange={(e) => {
+                  setTransactionForm({...transactionForm, reason: e.target.value});
+                  // Clear validation error when user starts typing
+                  if (validationErrors.reason) {
+                    setValidationErrors({...validationErrors, reason: undefined});
+                  }
+                }}
                 required
+                helpText="Provide a reason for this return (e.g., patient no longer needs medication, wrong dosage, etc.)"
+                error={validationErrors.reason}
+                className={validationErrors.reason ? 'is-invalid' : ''}
               />
             </div>
           )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Cancel
-          </Button>
-          <Button 
-            variant="primary" 
-            onClick={handleTransaction}
-            disabled={loading}
-          >
-            {loading ? <Spinner animation="border" size="sm" /> : 'Confirm'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        </DraggableDialog>
+      )}
+
+      {/* Expire Medication Dialog - Using DraggableDialog */}
+      {modalType === 'expire' && (
+        <DraggableDialog
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          title="Expire Medication"
+          width={480}
+          height={520}
+          footer={
+            <>
+              <div className="d-flex justify-content-between align-items-start w-100">
+                <div className="me-3 flex-grow-1">
+                  <Button variant="secondary" onClick={() => setShowModal(false)} className="me-2">
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="primary" 
+                    onClick={handleTransaction}
+                    disabled={loading || !isFormValid()}
+                  >
+                    {loading ? <Spinner animation="border" size="sm" /> : 'Confirm'}
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Validation Errors below buttons */}
+              {(showValidationWarning || Object.keys(validationErrors).some(key => validationErrors[key])) && (
+                <Alert variant="warning" className="mt-3 mb-0">
+                  <Alert.Heading className="h6 mb-2">
+                    <i className="fas fa-exclamation-triangle me-2"></i>
+                    Please correct the following errors:
+                  </Alert.Heading>
+                  <ul className="mb-0 ps-3">
+                    {Object.entries(validationErrors).map(([field, error]) => 
+                      error && (
+                        <li key={field} className="small">
+                          <strong>{field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {error}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </Alert>
+              )}
+            </>
+          }
+        >
+          {selectedItem && (
+            <div>
+              <div className="mb-3">
+                <strong>{selectedItem.generic_name}</strong>
+                {selectedItem.brand_name && <div className="text-muted">{selectedItem.brand_name}</div>}
+                <div className="small text-muted">Current Stock: {selectedItem.quantity_on_hand}</div>
+                {selectedItem.expiration_date && (
+                  <div className="small text-muted">Expires: {new Date(selectedItem.expiration_date).toLocaleDateString()}</div>
+                )}
+              </div>
+
+              <FormField
+                label="Quantity to Expire"
+                name="quantity"
+                type="number"
+                value={transactionForm.quantity}
+                onChange={(e) => {
+                  setTransactionForm({...transactionForm, quantity: e.target.value});
+                  // Clear validation error when user starts typing
+                  if (validationErrors.quantity) {
+                    setValidationErrors({...validationErrors, quantity: undefined});
+                  }
+                }}
+                inputProps={{
+                  min: 1,
+                  max: selectedItem.quantity_on_hand
+                }}
+                required
+                helpText={`Maximum available: ${selectedItem.quantity_on_hand} units`}
+                error={validationErrors.quantity}
+                className={validationErrors.quantity ? 'is-invalid' : ''}
+              />
+
+              <FormField
+                label="Expiration Reason"
+                name="reason"
+                type="textarea"
+                rows={3}
+                value={transactionForm.reason}
+                onChange={(e) => {
+                  setTransactionForm({...transactionForm, reason: e.target.value});
+                  // Clear validation error when user starts typing
+                  if (validationErrors.reason) {
+                    setValidationErrors({...validationErrors, reason: undefined});
+                  }
+                }}
+                required
+                placeholder="e.g., Past expiration date, damaged packaging, etc."
+                helpText="Provide a reason for expiring this medication"
+                error={validationErrors.reason}
+                className={validationErrors.reason ? 'is-invalid' : ''}
+              />
+            </div>
+          )}
+        </DraggableDialog>
+      )}
+
+      {/* Audit Inventory Dialog - Using DraggableDialog */}
+      {modalType === 'audit' && (
+        <DraggableDialog
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          title="Audit Inventory"
+          width={480}
+          height={540}
+          footer={
+            <>
+              <div className="d-flex justify-content-between align-items-start w-100">
+                <div className="me-3 flex-grow-1">
+                  <Button variant="secondary" onClick={() => setShowModal(false)} className="me-2">
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="primary" 
+                    onClick={handleTransaction}
+                    disabled={loading || !isFormValid()}
+                  >
+                    {loading ? <Spinner animation="border" size="sm" /> : 'Confirm'}
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Validation Errors below buttons */}
+              {(showValidationWarning || Object.keys(validationErrors).some(key => validationErrors[key])) && (
+                <Alert variant="warning" className="mt-3 mb-0">
+                  <Alert.Heading className="h6 mb-2">
+                    <i className="fas fa-exclamation-triangle me-2"></i>
+                    Please correct the following errors:
+                  </Alert.Heading>
+                  <ul className="mb-0 ps-3">
+                    {Object.entries(validationErrors).map(([field, error]) => 
+                      error && (
+                        <li key={field} className="small">
+                          <strong>{field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {error}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </Alert>
+              )}
+            </>
+          }
+        >
+          {selectedItem && (
+            <div>
+              <div className="mb-3">
+                <strong>{selectedItem.generic_name}</strong>
+                {selectedItem.brand_name && <div className="text-muted">{selectedItem.brand_name}</div>}
+                <div className="small text-muted">Current Stock: {selectedItem.quantity_on_hand}</div>
+                {selectedItem.lot_number && (
+                  <div className="small text-muted">Lot: {selectedItem.lot_number}</div>
+                )}
+              </div>
+
+              <FormField
+                label="Actual Quantity (Physical Count)"
+                name="actual_quantity"
+                type="number"
+                value={transactionForm.actual_quantity}
+                onChange={(e) => {
+                  setTransactionForm({...transactionForm, actual_quantity: e.target.value});
+                  // Clear validation error when user starts typing
+                  if (validationErrors.actual_quantity) {
+                    setValidationErrors({...validationErrors, actual_quantity: undefined});
+                  }
+                }}
+                inputProps={{ min: 0 }}
+                required
+                helpText="Enter the actual counted quantity during physical inventory"
+                error={validationErrors.actual_quantity}
+                className={validationErrors.actual_quantity ? 'is-invalid' : ''}
+              />
+
+              <FormField
+                label="Audit Reason"
+                name="reason"
+                type="textarea"
+                rows={3}
+                value={transactionForm.reason}
+                onChange={(e) => {
+                  setTransactionForm({...transactionForm, reason: e.target.value});
+                  // Clear validation error when user starts typing
+                  if (validationErrors.reason) {
+                    setValidationErrors({...validationErrors, reason: undefined});
+                  }
+                }}
+                placeholder="Physical inventory count, cycle count, etc."
+                required
+                helpText="Provide a reason for this inventory audit"
+                error={validationErrors.reason}
+                className={validationErrors.reason ? 'is-invalid' : ''}
+              />
+            </div>
+          )}
+        </DraggableDialog>
+      )}
+
 
       {/* Transaction History Modal */}
       <Modal show={showHistoryModal} onHide={() => setShowHistoryModal(false)} size="lg">

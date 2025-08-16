@@ -1,6 +1,7 @@
 const { pool: db } = require('../config/database');
 const { handleDatabaseError } = require('./ValidationError');
 const InventoryAuditLog = require('./InventoryAuditLog');
+const InventorySnapshot = require('./InventorySnapshot');
 
 class StoreInventory {
   /**
@@ -10,7 +11,11 @@ class StoreInventory {
    * @returns {number} Inventory ID
    */
   static async add(inventoryData, performedBy = null) {
+    const connection = await db.getConnection();
+    
     try {
+      await connection.beginTransaction();
+      
       const {
         store_id,
         drug_id,
@@ -23,7 +28,8 @@ class StoreInventory {
         supplier
       } = inventoryData;
 
-      const [result] = await db.execute(`
+      // Insert new inventory item
+      const [result] = await connection.execute(`
         INSERT INTO store_inventory (
           store_id, drug_id, quantity_on_hand, reorder_level, unit_cost,
           selling_price, lot_number, expiration_date, supplier
@@ -35,24 +41,52 @@ class StoreInventory {
 
       const inventoryId = result.insertId;
 
-      // Log initial stock if quantity > 0 and performed_by is provided
+      // Log initial stock and update snapshot if quantity > 0 and performed_by is provided
       if (quantity_on_hand > 0 && performedBy) {
-        await InventoryAuditLog.logTransaction({
-          inventory_id: inventoryId,
-          store_id,
-          drug_id,
-          transaction_type: 'initial_inventory',
-          quantity_change: quantity_on_hand,
-          quantity_before: 0,
-          quantity_after: quantity_on_hand,
-          reason: 'Initial inventory stock',
-          performed_by: performedBy
-        });
+        // Log the audit transaction
+        const [auditResult] = await connection.execute(`
+          INSERT INTO inventory_audit_log (
+            inventory_id, store_id, drug_id, transaction_type, quantity_change,
+            quantity_before, quantity_after, reason, performed_by
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          inventoryId, store_id, drug_id, 'initial_inventory', quantity_on_hand,
+          0, quantity_on_hand, 'Initial inventory stock', performedBy
+        ]);
+        
+        const auditLogId = auditResult.insertId;
+
+        // Update inventory snapshot
+        await connection.execute(`
+          INSERT INTO store_inventory_snapshot (
+            store_id, drug_id, quantity_on_hand, last_transaction_id,
+            last_transaction_date, last_transaction_type, last_updated_by
+          ) VALUES (?, ?, ?, ?, NOW(), ?, ?)
+          ON DUPLICATE KEY UPDATE
+            quantity_on_hand = quantity_on_hand + ?,
+            last_transaction_id = ?,
+            last_transaction_date = NOW(),
+            last_transaction_type = ?,
+            last_updated_by = ?,
+            updated_at = CURRENT_TIMESTAMP
+        `, [
+          store_id, drug_id, quantity_on_hand, auditLogId,
+          'initial_inventory', performedBy,
+          quantity_on_hand, auditLogId, 'initial_inventory', performedBy
+        ]);
+        
+        console.log(`✅ Initial inventory added: Store ${store_id}, Drug ${drug_id}: ${quantity_on_hand} units`);
       }
 
+      await connection.commit();
       return inventoryId;
+      
     } catch (error) {
-      handleDatabaseError(error);
+      await connection.rollback();
+      console.error('❌ Add inventory failed:', error.message);
+      throw error;
+    } finally {
+      connection.release();
     }
   }
 
@@ -213,7 +247,7 @@ class StoreInventory {
   }
 
   /**
-   * Internal method: Adjust stock (add or subtract)
+   * Internal method: Adjust stock (add or subtract) with proper transaction protection
    * @param {number} id - Inventory ID
    * @param {number} adjustment - Quantity adjustment (positive or negative)
    * @param {string} reason - Reason for adjustment
@@ -223,41 +257,87 @@ class StoreInventory {
    * @returns {boolean} Success status
    */
   static async adjustStock(id, adjustment, reason = 'Stock adjustment', performedBy, transactionType = 'shipment_received', referenceNumber = null) {
+    const connection = await db.getConnection();
+    
     try {
-      // Get current inventory data
-      const inventory = await this.findById(id);
-      if (!inventory) {
-        throw new Error('Inventory item not found');
-      }
-
-      const quantityBefore = inventory.quantity_on_hand;
-      const quantityAfter = quantityBefore + adjustment;
-
-      // Update the quantity
-      const [result] = await db.execute(
-        'UPDATE store_inventory SET quantity_on_hand = quantity_on_hand + ? WHERE id = ?',
-        [adjustment, id]
+      await connection.beginTransaction();
+      
+      // Get current inventory data with row-level locking
+      const [inventoryRows] = await connection.execute(
+        'SELECT * FROM store_inventory WHERE id = ? FOR UPDATE',
+        [id]
       );
       
-      if (result.affectedRows > 0 && performedBy) {
-        // Log the transaction
-        await InventoryAuditLog.logTransaction({
-          inventory_id: id,
-          store_id: inventory.store_id,
-          drug_id: inventory.drug_id,
-          transaction_type: transactionType,
-          quantity_change: adjustment,
-          quantity_before: quantityBefore,
-          quantity_after: quantityAfter,
-          reason,
-          reference_number: referenceNumber,
-          performed_by: performedBy
-        });
+      if (!inventoryRows.length) {
+        throw new Error('Inventory item not found');
       }
       
-      return result.affectedRows > 0;
+      const inventory = inventoryRows[0];
+      const quantityBefore = inventory.quantity_on_hand;
+      const quantityAfter = quantityBefore + adjustment;
+      
+      // Validate that we don't go negative (unless it's an audit correction)
+      if (quantityAfter < 0 && transactionType !== 'audit') {
+        throw new Error(`Insufficient inventory. Available: ${quantityBefore}, Requested: ${Math.abs(adjustment)}`);
+      }
+
+      // Update the inventory quantity
+      const [updateResult] = await connection.execute(
+        'UPDATE store_inventory SET quantity_on_hand = ?, last_updated = CURRENT_TIMESTAMP WHERE id = ?',
+        [quantityAfter, id]
+      );
+      
+      if (updateResult.affectedRows === 0) {
+        throw new Error('Failed to update inventory quantity');
+      }
+      
+      // Log the audit transaction
+      let auditLogId = null;
+      if (performedBy) {
+        const [auditResult] = await connection.execute(`
+          INSERT INTO inventory_audit_log (
+            inventory_id, store_id, drug_id, transaction_type, quantity_change,
+            quantity_before, quantity_after, reason, reference_number, performed_by
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          id, inventory.store_id, inventory.drug_id, transactionType, adjustment,
+          quantityBefore, quantityAfter, reason, referenceNumber, performedBy
+        ]);
+        
+        auditLogId = auditResult.insertId;
+      }
+      
+      // Update inventory snapshot table
+      await connection.execute(`
+        INSERT INTO store_inventory_snapshot (
+          store_id, drug_id, quantity_on_hand, last_transaction_id,
+          last_transaction_date, last_transaction_type, last_updated_by
+        ) VALUES (?, ?, ?, ?, NOW(), ?, ?)
+        ON DUPLICATE KEY UPDATE
+          quantity_on_hand = quantity_on_hand + ?,
+          last_transaction_id = ?,
+          last_transaction_date = NOW(),
+          last_transaction_type = ?,
+          last_updated_by = ?,
+          updated_at = CURRENT_TIMESTAMP
+      `, [
+        inventory.store_id, inventory.drug_id, quantityAfter, auditLogId,
+        transactionType, performedBy,
+        adjustment, auditLogId, transactionType, performedBy
+      ]);
+      
+      await connection.commit();
+      
+      console.log(`✅ Stock adjustment completed: Store ${inventory.store_id}, Drug ${inventory.drug_id}: ${quantityBefore} → ${quantityAfter} (${adjustment > 0 ? '+' : ''}${adjustment})`);
+      
+      return true;
+      
     } catch (error) {
-      handleDatabaseError(error);
+      await connection.rollback();
+      console.error('❌ Stock adjustment failed:', error.message);
+      throw error;
+    } finally {
+      connection.release();
     }
   }
 

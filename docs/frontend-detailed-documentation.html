@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaTraK - Frontend Component Function Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8f9fa; }
+        .sidebar { background: #2c3e50; color: white; min-height: 100vh; position: fixed; width: 320px; overflow-y: auto; z-index: 1000; }
+        .content { margin-left: 320px; padding: 20px; }
+        .sidebar .nav-link { color: #bdc3c7; padding: 6px 15px; border-radius: 0; font-size: 14px; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #34495e; color: white; }
+        .function-card { margin-bottom: 25px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .function-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .component-header { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; margin: 30px 0 20px 0; }
+        .json-code { background: #2d3748; color: #e2e8f0; border-radius: 8px; max-height: 400px; overflow-y: auto; font-size: 13px; }
+        .file-ref { font-family: 'Monaco', 'Menlo', monospace; font-size: 11px; background: #e9ecef; padding: 2px 6px; border-radius: 3px; color: #495057; }
+        .function-signature { background: #f8f9fa; border-left: 4px solid #007bff; padding: 12px; margin: 10px 0; font-family: 'Monaco', monospace; font-size: 13px; }
+        .api-call-badge { background: #28a745; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; margin: 2px; }
+        .error-badge { background: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; }
+        .state-badge { background: #6f42c1; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; }
+        .param-table { font-size: 13px; }
+        .param-table th { background: #f8f9fa; font-weight: 600; }
+        .hierarchy { border-left: 3px solid #dee2e6; padding-left: 15px; margin-left: 10px; }
+        .function-nav { font-size: 12px; }
+        .cross-link { color: #007bff; text-decoration: none; }
+        .cross-link:hover { text-decoration: underline; }
+        .backend-link { background: #17a2b8; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; text-decoration: none; }
+        .backend-link:hover { background: #138496; color: white; }
+        .accordion-button:not(.collapsed) { background-color: #e7f3ff; color: #004085; }
+        .sample-data { background: #f1f5f9; border: 1px solid #d1ecf1; border-radius: 6px; padding: 12px; }
+        pre { margin-bottom: 0; }
+        .nav-pills .nav-link.active { background-color: #34495e; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="p-3">
+            <h5><i class="fas fa-code me-2"></i>Frontend Functions</h5>
+            <small class="text-muted">Component Function Reference</small>
+            <div class="mt-2">
+                <a href="backend-detailed-documentation.html" class="backend-link">
+                    <i class="fas fa-server me-1"></i>Backend API Docs
+                </a>
+            </div>
+        </div>
+        
+        <nav class="nav nav-pills flex-column">
+            <a class="nav-link active" href="#overview">
+                <i class="fas fa-home me-2"></i>Overview
+            </a>
+            
+            <!-- Inventory Component Functions -->
+            <div class="nav-link text-light bg-secondary"><strong>Inventory Component</strong></div>
+            <div class="hierarchy">
+                <a class="nav-link function-nav" href="#inventory-loadInventory">loadInventory()</a>
+                <a class="nav-link function-nav" href="#inventory-handleFilterChange">handleFilterChange()</a>
+                <a class="nav-link function-nav" href="#inventory-openTransactionModal">openTransactionModal()</a>
+                <a class="nav-link function-nav" href="#inventory-handleTransaction">handleTransaction()</a>
+                <a class="nav-link function-nav" href="#inventory-loadTransactionHistory">loadTransactionHistory()</a>
+                <a class="nav-link function-nav" href="#inventory-calculateRunningBalance">calculateRunningBalance()</a>
+                <a class="nav-link function-nav" href="#inventory-getSortedTransactions">getSortedTransactions()</a>
+                <a class="nav-link function-nav" href="#inventory-getAvailablePrescriptions">getAvailablePrescriptions()</a>
+            </div>
+            
+            <!-- UserManagement Component Functions -->
+            <div class="nav-link text-light bg-secondary"><strong>UserManagement Component</strong></div>
+            <div class="hierarchy">
+                <a class="nav-link function-nav" href="#user-loadUsers">loadUsers()</a>
+                <a class="nav-link function-nav" href="#user-handleCreateUser">handleCreateUser()</a>
+                <a class="nav-link function-nav" href="#user-handleEditUser">handleEditUser()</a>
+                <a class="nav-link function-nav" href="#user-handleUpdatePassword">handleUpdatePassword()</a>
+                <a class="nav-link function-nav" href="#user-handleDeleteUser">handleDeleteUser()</a>
+                <a class="nav-link function-nav" href="#user-getUserActions">getUserActions()</a>
+            </div>
+            
+            <!-- Dashboard Component Functions -->
+            <div class="nav-link text-light bg-secondary"><strong>Dashboard Component</strong></div>
+            <div class="hierarchy">
+                <a class="nav-link function-nav" href="#dashboard-loadDashboardData">loadDashboardData()</a>
+                <a class="nav-link function-nav" href="#dashboard-refreshStats">refreshStats()</a>
+                <a class="nav-link function-nav" href="#dashboard-handleQuickAction">handleQuickAction()</a>
+            </div>
+            
+            <!-- Other Components -->
+            <div class="nav-link text-light bg-secondary"><strong>Other Components</strong></div>
+            <div class="hierarchy">
+                <a class="nav-link function-nav" href="#login-handleSubmit">Login.handleSubmit()</a>
+                <a class="nav-link function-nav" href="#fda-search-functions">FDASearch Functions</a>
+                <a class="nav-link function-nav" href="#ndc-audit-functions">NDCAuditReport Functions</a>
+            </div>
+            
+            <a class="nav-link" href="#error-patterns">
+                <i class="fas fa-exclamation-triangle me-2"></i>Error Patterns
+            </a>
+            <a class="nav-link" href="#state-management">
+                <i class="fas fa-layer-group me-2"></i>State Management
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Overview Section -->
+        <section id="overview">
+            <div class="card function-card">
+                <div class="card-header component-header">
+                    <h2><i class="fas fa-code me-2"></i>Frontend Function Documentation</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4>Recursive Function Analysis</h4>
+                            <p class="lead">This documentation provides comprehensive function-level analysis of all React components in the PharmaTraK frontend, including detailed input/output samples, API calls, state changes, and error handling patterns.</p>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Navigation:</strong> Each function includes cross-references to the backend API endpoints it calls. 
+                                Click the <span class="backend-link">Backend API Docs</span> button to view corresponding backend documentation.
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h5>Documentation Scope</h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-layer-group text-primary me-2"></i><strong>24</strong> React Components</li>
+                                <li><i class="fas fa-cog text-success me-2"></i><strong>150+</strong> Component Functions</li>
+                                <li><i class="fas fa-plug text-warning me-2"></i><strong>45+</strong> API Integrations</li>
+                                <li><i class="fas fa-database text-info me-2"></i><strong>Sample Data</strong> for all I/O</li>
+                                <li><i class="fas fa-shield-alt text-secondary me-2"></i><strong>Error Handling</strong> Patterns</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Inventory Component Functions -->
+        <section id="inventory-functions">
+            <div class="card function-card">
+                <div class="card-header component-header">
+                    <h2><i class="fas fa-boxes me-2"></i>Inventory Component Functions</h2>
+                    <small class="text-light">File: <span class="file-ref text-light">frontend/src/components/Inventory.js</span></small>
+                </div>
+            </div>
+
+            <!-- loadInventory Function -->
+            <div class="card function-card" id="inventory-loadInventory">
+                <div class="card-header function-header">
+                    <h4><i class="fas fa-download me-2"></i>loadInventory()</h4>
+                    <span class="file-ref">Line 178-207</span>
+                </div>
+                <div class="card-body">
+                    <div class="function-signature">
+                        <strong>async loadInventory(): Promise&lt;void&gt;</strong>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Loads paginated inventory data from the API with filtering, search, and store-specific parameters. This is the core data loading function for the inventory management interface.</p>
+                            
+                            <h5>Parameters</h5>
+                            <div class="alert alert-secondary">
+                                <strong>None</strong> - Uses component state (<code>filters</code>, <code>user.store_id</code>)
+                            </div>
+                            
+                            <h5>API Calls</h5>
+                            <span class="api-call-badge">inventoryAPI.getByStore()</span>
+                            <a href="backend-detailed-documentation.html#get-inventory-store" class="backend-link ms-2">
+                                <i class="fas fa-external-link-alt me-1"></i>Backend: GET /api/inventory/store/:id
+                            </a>
+                            
+                            <h5>State Changes</h5>
+                            <span class="state-badge">inventory</span>
+                            <span class="state-badge">pagination</span>
+                            <span class="state-badge">loading</span>
+                            <span class="state-badge">error</span>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Request Parameters Built</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "page": 1,
+  "limit": 20,
+  "active": true,
+  "search": "acetaminophen",
+  "low_stock": false,
+  "expiring_days": 30
+}</code></pre>
+                            
+                            <h5>Sample Response Data</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "inventory": [
+    {
+      "id": 123,
+      "generic_name": "Acetaminophen",
+      "brand_name": "TYLENOL Regular Strength",
+      "ndc": "00003-0232-21",
+      "quantity_on_hand": 896,
+      "reorder_level": 264,
+      "unit_cost": "29.5600",
+      "selling_price": "106.2700",
+      "expiration_date": "2025-12-31",
+      "supplier": "Cardinal Health"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 145,
+    "pages": 8
+  }
+}</code></pre>
+                            
+                            <h5>Error Handling</h5>
+                            <span class="error-badge">Network Errors</span>
+                            <span class="error-badge">Store Access Denied</span>
+                            <span class="error-badge">Invalid Parameters</span>
+                            
+                            <div class="sample-data mt-2">
+                                <strong>Error Response:</strong> Sets user-friendly error message, logs technical details to console
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- handleFilterChange Function -->
+            <div class="card function-card" id="inventory-handleFilterChange">
+                <div class="card-header function-header">
+                    <h4><i class="fas fa-filter me-2"></i>handleFilterChange(key, value)</h4>
+                    <span class="file-ref">Line 209-220</span>
+                </div>
+                <div class="card-body">
+                    <div class="function-signature">
+                        <strong>handleFilterChange(key: string, value: any): void</strong>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Updates search filters and synchronizes with URL parameters for bookmarkable filtered views. Triggers automatic data reload.</p>
+                            
+                            <h5>Parameters</h5>
+                            <table class="table table-sm param-table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>key</code></td>
+                                        <td>string</td>
+                                        <td>Filter field name</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>value</code></td>
+                                        <td>any</td>
+                                        <td>Filter value to set</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <h5>State Changes</h5>
+                            <span class="state-badge">filters</span>
+                            <span class="state-badge">URL searchParams</span>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Sample Function Calls</h5>
+                            <pre class="json-code"><code class="language-javascript">// Text search
+handleFilterChange('search', 'aspirin')
+
+// Boolean filter
+handleFilterChange('low_stock', true)
+
+// Clear filter
+handleFilterChange('expiring', false)
+
+// Special filter
+handleFilterChange('filter', 'low_stock')</code></pre>
+                            
+                            <h5>URL Parameter Updates</h5>
+                            <div class="sample-data">
+                                <strong>Before:</strong> <code>/inventory</code><br>
+                                <strong>After:</strong> <code>/inventory?search=aspirin&low_stock=true</code>
+                            </div>
+                            
+                            <h5>Side Effects</h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-arrow-right text-primary me-2"></i>Triggers <code>loadInventory()</code> via useEffect</li>
+                                <li><i class="fas fa-arrow-right text-primary me-2"></i>Updates browser URL for bookmarking</li>
+                                <li><i class="fas fa-arrow-right text-primary me-2"></i>Maintains filter state across page reloads</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- openTransactionModal Function -->
+            <div class="card function-card" id="inventory-openTransactionModal">
+                <div class="card-header function-header">
+                    <h4><i class="fas fa-edit me-2"></i>openTransactionModal(type, item)</h4>
+                    <span class="file-ref">Line 315-378</span>
+                </div>
+                <div class="card-body">
+                    <div class="function-signature">
+                        <strong>async openTransactionModal(type: string, item: object): Promise&lt;void&gt;</strong>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Prepares and opens the transaction modal with type-specific form fields and validation. For return transactions, loads available prescriptions.</p>
+                            
+                            <h5>Parameters</h5>
+                            <table class="table table-sm param-table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>type</code></td>
+                                        <td>string</td>
+                                        <td>'prescription', 'return', 'expire', 'audit'</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>item</code></td>
+                                        <td>object</td>
+                                        <td>Selected inventory item</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <h5>API Calls (Conditional)</h5>
+                            <span class="api-call-badge">auditAPI.getInventoryHistory()</span>
+                            <a href="backend-detailed-documentation.html#get-audit-inventory" class="backend-link ms-2">
+                                <i class="fas fa-external-link-alt me-1"></i>Backend: GET /api/audit/inventory/:id
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Sample Item Parameter</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "id": 123,
+  "generic_name": "Acetaminophen",
+  "brand_name": "TYLENOL Regular Strength",
+  "quantity_on_hand": 896,
+  "reorder_level": 264,
+  "ndc": "00003-0232-21"
+}</code></pre>
+                            
+                            <h5>Transaction Type Behaviors</h5>
+                            <div class="accordion" id="transactionTypeAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#prescription-collapse">
+                                            Prescription Fill
+                                        </button>
+                                    </h2>
+                                    <div id="prescription-collapse" class="accordion-collapse collapse">
+                                        <div class="accordion-body">
+                                            <ul>
+                                                <li>Requires: quantity, prescription_number</li>
+                                                <li>Validates: quantity &le; available stock</li>
+                                                <li>Action: Subtracts from inventory</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#return-collapse">
+                                            Return to Stock
+                                        </button>
+                                    </h2>
+                                    <div id="return-collapse" class="accordion-collapse collapse">
+                                        <div class="accordion-body">
+                                            <ul>
+                                                <li>Loads available prescriptions for return</li>
+                                                <li>Dropdown for prescription selection</li>
+                                                <li>Action: Adds back to inventory</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#audit-collapse">
+                                            Inventory Audit
+                                        </button>
+                                    </h2>
+                                    <div id="audit-collapse" class="accordion-collapse collapse">
+                                        <div class="accordion-body">
+                                            <ul>
+                                                <li>Shows current quantity: {item.quantity_on_hand}</li>
+                                                <li>Requires: actual_quantity, reason</li>
+                                                <li>Action: Sets inventory to actual count</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- handleTransaction Function -->
+            <div class="card function-card" id="inventory-handleTransaction">
+                <div class="card-header function-header">
+                    <h4><i class="fas fa-exchange-alt me-2"></i>handleTransaction()</h4>
+                    <span class="file-ref">Line 380-465</span>
+                </div>
+                <div class="card-body">
+                    <div class="function-signature">
+                        <strong>async handleTransaction(): Promise&lt;void&gt;</strong>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Processes inventory transactions by calling appropriate API endpoints based on transaction type. Includes comprehensive validation and error handling.</p>
+                            
+                            <h5>API Calls (Type-Dependent)</h5>
+                            <div class="mb-2">
+                                <span class="api-call-badge">inventoryAPI.fillPrescription()</span>
+                                <a href="backend-detailed-documentation.html#post-fill-prescription" class="backend-link ms-1">Backend</a>
+                            </div>
+                            <div class="mb-2">
+                                <span class="api-call-badge">inventoryAPI.returnToStock()</span>
+                                <a href="backend-detailed-documentation.html#post-return-stock" class="backend-link ms-1">Backend</a>
+                            </div>
+                            <div class="mb-2">
+                                <span class="api-call-badge">inventoryAPI.expire()</span>
+                                <a href="backend-detailed-documentation.html#post-expire" class="backend-link ms-1">Backend</a>
+                            </div>
+                            <div class="mb-2">
+                                <span class="api-call-badge">inventoryAPI.audit()</span>
+                                <a href="backend-detailed-documentation.html#post-audit" class="backend-link ms-1">Backend</a>
+                            </div>
+                            
+                            <h5>Validation Rules</h5>
+                            <ul>
+                                <li><strong>Prescription:</strong> quantity > 0, prescription_number required</li>
+                                <li><strong>Return:</strong> quantity > 0, reason required</li>
+                                <li><strong>Expire:</strong> quantity > 0, reason required</li>
+                                <li><strong>Audit:</strong> actual_quantity ≥ 0, reason required</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Sample Transaction Data</h5>
+                            <div class="accordion" id="transactionDataAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#prescription-data">
+                                            Prescription Fill Data
+                                        </button>
+                                    </h2>
+                                    <div id="prescription-data" class="accordion-collapse collapse show">
+                                        <div class="accordion-body">
+                                            <pre class="json-code"><code class="language-json">{
+  "quantity": 30,
+  "prescription_number": "RX789012345",
+  "reason": "Prescription fill for chronic condition"
+}</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#return-data">
+                                            Return Data
+                                        </button>
+                                    </h2>
+                                    <div id="return-data" class="accordion-collapse collapse">
+                                        <div class="accordion-body">
+                                            <pre class="json-code"><code class="language-json">{
+  "quantity": 10,
+  "reason": "Patient returned unused medication",
+  "reference_number": "RX789012345"
+}</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#audit-data">
+                                            Audit Data
+                                        </button>
+                                    </h2>
+                                    <div id="audit-data" class="accordion-collapse collapse">
+                                        <div class="accordion-body">
+                                            <pre class="json-code"><code class="language-json">{
+  "actual_quantity": 87,
+  "reason": "Physical inventory count - Q1 2024"
+}</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h5>Success Response Actions</h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Close transaction modal</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Reload inventory data</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Refresh transaction history (if open)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Clear form data</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- calculateRunningBalance Function -->
+            <div class="card function-card" id="inventory-calculateRunningBalance">
+                <div class="card-header function-header">
+                    <h4><i class="fas fa-calculator me-2"></i>calculateRunningBalance(transactions)</h4>
+                    <span class="file-ref">Line 93-113</span>
+                </div>
+                <div class="card-body">
+                    <div class="function-signature">
+                        <strong>calculateRunningBalance(transactions: Array): Array</strong>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Calculates running balance for transaction register display, ensuring chronological order and handling concurrent transactions properly.</p>
+                            
+                            <h5>Algorithm</h5>
+                            <ol>
+                                <li>Sort transactions by date + ID (chronological)</li>
+                                <li>Initialize running balance to 0</li>
+                                <li>Add quantity_change to running balance</li>
+                                <li>Attach calculated_running_balance to each transaction</li>
+                            </ol>
+                            
+                            <h5>Business Logic</h5>
+                            <ul>
+                                <li>Uses transaction ID as tiebreaker for same timestamp</li>
+                                <li>Ensures audit trail accuracy</li>
+                                <li>Handles negative adjustments (fills, expirations)</li>
+                                <li>Handles positive adjustments (returns, receipts)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Sample Input/Output</h5>
+                            <pre class="json-code"><code class="language-javascript">// Input transactions
+[
+  { id: 1, quantity_change: 100, transaction_date: "2024-01-01" },
+  { id: 2, quantity_change: -30, transaction_date: "2024-01-02" },
+  { id: 3, quantity_change: -20, transaction_date: "2024-01-03" },
+  { id: 4, quantity_change: 10, transaction_date: "2024-01-04" }
+]
+
+// Output with running balances
+[
+  { 
+    id: 1, 
+    quantity_change: 100, 
+    calculated_running_balance: 100 
+  },
+  { 
+    id: 2, 
+    quantity_change: -30, 
+    calculated_running_balance: 70 
+  },
+  { 
+    id: 3, 
+    quantity_change: -20, 
+    calculated_running_balance: 50 
+  },
+  { 
+    id: 4, 
+    quantity_change: 10, 
+    calculated_running_balance: 60 
+  }
+]</code></pre>
+                            
+                            <h5>Edge Cases Handled</h5>
+                            <span class="error-badge">Same Timestamp</span>
+                            <span class="error-badge">Missing Dates</span>
+                            <span class="error-badge">Negative Balances</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- UserManagement Component Functions -->
+        <section id="user-functions">
+            <div class="card function-card">
+                <div class="card-header component-header">
+                    <h2><i class="fas fa-users me-2"></i>UserManagement Component Functions</h2>
+                    <small class="text-light">File: <span class="file-ref text-light">frontend/src/components/UserManagement.js</span></small>
+                </div>
+            </div>
+
+            <!-- loadUsers Function -->
+            <div class="card function-card" id="user-loadUsers">
+                <div class="card-header function-header">
+                    <h4><i class="fas fa-users me-2"></i>loadUsers()</h4>
+                    <span class="file-ref">Line 89-142</span>
+                </div>
+                <div class="card-body">
+                    <div class="function-signature">
+                        <strong>async loadUsers(): Promise&lt;void&gt;</strong>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Loads paginated user data with filtering and search capabilities. Handles admin access validation and error display.</p>
+                            
+                            <h5>API Calls</h5>
+                            <span class="api-call-badge">userAPI.getAll()</span>
+                            <a href="backend-detailed-documentation.html#get-users" class="backend-link ms-2">
+                                <i class="fas fa-external-link-alt me-1"></i>Backend: GET /api/users
+                            </a>
+                            
+                            <h5>Access Control</h5>
+                            <div class="alert alert-warning">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                <strong>Admin Only:</strong> Redirects non-admin users to dashboard
+                            </div>
+                            
+                            <h5>State Changes</h5>
+                            <span class="state-badge">users</span>
+                            <span class="state-badge">totalPages</span>
+                            <span class="state-badge">loading</span>
+                            <span class="state-badge">error</span>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Query Parameters Built</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "page": 1,
+  "limit": 10,
+  "search": "john",
+  "role": "admin",
+  "active": true,
+  "store_id": 1
+}</code></pre>
+                            
+                            <h5>Sample Response</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "users": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "5551234567",
+      "store_name": "Main Pharmacy",
+      "role": "admin",
+      "is_active": true,
+      "date_created": "2024-01-15T10:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 25,
+    "pages": 3
+  }
+}</code></pre>
+                            
+                            <h5>Error Handling</h5>
+                            <ul>
+                                <li><strong>403 Forbidden:</strong> Insufficient permissions</li>
+                                <li><strong>Network Errors:</strong> Connection issues</li>
+                                <li><strong>Invalid Parameters:</strong> Validation failures</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- handleDeleteUser Function -->
+            <div class="card function-card" id="user-handleDeleteUser">
+                <div class="card-header function-header">
+                    <h4><i class="fas fa-trash me-2"></i>handleDeleteUser()</h4>
+                    <span class="file-ref">Line 315-345</span>
+                </div>
+                <div class="card-body">
+                    <div class="function-signature">
+                        <strong>async handleDeleteUser(): Promise&lt;void&gt;</strong>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Performs user account deactivation (soft delete) with comprehensive business rule validation and god_mode privilege handling.</p>
+                            
+                            <h5>API Calls</h5>
+                            <span class="api-call-badge">userAPI.delete()</span>
+                            <a href="backend-detailed-documentation.html#delete-user" class="backend-link ms-2">
+                                <i class="fas fa-external-link-alt me-1"></i>Backend: DELETE /api/users/:id
+                            </a>
+                            
+                            <h5>Business Rules Enforced</h5>
+                            <ul>
+                                <li><strong>Self-Protection:</strong> Cannot delete own account</li>
+                                <li><strong>Admin Protection:</strong> Regular admins cannot delete other admins</li>
+                                <li><strong>God Mode Override:</strong> god_mode users can delete admins</li>
+                                <li><strong>Last Admin Rule:</strong> Cannot delete last admin for a store</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Validation Logic Flow</h5>
+                            <pre class="json-code"><code class="language-javascript">// Client-side validation
+if (selectedUser.id === user.id) {
+  setError("Cannot delete your own account");
+  return;
+}
+
+// Server validates:
+// 1. Admin deletion privileges (god_mode required)
+// 2. Last admin per store rule
+// 3. User exists and is active</code></pre>
+                            
+                            <h5>Possible Server Responses</h5>
+                            <div class="accordion" id="deleteResponseAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#delete-success">
+                                            Success (200)
+                                        </button>
+                                    </h2>
+                                    <div id="delete-success" class="accordion-collapse collapse show">
+                                        <div class="accordion-body">
+                                            <pre class="json-code"><code class="language-json">{
+  "message": "User deactivated successfully"
+}</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#delete-forbidden">
+                                            Forbidden (403)
+                                        </button>
+                                    </h2>
+                                    <div id="delete-forbidden" class="accordion-collapse collapse">
+                                        <div class="accordion-body">
+                                            <pre class="json-code"><code class="language-json">{
+  "error": "Admin users cannot be deleted. To remove admin access, change their role to user instead."
+}</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#delete-last-admin">
+                                            Last Admin (400)
+                                        </button>
+                                    </h2>
+                                    <div id="delete-last-admin" class="accordion-collapse collapse">
+                                        <div class="accordion-body">
+                                            <pre class="json-code"><code class="language-json">{
+  "error": "Cannot delete the last admin for this store. Each store must have at least one admin."
+}</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Component Functions -->
+        <section id="dashboard-functions">
+            <div class="card function-card">
+                <div class="card-header component-header">
+                    <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard Component Functions</h2>
+                    <small class="text-light">File: <span class="file-ref text-light">frontend/src/components/Dashboard.js</span></small>
+                </div>
+            </div>
+
+            <!-- loadDashboardData Function -->
+            <div class="card function-card" id="dashboard-loadDashboardData">
+                <div class="card-header function-header">
+                    <h4><i class="fas fa-chart-line me-2"></i>loadDashboardData()</h4>
+                    <span class="file-ref">Line 45-123</span>
+                </div>
+                <div class="card-body">
+                    <div class="function-signature">
+                        <strong>async loadDashboardData(): Promise&lt;void&gt;</strong>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Loads all dashboard data in parallel using Promise.allSettled for resilient error handling. Provides comprehensive overview of pharmacy operations.</p>
+                            
+                            <h5>Concurrent API Calls</h5>
+                            <div class="mb-1"><span class="api-call-badge">inventoryAPI.getStats()</span></div>
+                            <div class="mb-1"><span class="api-call-badge">inventoryAPI.getLowStock()</span></div>
+                            <div class="mb-1"><span class="api-call-badge">inventoryAPI.getExpiring()</span></div>
+                            <div class="mb-1"><span class="api-call-badge">auditAPI.getStoreHistory()</span></div>
+                            <div class="mb-1"><span class="api-call-badge">drugAPI.getStats()</span> <small>(Admin)</small></div>
+                            <div class="mb-1"><span class="api-call-badge">storeAPI.getStats()</span> <small>(Admin)</small></div>
+                            
+                            <a href="backend-detailed-documentation.html#dashboard-endpoints" class="backend-link">
+                                <i class="fas fa-external-link-alt me-1"></i>All Backend Endpoints
+                            </a>
+                            
+                            <h5>Error Resilience</h5>
+                            <p>Uses <code>Promise.allSettled()</code> to prevent one failed API call from breaking the entire dashboard.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Consolidated Response Structure</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "inventory": {
+    "total_items": 150,
+    "active_items": 145,
+    "low_stock_items": 12,
+    "expiring_items": 8,
+    "total_inventory_value": "15750.25",
+    "avg_quantity": "45.7"
+  },
+  "lowStock": [
+    {
+      "id": 45,
+      "generic_name": "Aspirin",
+      "brand_name": "Bayer",
+      "quantity_on_hand": 5,
+      "reorder_level": 25
+    }
+  ],
+  "expiring": [
+    {
+      "id": 67,
+      "generic_name": "Ibuprofen", 
+      "expiration_date": "2024-02-15",
+      "days_until_expiration": 12
+    }
+  ],
+  "recentTransactions": [
+    {
+      "transaction_date": "2024-01-15T14:30:00Z",
+      "transaction_type": "prescription_fill",
+      "generic_name": "Acetaminophen",
+      "quantity_change": -30,
+      "performed_by_name": "John Doe"
+    }
+  ]
+}</code></pre>
+                            
+                            <h5>Role-Based Data Loading</h5>
+                            <ul>
+                                <li><strong>All Users:</strong> Store inventory stats, alerts, recent transactions</li>
+                                <li><strong>Admins:</strong> + System-wide drug statistics</li>
+                                <li><strong>God Mode:</strong> + Multi-store statistics and global metrics</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Login Component Functions -->
+        <section id="login-handleSubmit">
+            <div class="card function-card">
+                <div class="card-header function-header">
+                    <h4><i class="fas fa-sign-in-alt me-2"></i>Login.handleSubmit(e)</h4>
+                    <span class="file-ref">frontend/src/components/Login.js:26-39</span>
+                </div>
+                <div class="card-body">
+                    <div class="function-signature">
+                        <strong>async handleSubmit(e: Event): Promise&lt;void&gt;</strong>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Handles user authentication form submission with loading states and error handling. Integrates with AuthContext for application-wide authentication state.</p>
+                            
+                            <h5>API Calls</h5>
+                            <span class="api-call-badge">login() from AuthContext</span>
+                            <div class="small text-muted">→ authAPI.login() → POST /api/auth/login</div>
+                            
+                            <h5>Form Data</h5>
+                            <ul>
+                                <li><code>email</code> - User email address</li>
+                                <li><code>password</code> - User password</li>
+                                <li><code>rememberMe</code> - Extended session flag</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Request Data</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "email": "admin@pharmatrak.com",
+  "password": "Admin123!",
+  "rememberMe": false
+}</code></pre>
+                            
+                            <h5>Success Response</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "name": "Demo Admin",
+    "email": "admin@pharmatrak.com",
+    "role": "god_mode",
+    "store_id": 1
+  }
+}</code></pre>
+                            
+                            <h5>Error Scenarios</h5>
+                            <span class="error-badge">Invalid Credentials</span>
+                            <span class="error-badge">Account Deactivated</span>
+                            <span class="error-badge">Rate Limited</span>
+                            <span class="error-badge">Network Error</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Error Patterns Section -->
+        <section id="error-patterns">
+            <div class="card function-card">
+                <div class="card-header component-header">
+                    <h2><i class="fas fa-exclamation-triangle me-2"></i>Error Handling Patterns</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>Frontend Error Handling Strategy</h4>
+                            
+                            <h5>1. API Error Extraction</h5>
+                            <pre class="json-code"><code class="language-javascript">try {
+  await apiCall();
+} catch (err) {
+  const errorMessage = 
+    err.response?.data?.message || 
+    err.response?.data?.error ||
+    err.message ||
+    'An error occurred';
+  setError(errorMessage);
+}</code></pre>
+                            
+                            <h5>2. Validation Error Arrays</h5>
+                            <pre class="json-code"><code class="language-javascript">// Server returns validation errors
+{
+  "errors": [
+    {"field": "email", "message": "Invalid format"},
+    {"field": "password", "message": "Too short"}
+  ]
+}
+
+// Frontend handling
+const errorMessages = error.response?.data?.errors
+  ?.map(err => `${err.field}: ${err.message}`)
+  .join(', ') || 'Validation failed';</code></pre>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Common Error Response Formats</h4>
+                            
+                            <h5>Authentication Errors (401)</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "error": "Invalid credentials",
+  "code": "AUTH_FAILED"
+}</code></pre>
+                            
+                            <h5>Permission Errors (403)</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "error": "Insufficient permissions",
+  "required_role": "admin",
+  "user_role": "user"
+}</code></pre>
+                            
+                            <h5>Business Logic Errors (400)</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "error": "Cannot delete the last admin for this store",
+  "code": "BUSINESS_RULE_VIOLATION",
+  "details": {
+    "rule": "minimum_store_admins",
+    "current_count": 1,
+    "minimum_required": 1
+  }
+}</code></pre>
+                            
+                            <h5>Server Errors (500)</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "error": "Internal server error",
+  "request_id": "req_123456",
+  "timestamp": "2024-01-15T10:30:00Z"
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- State Management Section -->
+        <section id="state-management">
+            <div class="card function-card">
+                <div class="card-header component-header">
+                    <h2><i class="fas fa-layer-group me-2"></i>State Management Patterns</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>Component State Patterns</h4>
+                            
+                            <h5>1. Data Loading State</h5>
+                            <pre class="json-code"><code class="language-javascript">const [data, setData] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState('');
+
+const loadData = async () => {
+  try {
+    setLoading(true);
+    setError('');
+    const response = await api.getData();
+    setData(response.data);
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};</code></pre>
+                            
+                            <h5>2. Form State Management</h5>
+                            <pre class="json-code"><code class="language-javascript">const [formData, setFormData] = useState({
+  name: '',
+  email: '',
+  phone: ''
+});
+
+const handleChange = (e) => {
+  const { name, value, type, checked } = e.target;
+  setFormData(prev => ({
+    ...prev,
+    [name]: type === 'checkbox' ? checked : value
+  }));
+};</code></pre>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Context-Based State</h4>
+                            
+                            <h5>AuthContext Usage</h5>
+                            <pre class="json-code"><code class="language-javascript">const { user, login, logout } = useAuth();
+
+// User object structure
+{
+  id: 1,
+  name: "John Doe",
+  email: "john@example.com",
+  role: "admin", // "user", "admin", "god_mode"
+  store_id: 1,
+  store_name: "Main Pharmacy"
+}</code></pre>
+                            
+                            <h5>URL State Synchronization</h5>
+                            <pre class="json-code"><code class="language-javascript">const [searchParams, setSearchParams] = useSearchParams();
+
+// Read from URL
+const [filters, setFilters] = useState({
+  search: searchParams.get('search') || '',
+  active: searchParams.get('active') !== 'false'
+});
+
+// Update URL when filters change
+const updateFilters = (key, value) => {
+  const newParams = new URLSearchParams(searchParams);
+  if (value) {
+    newParams.set(key, value);
+  } else {
+    newParams.delete(key);
+  }
+  setSearchParams(newParams);
+};</code></pre>
+                            
+                            <h5>Modal State Pattern</h5>
+                            <pre class="json-code"><code class="language-javascript">const [showModal, setShowModal] = useState(false);
+const [modalType, setModalType] = useState('');
+const [selectedItem, setSelectedItem] = useState(null);
+
+const openModal = (type, item) => {
+  setModalType(type);
+  setSelectedItem(item);
+  setShowModal(true);
+};
+
+const closeModal = () => {
+  setShowModal(false);
+  setModalType('');
+  setSelectedItem(null);
+};</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script>
+        // Smooth scrolling and active navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Update active nav link
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                }
+            });
+        });
+        
+        // Intersection observer for active sections
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    const navLink = document.querySelector(`a[href="#${id}"]`);
+                    if (navLink) {
+                        document.querySelectorAll('.nav-link').forEach(link => {
+                            link.classList.remove('active');
+                        });
+                        navLink.classList.add('active');
+                    }
+                }
+            });
+        }, { threshold: 0.3 });
+        
+        document.querySelectorAll('section[id], .function-card[id]').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>

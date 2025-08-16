@@ -52,7 +52,7 @@ const {
   verifyDate,
   verifyId 
 } = require('../middleware/dataVerification');
-const debugLogger = require('../utils/debugLogger');
+const debugLogger = require('../utilities/debug/debugLogger');
 
 const router = express.Router();
 

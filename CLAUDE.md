@@ -37,6 +37,26 @@
   - `logs/` - Centralized log files
 - **Created comprehensive README files** for each directory
 
+### 🔒 SQL Transaction Protection Implemented (COMPLETED)
+- **Issue**: Inventory operations were not properly protected with SQL transactions
+- **Issue**: Inventory snapshot table was not automatically updated when drug actions were performed
+- **Solution**: Implemented comprehensive SQL transaction protection with:
+  1. **Row-level locking** with `FOR UPDATE` to prevent race conditions
+  2. **Automatic rollback** on any errors during inventory operations
+  3. **Atomic snapshot updates** within the same transaction
+  4. **Proper connection pooling** with transaction management
+  5. **Validation** to prevent negative inventory (except audit corrections)
+- **Files Modified**:
+  - `models/StoreInventory.js`: `adjustStock()` and `add()` methods now use proper SQL transactions
+  - Added comprehensive test suite in `test_inventory_transactions.js`
+- **Transaction Types Supported**:
+  - `shipment_received` - Adding inventory from shipments
+  - `prescription_fill` - Dispensing medications
+  - `return_to_stock` - Returning medications to inventory
+  - `expire` - Removing expired medications
+  - `audit` - Correcting inventory counts (can go negative)
+  - `initial_inventory` - Setting up new inventory items
+
 ### 🐛 DraggableDialog Issue (In Progress)
 - **Issue**: Delete user dialog not draggable
 - **Debug Steps**: Added console logging to identify where drag functionality breaks
@@ -77,7 +97,39 @@
 - ✅ All 500 status code errors resolved
 - ✅ CORS configuration working
 - ✅ Login and dashboard working
+- ✅ **SQL Transaction Protection implemented and tested**
+- ✅ **Inventory snapshot table automatically updated**
+- ✅ **All inventory operations properly protected with transactions**
 - ⏳ DraggableDialog drag functionality being debugged
+
+## New Transaction Safety Features
+
+### ✅ What's Now Protected
+All inventory operations now use proper SQL transactions with automatic rollback:
+
+1. **Inventory Adjustments** (`StoreInventory.adjustStock`):
+   - Uses row-level locking (`FOR UPDATE`) to prevent race conditions
+   - Validates inventory quantities before changes
+   - Automatically updates audit log and snapshot table
+   - Rolls back entire transaction on any error
+
+2. **Initial Inventory** (`StoreInventory.add`):
+   - Creates inventory item and audit log in single transaction
+   - Updates snapshot table atomically
+   - Ensures data consistency from the start
+
+3. **Prescription Operations**:
+   - `fillPrescription()` - Protected with transaction rollback
+   - `returnToStock()` - Atomic updates with audit logging
+   - `expireMedication()` - Safe removal with proper tracking
+   - `auditInventory()` - Can adjust to actual counts safely
+
+### ✅ Data Integrity Guarantees
+- **No partial updates**: Either all changes succeed or none do
+- **Consistent snapshots**: Inventory and snapshot tables always match
+- **Audit trail**: All changes properly logged with transaction context
+- **Race condition protection**: Row-level locking prevents concurrent conflicts
+- **Validation**: Cannot create negative inventory (except authorized audits)
 
 ## File Organization Summary (Updated)
 ```

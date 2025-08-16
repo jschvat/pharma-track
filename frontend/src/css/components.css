@@ -887,6 +887,195 @@
   opacity: 1 !important;
 }
 
+/* Fix dropdown positioning within draggable dialogs */
+.draggable-dialog .modal-body {
+  position: relative;
+  overflow: visible;
+  z-index: 1;
+  /* Ensure proper stacking context */
+  isolation: isolate;
+}
+
+.draggable-dialog .form-select {
+  position: relative;
+  z-index: 1052;
+  /* Force the select to respect container bounds */
+  transform: none !important;
+}
+
+.draggable-dialog select {
+  position: relative !important;
+  z-index: 1052 !important;
+  /* Prevent dropdown from breaking out of container */
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Ensure form controls stay within dialog bounds */
+.draggable-dialog .form-control,
+.draggable-dialog .form-select {
+  max-width: 100%;
+  box-sizing: border-box;
+  /* Reset any transforms that might affect positioning */
+  transform: none !important;
+}
+
+/* Handle Bootstrap select dropdown positioning */
+.draggable-dialog .dropdown-menu {
+  position: absolute !important;
+  z-index: 1053 !important;
+  max-height: 200px;
+  overflow-y: auto;
+  /* Ensure dropdown stays within viewport */
+  max-width: calc(100vw - 40px);
+}
+
+/* Additional fix for transformed containers */
+.draggable-dialog-container {
+  /* Create new stacking context to contain dropdowns */
+  isolation: isolate;
+}
+
+.draggable-dialog-container select {
+  /* Prevent browser from repositioning select dropdown */
+  position: relative !important;
+  z-index: auto !important;
+}
+
+/* Force select dropdowns to respect container positioning */
+.draggable-dialog-container .form-select option {
+  position: static !important;
+}
+
+/* Custom Bootstrap Dropdown positioning within draggable dialogs */
+.draggable-dialog .dropdown-menu {
+  position: absolute !important;
+  z-index: 1055 !important;
+  transform: none !important;
+  will-change: auto !important;
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #ced4da;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.draggable-dialog .dropdown-toggle {
+  border: 1px solid #ced4da;
+  background-color: #fff;
+  color: #495057;
+}
+
+.draggable-dialog .dropdown-toggle:focus,
+.draggable-dialog .dropdown-toggle:active {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.draggable-dialog .dropdown-toggle.is-invalid {
+  border-color: #dc3545;
+}
+
+.draggable-dialog .dropdown-item {
+  padding: 0.4rem 0.75rem;
+  word-wrap: break-word;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  border-bottom: 1px solid #f1f3f4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.draggable-dialog .dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.draggable-dialog .dropdown-item .prescription-table {
+  display: table;
+  width: 100%;
+  font-size: 0.8rem;
+  table-layout: fixed;
+}
+
+.draggable-dialog .dropdown-item .prescription-row {
+  display: table-row;
+}
+
+.draggable-dialog .dropdown-item .prescription-cell {
+  display: table-cell;
+  padding-right: 16px;
+  vertical-align: middle;
+}
+
+.draggable-dialog .dropdown-item .prescription-cell.rx-number {
+  font-weight: bold;
+  color: #2c3e50;
+  width: 30%;
+  min-width: 100px;
+}
+
+.draggable-dialog .dropdown-item .prescription-cell.date {
+  color: #6c757d;
+  width: 25%;
+  font-size: 0.75rem;
+  min-width: 85px;
+}
+
+.draggable-dialog .dropdown-item .prescription-cell.time {
+  color: #6c757d;
+  width: 18%;
+  font-size: 0.75rem;
+  min-width: 65px;
+}
+
+.draggable-dialog .dropdown-item .prescription-cell.user {
+  color: #495057;
+  width: 15%;
+  font-size: 0.75rem;
+  min-width: 60px;
+}
+
+.draggable-dialog .dropdown-item .prescription-cell.quantity {
+  color: #495057;
+  text-align: right;
+  width: 12%;
+  padding-right: 0;
+  min-width: 50px;
+}
+
+.draggable-dialog .dropdown-toggle {
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.draggable-dialog .dropdown-toggle .prescription-info .rx-bold {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.draggable-dialog .dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.draggable-dialog .dropdown-item:hover strong {
+  color: #1a252f;
+}
+
+.draggable-dialog .dropdown-item.active {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.draggable-dialog .dropdown-item.active strong {
+  color: #fff;
+}
+
+.draggable-dialog .dropdown-item.active small {
+  color: rgba(255, 255, 255, 0.8);
+}
+
 /* ===== STORE SETTINGS COMPONENT ===== */
 
 .store-settings-table-cell {

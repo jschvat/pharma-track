@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaTraK - Frontend Component & API Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8f9fa; }
+        .sidebar { background: #2c3e50; color: white; min-height: 100vh; position: fixed; width: 280px; overflow-y: auto; }
+        .content { margin-left: 280px; padding: 20px; }
+        .sidebar .nav-link { color: #bdc3c7; padding: 8px 20px; border-radius: 0; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #34495e; color: white; }
+        .component-card { margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .badge-endpoint { background: #28a745; }
+        .badge-method { background: #007bff; }
+        .badge-component { background: #6f42c1; }
+        .json-code { background: #2d3748; color: #e2e8f0; border-radius: 8px; max-height: 300px; overflow-y: auto; }
+        .api-flow { background: #f1f5f9; border-left: 4px solid #3b82f6; padding: 15px; }
+        .section-header { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; margin: 30px 0 20px 0; }
+        .file-ref { font-family: 'Monaco', 'Menlo', monospace; font-size: 12px; background: #f8f9fa; padding: 2px 6px; border-radius: 3px; }
+        .table-hover tbody tr:hover { background-color: #f5f5f5; }
+        .hierarchy { border-left: 3px solid #dee2e6; padding-left: 15px; margin-left: 10px; }
+        pre { max-height: 400px; overflow-y: auto; }
+        .nav-pills .nav-link.active { background-color: #34495e; }
+        .collapse-toggle { cursor: pointer; }
+        .collapse-toggle:hover { background-color: rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="p-3">
+            <h5><i class="fas fa-pills me-2"></i>PharmaTraK Docs</h5>
+            <small class="text-muted">Frontend-Backend API Reference</small>
+        </div>
+        
+        <nav class="nav nav-pills flex-column">
+            <a class="nav-link active" href="#overview">
+                <i class="fas fa-home me-2"></i>Overview
+            </a>
+            <a class="nav-link" href="#architecture">
+                <i class="fas fa-sitemap me-2"></i>Architecture
+            </a>
+            <a class="nav-link collapse-toggle" data-bs-toggle="collapse" href="#authComponents">
+                <i class="fas fa-shield-alt me-2"></i>Authentication <i class="fas fa-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse show hierarchy" id="authComponents">
+                <a class="nav-link" href="#login-component">Login</a>
+                <a class="nav-link" href="#protected-route">ProtectedRoute</a>
+            </div>
+            
+            <a class="nav-link collapse-toggle" data-bs-toggle="collapse" href="#dashboardComponents">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard <i class="fas fa-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse show hierarchy" id="dashboardComponents">
+                <a class="nav-link" href="#dashboard-component">Dashboard</a>
+            </div>
+            
+            <a class="nav-link collapse-toggle" data-bs-toggle="collapse" href="#inventoryComponents">
+                <i class="fas fa-boxes me-2"></i>Inventory <i class="fas fa-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse show hierarchy" id="inventoryComponents">
+                <a class="nav-link" href="#inventory-component">Inventory</a>
+                <a class="nav-link" href="#browse-drugs">BrowseDrugs</a>
+                <a class="nav-link" href="#state-count">StateCount</a>
+            </div>
+            
+            <a class="nav-link collapse-toggle" data-bs-toggle="collapse" href="#drugComponents">
+                <i class="fas fa-capsules me-2"></i>Drug Management <i class="fas fa-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse show hierarchy" id="drugComponents">
+                <a class="nav-link" href="#fda-search">FDASearch</a>
+            </div>
+            
+            <a class="nav-link collapse-toggle" data-bs-toggle="collapse" href="#userComponents">
+                <i class="fas fa-users me-2"></i>User Management <i class="fas fa-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse show hierarchy" id="userComponents">
+                <a class="nav-link" href="#user-management">UserManagement</a>
+            </div>
+            
+            <a class="nav-link collapse-toggle" data-bs-toggle="collapse" href="#adminComponents">
+                <i class="fas fa-cog me-2"></i>Administration <i class="fas fa-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse show hierarchy" id="adminComponents">
+                <a class="nav-link" href="#admin-stores">AdminStores</a>
+                <a class="nav-link" href="#admin-settings">AdminSettings</a>
+            </div>
+            
+            <a class="nav-link collapse-toggle" data-bs-toggle="collapse" href="#reportComponents">
+                <i class="fas fa-chart-bar me-2"></i>Reporting <i class="fas fa-chevron-down ms-auto"></i>
+            </a>
+            <div class="collapse show hierarchy" id="reportComponents">
+                <a class="nav-link" href="#ndc-audit">NDCAuditReport</a>
+            </div>
+            
+            <a class="nav-link" href="#api-reference">
+                <i class="fas fa-code me-2"></i>API Reference
+            </a>
+            <a class="nav-link" href="#data-structures">
+                <i class="fas fa-database me-2"></i>Data Structures
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Overview Section -->
+        <section id="overview">
+            <div class="card component-card">
+                <div class="card-header section-header">
+                    <h2><i class="fas fa-home me-2"></i>PharmaTraK Documentation Overview</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4>Frontend-Backend API Integration Reference</h4>
+                            <p class="lead">This documentation provides a comprehensive mapping of React frontend components to their corresponding backend API endpoints, including data structures, function calls, and file references.</p>
+                            
+                            <div class="api-flow">
+                                <h5><i class="fas fa-arrow-right me-2"></i>Data Flow</h5>
+                                <p><strong>Frontend Component</strong> → <strong>API Service</strong> → <strong>HTTP Request</strong> → <strong>Backend Route</strong> → <strong>Controller Function</strong> → <strong>Database Model</strong></p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h5>Key Statistics</h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-layer-group text-primary me-2"></i><strong>24</strong> Main Components</li>
+                                <li><i class="fas fa-puzzle-piece text-success me-2"></i><strong>14</strong> Reusable Components</li>
+                                <li><i class="fas fa-plug text-warning me-2"></i><strong>45+</strong> API Endpoints</li>
+                                <li><i class="fas fa-shield-alt text-info me-2"></i><strong>JWT</strong> Authentication</li>
+                                <li><i class="fas fa-users text-secondary me-2"></i><strong>3</strong> User Roles</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture">
+            <div class="card component-card">
+                <div class="card-header section-header">
+                    <h2><i class="fas fa-sitemap me-2"></i>Application Architecture</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>Frontend Stack</h4>
+                            <ul>
+                                <li><strong>React 18</strong> - Component framework</li>
+                                <li><strong>React Router</strong> - Client-side routing</li>
+                                <li><strong>Bootstrap 5</strong> - UI framework</li>
+                                <li><strong>Axios</strong> - HTTP client</li>
+                                <li><strong>Context API</strong> - State management</li>
+                            </ul>
+                            
+                            <h4>API Service Structure</h4>
+                            <div class="file-ref">frontend/src/services/api.js</div>
+                            <ul class="mt-2">
+                                <li><code>authAPI</code> - Authentication services</li>
+                                <li><code>userAPI</code> - User management</li>
+                                <li><code>storeAPI</code> - Store operations</li>
+                                <li><code>drugAPI</code> - Drug database & FDA</li>
+                                <li><code>inventoryAPI</code> - Inventory management</li>
+                                <li><code>auditAPI</code> - Reporting & audit</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Backend Stack</h4>
+                            <ul>
+                                <li><strong>Node.js & Express</strong> - Server framework</li>
+                                <li><strong>MySQL</strong> - Database</li>
+                                <li><strong>JWT</strong> - Authentication tokens</li>
+                                <li><strong>bcrypt</strong> - Password hashing</li>
+                                <li><strong>CORS</strong> - Cross-origin support</li>
+                            </ul>
+                            
+                            <h4>API Base Configuration</h4>
+                            <pre><code class="language-javascript">Base URL: http://localhost:3001/api
+Authentication: Bearer JWT Token
+Content-Type: application/json</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Authentication Components -->
+        <section id="login-component">
+            <div class="card component-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-sign-in-alt me-2"></i>Login Component</h3>
+                    <span class="badge badge-component">Authentication</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Component Details</h5>
+                            <table class="table table-sm">
+                                <tr><td><strong>File:</strong></td><td class="file-ref">frontend/src/components/Login.js</td></tr>
+                                <tr><td><strong>Purpose:</strong></td><td>User authentication interface</td></tr>
+                                <tr><td><strong>Functions:</strong></td><td>handleSubmit() - Line 26</td></tr>
+                                <tr><td><strong>API Call:</strong></td><td>authAPI.login() - Line 32</td></tr>
+                            </table>
+                            
+                            <h5>Sub-Components</h5>
+                            <ul>
+                                <li>Email input field</li>
+                                <li>Password input field</li>
+                                <li>Remember Me checkbox</li>
+                                <li>Development auto-fill button</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>API Integration</h5>
+                            <div class="api-flow">
+                                <strong>Endpoint:</strong> <span class="badge badge-method">POST</span> <span class="badge badge-endpoint">/api/auth/login</span><br>
+                                <strong>Backend Route:</strong> <span class="file-ref">routes/auth.js:23</span><br>
+                                <strong>Controller:</strong> <code>login()</code> function
+                            </div>
+                            
+                            <h6>Request Data</h6>
+                            <pre class="json-code"><code class="language-json">{
+  "email": "admin@pharmatrak.com",
+  "password": "Admin123!",
+  "rememberMe": false
+}</code></pre>
+                            
+                            <h6>Response Data</h6>
+                            <pre class="json-code"><code class="language-json">{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "name": "Demo Admin",
+    "email": "admin@pharmatrak.com",
+    "role": "god_mode",
+    "store_id": 1,
+    "store_name": "PharmaTraK Demo Store"
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Component -->
+        <section id="dashboard-component">
+            <div class="card component-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-tachometer-alt me-2"></i>Dashboard Component</h3>
+                    <span class="badge badge-component">Overview</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Component Details</h5>
+                            <table class="table table-sm">
+                                <tr><td><strong>File:</strong></td><td class="file-ref">frontend/src/components/Dashboard.js</td></tr>
+                                <tr><td><strong>Purpose:</strong></td><td>Main overview with metrics and activity</td></tr>
+                                <tr><td><strong>Functions:</strong></td><td>loadDashboardData() - Line 45</td></tr>
+                            </table>
+                            
+                            <h5>Sub-Components</h5>
+                            <ul>
+                                <li>Statistics Cards</li>
+                                <li>Low Stock Alerts</li>
+                                <li>Expiring Items List</li>
+                                <li>Recent Transactions (Admin)</li>
+                                <li>System Overview (God Mode)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Multiple API Calls</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>API Call</th>
+                                            <th>Endpoint</th>
+                                            <th>Purpose</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>inventoryAPI.getStats()</code></td>
+                                            <td><span class="badge badge-method">GET</span> /inventory/store/{id}/stats</td>
+                                            <td>Store statistics</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>inventoryAPI.getLowStock()</code></td>
+                                            <td><span class="badge badge-method">GET</span> /inventory/store/{id}/low-stock</td>
+                                            <td>Low stock items</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>inventoryAPI.getExpiring()</code></td>
+                                            <td><span class="badge badge-method">GET</span> /inventory/store/{id}/expiring</td>
+                                            <td>Expiring items</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>auditAPI.getStoreHistory()</code></td>
+                                            <td><span class="badge badge-method">GET</span> /audit/store/{id}</td>
+                                            <td>Recent transactions</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <h6>Sample Stats Response</h6>
+                            <pre class="json-code"><code class="language-json">{
+  "stats": {
+    "total_items": 10,
+    "active_items": 10,
+    "low_stock_items": 0,
+    "expiring_items": 0,
+    "total_inventory_value": "173509.8600",
+    "avg_quantity": "609.2000"
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Inventory Component -->
+        <section id="inventory-component">
+            <div class="card component-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-boxes me-2"></i>Inventory Component</h3>
+                    <span class="badge badge-component">Inventory Management</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Component Details</h5>
+                            <table class="table table-sm">
+                                <tr><td><strong>File:</strong></td><td class="file-ref">frontend/src/components/Inventory.js</td></tr>
+                                <tr><td><strong>Purpose:</strong></td><td>Comprehensive inventory management</td></tr>
+                                <tr><td><strong>Main Functions:</strong></td><td>
+                                    handleFillPrescription() - Line 156<br>
+                                    handleReturnToStock() - Line 189<br>
+                                    handleExpire() - Line 222<br>
+                                    handleAudit() - Line 255
+                                </td></tr>
+                            </table>
+                            
+                            <h5>Sub-Components</h5>
+                            <ul>
+                                <li>Inventory List (Left Pane)</li>
+                                <li>Transaction Register (Right Pane)</li>
+                                <li>Search & Filter Controls</li>
+                                <li>Transaction History Modal</li>
+                                <li>Running Balance Display</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Transaction API Calls</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Transaction</th>
+                                            <th>Endpoint</th>
+                                            <th>Method</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Fill Prescription</td>
+                                            <td>/inventory/{id}/fill-prescription</td>
+                                            <td><span class="badge badge-method">POST</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Return to Stock</td>
+                                            <td>/inventory/{id}/return-to-stock</td>
+                                            <td><span class="badge badge-method">POST</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Expire Items</td>
+                                            <td>/inventory/{id}/expire</td>
+                                            <td><span class="badge badge-method">POST</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Audit Count</td>
+                                            <td>/inventory/{id}/audit</td>
+                                            <td><span class="badge badge-method">POST</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <h6>Fill Prescription Request</h6>
+                            <pre class="json-code"><code class="language-json">{
+  "quantity": 30,
+  "prescription_number": "RX123456",
+  "reason": "Patient prescription fill"
+}</code></pre>
+                            
+                            <h6>Backend Function</h6>
+                            <div class="file-ref">routes/inventory.js:145 - fillPrescription()</div>
+                            <div class="file-ref">models/StoreInventory.js:539 - fillPrescription()</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Management Component -->
+        <section id="user-management">
+            <div class="card component-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-users me-2"></i>UserManagement Component</h3>
+                    <span class="badge badge-component">Administration</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Component Details</h5>
+                            <table class="table table-sm">
+                                <tr><td><strong>File:</strong></td><td class="file-ref">frontend/src/components/UserManagement.js</td></tr>
+                                <tr><td><strong>Purpose:</strong></td><td>Admin interface for user management</td></tr>
+                                <tr><td><strong>Key Functions:</strong></td><td>
+                                    handleCreateUser() - Line 89<br>
+                                    handleUpdateUser() - Line 142<br>
+                                    handleDeleteUser() - Line 178
+                                </td></tr>
+                                <tr><td><strong>Access:</strong></td><td>Admin/God Mode only</td></tr>
+                            </table>
+                            
+                            <h5>Sub-Components</h5>
+                            <ul>
+                                <li>User List with Pagination</li>
+                                <li>Create User Modal</li>
+                                <li>Edit User Modal</li>
+                                <li>Password Reset Modal</li>
+                                <li>Role Management</li>
+                                <li>Store Assignment</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>CRUD Operations</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Operation</th>
+                                            <th>Endpoint</th>
+                                            <th>Backend Function</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><span class="badge badge-method">GET</span> List Users</td>
+                                            <td>/api/users</td>
+                                            <td class="file-ref">routes/users.js:25</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge badge-method">POST</span> Create</td>
+                                            <td>/api/users</td>
+                                            <td class="file-ref">routes/users.js:89</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge badge-method">PUT</span> Update</td>
+                                            <td>/api/users/{id}</td>
+                                            <td class="file-ref">routes/users.js:156</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="badge badge-method">DELETE</span> Delete</td>
+                                            <td>/api/users/{id}</td>
+                                            <td class="file-ref">routes/users.js:203</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <h6>Create User Request</h6>
+                            <pre class="json-code"><code class="language-json">{
+  "name": "John Pharmacist",
+  "email": "john@pharmacy.com",
+  "phone": "5551234567",
+  "password": "SecurePass123!",
+  "address": "123 Main St, City, ST 12345",
+  "role": "user",
+  "store_id": 1
+}</code></pre>
+                            
+                            <h6>Special Business Logic</h6>
+                            <ul>
+                                <li><strong>God Mode Protection:</strong> Only god_mode users can delete admins</li>
+                                <li><strong>Last Admin Protection:</strong> Cannot delete the last admin for a store</li>
+                                <li><strong>Soft Delete:</strong> Users are marked inactive, not physically deleted</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FDA Search Component -->
+        <section id="fda-search">
+            <div class="card component-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-search me-2"></i>FDASearch Component</h3>
+                    <span class="badge badge-component">Drug Management</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Component Details</h5>
+                            <table class="table table-sm">
+                                <tr><td><strong>File:</strong></td><td class="file-ref">frontend/src/components/FDASearch.js</td></tr>
+                                <tr><td><strong>Purpose:</strong></td><td>Search FDA database and add new drugs</td></tr>
+                                <tr><td><strong>Functions:</strong></td><td>
+                                    handleSearch() - Line 67<br>
+                                    handleAddDrug() - Line 124
+                                </td></tr>
+                            </table>
+                            
+                            <h5>Search Types</h5>
+                            <ul>
+                                <li>NDC Number Search</li>
+                                <li>Generic Name Search</li>
+                                <li>Brand Name Search</li>
+                                <li>Manufacturer Search</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>API Integration</h5>
+                            <div class="api-flow">
+                                <strong>Search:</strong> <span class="badge badge-method">GET</span> <span class="badge badge-endpoint">/api/drugs/search/fda</span><br>
+                                <strong>Backend:</strong> <span class="file-ref">routes/drugs.js:78</span><br>
+                                <strong>Add Drug:</strong> <span class="badge badge-method">POST</span> <span class="badge badge-endpoint">/api/drugs/add-from-fda-with-inventory</span>
+                            </div>
+                            
+                            <h6>Search Request</h6>
+                            <pre class="json-code"><code class="language-json">{
+  "search_type": "generic_name",
+  "search_term": "acetaminophen",
+  "limit": 20
+}</code></pre>
+                            
+                            <h6>Add Drug with Initial Inventory</h6>
+                            <pre class="json-code"><code class="language-json">{
+  "ndc": "00003-0232-21",
+  "initialInventory": {
+    "quantity": 100,
+    "reorder_level": 25,
+    "unit_cost": 5.50,
+    "selling_price": 12.99,
+    "lot_number": "LOT123",
+    "expiration_date": "2025-12-31",
+    "supplier": "Cardinal Health"
+  }
+}</code></pre>
+                            
+                            <h6>FDA Response Structure</h6>
+                            <pre class="json-code"><code class="language-json">{
+  "results": [{
+    "product_ndc": "00003-0232-21",
+    "generic_name": "Acetaminophen",
+    "brand_name": "TYLENOL Regular Strength",
+    "labeler_name": "McNeil Consumer Healthcare",
+    "dosage_form": "TABLET",
+    "route": ["ORAL"],
+    "marketing_start_date": "19820101"
+  }]
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NDC Audit Report Component -->
+        <section id="ndc-audit">
+            <div class="card component-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-bar me-2"></i>NDCAuditReport Component</h3>
+                    <span class="badge badge-component">Reporting</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Component Details</h5>
+                            <table class="table table-sm">
+                                <tr><td><strong>File:</strong></td><td class="file-ref">frontend/src/components/NDCAuditReport.js</td></tr>
+                                <tr><td><strong>Purpose:</strong></td><td>Generate comprehensive NDC audit reports</td></tr>
+                                <tr><td><strong>Functions:</strong></td><td>
+                                    generateReport() - Line 89<br>
+                                    exportReport() - Line 134
+                                </td></tr>
+                            </table>
+                            
+                            <h5>Report Features</h5>
+                            <ul>
+                                <li>Transaction History</li>
+                                <li>Running Balances</li>
+                                <li>Date Range Filtering</li>
+                                <li>PDF/CSV Export</li>
+                                <li>Regulatory Compliance</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Report Generation</h5>
+                            <div class="api-flow">
+                                <strong>Generate:</strong> <span class="badge badge-method">GET</span> <span class="badge badge-endpoint">/api/audit/ndc-report/{storeId}/{ndc}</span><br>
+                                <strong>Export:</strong> <span class="badge badge-method">GET</span> <span class="badge badge-endpoint">/api/audit/ndc-report/{storeId}/{ndc}/export</span><br>
+                                <strong>Backend:</strong> <span class="file-ref">routes/audit.js:156</span>
+                            </div>
+                            
+                            <h6>Report Parameters</h6>
+                            <pre class="json-code"><code class="language-json">{
+  "audit_point_date": "2025-08-15",
+  "start_date": "2025-01-01",
+  "end_date": "2025-08-15",
+  "restrict_to_future_date": false,
+  "include_inactive": false
+}</code></pre>
+                            
+                            <h6>Report Response</h6>
+                            <pre class="json-code"><code class="language-json">{
+  "report_data": {
+    "ndc": "00003-0232-21",
+    "drug_info": {
+      "generic_name": "Acetaminophen",
+      "brand_name": "TYLENOL Regular Strength"
+    },
+    "summary": {
+      "total_received": 1500,
+      "total_dispensed": 604,
+      "current_stock": 896,
+      "total_expired": 0
+    },
+    "transactions": [
+      {
+        "date": "2025-08-15",
+        "type": "initial_inventory",
+        "quantity": 896,
+        "balance": 896,
+        "reference": "Initial stock"
+      }
+    ]
+  }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- API Reference Section -->
+        <section id="api-reference">
+            <div class="card component-card">
+                <div class="card-header section-header">
+                    <h2><i class="fas fa-code me-2"></i>Complete API Reference</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Method</th>
+                                    <th>Endpoint</th>
+                                    <th>Backend Route</th>
+                                    <th>Model Function</th>
+                                    <th>Purpose</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Authentication -->
+                                <tr>
+                                    <td rowspan="4"><strong>Auth</strong></td>
+                                    <td><span class="badge badge-method">POST</span></td>
+                                    <td>/api/auth/login</td>
+                                    <td class="file-ref">routes/auth.js:23</td>
+                                    <td class="file-ref">models/User.js:findByEmail</td>
+                                    <td>User login</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/auth/me</td>
+                                    <td class="file-ref">routes/auth.js:67</td>
+                                    <td class="file-ref">models/User.js:findById</td>
+                                    <td>Get current user</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">POST</span></td>
+                                    <td>/api/auth/logout</td>
+                                    <td class="file-ref">routes/auth.js:89</td>
+                                    <td>-</td>
+                                    <td>User logout</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">POST</span></td>
+                                    <td>/api/auth/register</td>
+                                    <td class="file-ref">routes/auth.js:45</td>
+                                    <td class="file-ref">models/User.js:create</td>
+                                    <td>User registration</td>
+                                </tr>
+                                
+                                <!-- Users -->
+                                <tr>
+                                    <td rowspan="5"><strong>Users</strong></td>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/users</td>
+                                    <td class="file-ref">routes/users.js:25</td>
+                                    <td class="file-ref">models/User.js:findWithFilters</td>
+                                    <td>List users with pagination</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">POST</span></td>
+                                    <td>/api/users</td>
+                                    <td class="file-ref">routes/users.js:89</td>
+                                    <td class="file-ref">models/User.js:create</td>
+                                    <td>Create new user</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">PUT</span></td>
+                                    <td>/api/users/{id}</td>
+                                    <td class="file-ref">routes/users.js:156</td>
+                                    <td class="file-ref">models/User.js:update</td>
+                                    <td>Update user details</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">DELETE</span></td>
+                                    <td>/api/users/{id}</td>
+                                    <td class="file-ref">routes/users.js:203</td>
+                                    <td class="file-ref">models/User.js:delete</td>
+                                    <td>Soft delete user</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">PUT</span></td>
+                                    <td>/api/users/{id}/password</td>
+                                    <td class="file-ref">routes/users.js:287</td>
+                                    <td class="file-ref">models/User.js:updatePassword</td>
+                                    <td>Update user password</td>
+                                </tr>
+                                
+                                <!-- Inventory -->
+                                <tr>
+                                    <td rowspan="8"><strong>Inventory</strong></td>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/inventory/store/{id}</td>
+                                    <td class="file-ref">routes/inventory.js:23</td>
+                                    <td class="file-ref">models/StoreInventory.js:getByStore</td>
+                                    <td>Get store inventory</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/inventory/store/{id}/stats</td>
+                                    <td class="file-ref">routes/inventory.js:67</td>
+                                    <td class="file-ref">models/StoreInventory.js:getStats</td>
+                                    <td>Inventory statistics</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/inventory/store/{id}/low-stock</td>
+                                    <td class="file-ref">routes/inventory.js:89</td>
+                                    <td class="file-ref">models/StoreInventory.js:getLowStock</td>
+                                    <td>Low stock items</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/inventory/store/{id}/expiring</td>
+                                    <td class="file-ref">routes/inventory.js:123</td>
+                                    <td class="file-ref">models/StoreInventory.js:getExpiring</td>
+                                    <td>Expiring items</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">POST</span></td>
+                                    <td>/api/inventory/{id}/fill-prescription</td>
+                                    <td class="file-ref">routes/inventory.js:145</td>
+                                    <td class="file-ref">models/StoreInventory.js:fillPrescription</td>
+                                    <td>Fill prescription</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">POST</span></td>
+                                    <td>/api/inventory/{id}/return-to-stock</td>
+                                    <td class="file-ref">routes/inventory.js:189</td>
+                                    <td class="file-ref">models/StoreInventory.js:returnToStock</td>
+                                    <td>Return to stock</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">POST</span></td>
+                                    <td>/api/inventory/{id}/expire</td>
+                                    <td class="file-ref">routes/inventory.js:234</td>
+                                    <td class="file-ref">models/StoreInventory.js:expireMedication</td>
+                                    <td>Expire medication</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">POST</span></td>
+                                    <td>/api/inventory/{id}/audit</td>
+                                    <td class="file-ref">routes/inventory.js:278</td>
+                                    <td class="file-ref">models/StoreInventory.js:auditInventory</td>
+                                    <td>Audit inventory count</td>
+                                </tr>
+                                
+                                <!-- Drugs -->
+                                <tr>
+                                    <td rowspan="4"><strong>Drugs</strong></td>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/drugs/search/fda</td>
+                                    <td class="file-ref">routes/drugs.js:78</td>
+                                    <td class="file-ref">openfda/fdaService.js:searchDrugs</td>
+                                    <td>Search FDA database</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">POST</span></td>
+                                    <td>/api/drugs/check-exist</td>
+                                    <td class="file-ref">routes/drugs.js:134</td>
+                                    <td class="file-ref">models/Drug.js:findByNDCs</td>
+                                    <td>Check if drugs exist</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">POST</span></td>
+                                    <td>/api/drugs/add-from-fda-with-inventory</td>
+                                    <td class="file-ref">routes/drugs.js:189</td>
+                                    <td class="file-ref">models/Drug.js:createFromFDA</td>
+                                    <td>Add drug with inventory</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/drugs/stats/overview</td>
+                                    <td class="file-ref">routes/drugs.js:245</td>
+                                    <td class="file-ref">models/Drug.js:getStats</td>
+                                    <td>Drug statistics</td>
+                                </tr>
+                                
+                                <!-- Stores -->
+                                <tr>
+                                    <td rowspan="4"><strong>Stores</strong></td>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/stores</td>
+                                    <td class="file-ref">routes/stores.js:23</td>
+                                    <td class="file-ref">models/Store.js:findWithFilters</td>
+                                    <td>List stores</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">POST</span></td>
+                                    <td>/api/stores</td>
+                                    <td class="file-ref">routes/stores.js:67</td>
+                                    <td class="file-ref">models/Store.js:create</td>
+                                    <td>Create store</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">PUT</span></td>
+                                    <td>/api/stores/{id}</td>
+                                    <td class="file-ref">routes/stores.js:123</td>
+                                    <td class="file-ref">models/Store.js:update</td>
+                                    <td>Update store</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/stores/stats</td>
+                                    <td class="file-ref">routes/stores.js:189</td>
+                                    <td class="file-ref">models/Store.js:getStats</td>
+                                    <td>Store statistics</td>
+                                </tr>
+                                
+                                <!-- Audit -->
+                                <tr>
+                                    <td rowspan="4"><strong>Audit</strong></td>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/audit/inventory/{id}</td>
+                                    <td class="file-ref">routes/audit.js:23</td>
+                                    <td class="file-ref">models/InventoryAuditLog.js:getInventoryHistory</td>
+                                    <td>Inventory transaction history</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/audit/store/{id}</td>
+                                    <td class="file-ref">routes/audit.js:67</td>
+                                    <td class="file-ref">models/InventoryAuditLog.js:getStoreHistory</td>
+                                    <td>Store transaction history</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/audit/ndc-report/{storeId}/{ndc}</td>
+                                    <td class="file-ref">routes/audit.js:156</td>
+                                    <td class="file-ref">models/InventoryAuditLog.js:getNDCAuditReport</td>
+                                    <td>NDC audit report</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-method">GET</span></td>
+                                    <td>/api/audit/ndc-report/{storeId}/{ndc}/export</td>
+                                    <td class="file-ref">routes/audit.js:234</td>
+                                    <td class="file-ref">models/InventoryAuditLog.js:exportNDCReport</td>
+                                    <td>Export NDC report</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Structures Section -->
+        <section id="data-structures">
+            <div class="card component-card">
+                <div class="card-header section-header">
+                    <h2><i class="fas fa-database me-2"></i>Common Data Structures</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>User Object</h4>
+                            <pre class="json-code"><code class="language-json">{
+  "id": 1,
+  "name": "John Pharmacist",
+  "email": "john@pharmacy.com",
+  "phone": "5551234567",
+  "address": "123 Main St, City, ST",
+  "role": "user",
+  "store_id": 1,
+  "store_name": "Main Pharmacy",
+  "is_active": true,
+  "created_at": "2025-08-15T10:00:00Z"
+}</code></pre>
+                            
+                            <h4>Inventory Item</h4>
+                            <pre class="json-code"><code class="language-json">{
+  "id": 12,
+  "store_id": 1,
+  "drug_id": 12,
+  "quantity_on_hand": 896,
+  "reorder_level": 264,
+  "unit_cost": "29.5600",
+  "selling_price": "106.2700",
+  "lot_number": "LOT123ABC",
+  "expiration_date": "2025-12-31",
+  "supplier": "Cardinal Health",
+  "is_active": true,
+  "ndc": "00003-0232-21",
+  "generic_name": "Acetaminophen",
+  "brand_name": "TYLENOL Regular Strength"
+}</code></pre>
+                            
+                            <h4>Transaction Record</h4>
+                            <pre class="json-code"><code class="language-json">{
+  "id": 156,
+  "inventory_id": 12,
+  "store_id": 1,
+  "drug_id": 12,
+  "transaction_type": "prescription_fill",
+  "quantity_change": -30,
+  "quantity_before": 926,
+  "quantity_after": 896,
+  "reason": "Patient prescription fill",
+  "reference_number": "RX123456",
+  "performed_by": 1,
+  "transaction_date": "2025-08-15T14:30:00Z"
+}</code></pre>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Store Object</h4>
+                            <pre class="json-code"><code class="language-json">{
+  "id": 1,
+  "name": "PharmaTraK Demo Store",
+  "address": "123 Pharmacy Blvd",
+  "city": "Beverly Hills",
+  "state": "CA",
+  "zipcode": "90210",
+  "phone": "3105551234",
+  "fax": "3105551235",
+  "dea_registration_number": "BA1234567",
+  "npi": "1234567890",
+  "admin_user_id": 1,
+  "is_active": true
+}</code></pre>
+                            
+                            <h4>Drug Information</h4>
+                            <pre class="json-code"><code class="language-json">{
+  "id": 12,
+  "ndc": "00003-0232-21",
+  "generic_name": "Acetaminophen",
+  "brand_name": "TYLENOL Regular Strength",
+  "dosage_form": "TABLET",
+  "strength": "325 mg",
+  "manufacturer_name": "McNeil Consumer Healthcare",
+  "route": "ORAL",
+  "dea_schedule": null,
+  "is_active": true
+}</code></pre>
+                            
+                            <h4>Pagination Response</h4>
+                            <pre class="json-code"><code class="language-json">{
+  "data": [
+    // Array of items
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "pages": 8,
+    "hasNext": true,
+    "hasPrev": false
+  }
+}</code></pre>
+                            
+                            <h4>Error Response</h4>
+                            <pre class="json-code"><code class="language-json">{
+  "error": "Validation failed",
+  "message": "Request contains invalid data",
+  "details": [
+    {
+      "field": "email",
+      "message": "Invalid email format"
+    },
+    {
+      "field": "password",
+      "message": "Password must be at least 8 characters"
+    }
+  ],
+  "code": 400
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Update active nav link
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                }
+            });
+        });
+        
+        // Highlight active section in navigation
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    const navLink = document.querySelector(`a[href="#${id}"]`);
+                    if (navLink) {
+                        document.querySelectorAll('.nav-link').forEach(link => {
+                            link.classList.remove('active');
+                        });
+                        navLink.classList.add('active');
+                    }
+                }
+            });
+        }, { threshold: 0.3 });
+        
+        document.querySelectorAll('section[id]').forEach(section => {
+            observer.observe(section);
+        });
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    </script>
+</body>
+</html>
