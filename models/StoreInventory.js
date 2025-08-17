@@ -75,7 +75,6 @@ class StoreInventory {
           quantity_on_hand, auditLogId, 'initial_inventory', performedBy
         ]);
         
-        console.log(`✅ Initial inventory added: Store ${store_id}, Drug ${drug_id}: ${quantity_on_hand} units`);
       }
 
       await connection.commit();
@@ -83,7 +82,7 @@ class StoreInventory {
       
     } catch (error) {
       await connection.rollback();
-      console.error('❌ Add inventory failed:', error.message);
+      console.error('Add inventory failed:', error.message);
       throw error;
     } finally {
       connection.release();
@@ -328,13 +327,12 @@ class StoreInventory {
       
       await connection.commit();
       
-      console.log(`✅ Stock adjustment completed: Store ${inventory.store_id}, Drug ${inventory.drug_id}: ${quantityBefore} → ${quantityAfter} (${adjustment > 0 ? '+' : ''}${adjustment})`);
       
       return true;
       
     } catch (error) {
       await connection.rollback();
-      console.error('❌ Stock adjustment failed:', error.message);
+      console.error('Stock adjustment failed:', error.message);
       throw error;
     } finally {
       connection.release();

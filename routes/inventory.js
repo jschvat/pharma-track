@@ -11,6 +11,7 @@ const {
   verifyDate,
   verifyId
 } = require('../middleware/dataVerification');
+const { VALIDATION } = require('../config/constants');
 
 const router = express.Router();
 
@@ -18,11 +19,11 @@ const router = express.Router();
 router.get('/store/:storeId', authenticateToken, validateStoreParam, [
   verifyId('storeId'),
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
-  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100').toInt(),
+  query('limit').optional().isInt({ min: VALIDATION.MIN_PAGE_LIMIT, max: VALIDATION.MAX_PAGE_LIMIT }).withMessage(`Limit must be between ${VALIDATION.MIN_PAGE_LIMIT} and ${VALIDATION.MAX_PAGE_LIMIT}`).toInt(),
   query('active').optional().isBoolean().withMessage('Active must be boolean').toBoolean(),
   query('low_stock').optional().isBoolean().withMessage('Low stock must be boolean').toBoolean(),
-  query('expiring_days').optional().isInt({ min: 1, max: 365 }).withMessage('Expiring days must be between 1 and 365').toInt(),
-  query('search').optional().isLength({ min: 1, max: 100 }).withMessage('Search must be 1-100 characters')
+  query('expiring_days').optional().isInt({ min: VALIDATION.MIN_EXPIRING_DAYS, max: VALIDATION.MAX_EXPIRING_DAYS }).withMessage(`Expiring days must be between ${VALIDATION.MIN_EXPIRING_DAYS} and ${VALIDATION.MAX_EXPIRING_DAYS}`).toInt(),
+  query('search').optional().isLength({ min: VALIDATION.MIN_SEARCH_LENGTH, max: VALIDATION.MAX_SEARCH_LENGTH }).withMessage(`Search must be ${VALIDATION.MIN_SEARCH_LENGTH}-${VALIDATION.MAX_SEARCH_LENGTH} characters`)
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -655,15 +656,12 @@ router.post('/:id/return-to-stock', authenticateToken, requireStoreAdmin, [
   body('reference_number').optional().isLength({ max: 100 }).withMessage('Reference number must be 100 characters or less')
 ], async (req, res) => {
   try {
-    console.log('📦 Return-to-stock endpoint hit:', { id: req.params.id, body: req.body });
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log('❌ Return-to-stock validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
     
-    console.log('✅ Return-to-stock validation passed');
 
     const { id } = req.params;
     const { quantity, reason, reference_number } = req.body;
@@ -688,11 +686,9 @@ router.post('/:id/return-to-stock', authenticateToken, requireStoreAdmin, [
     );
 
     if (!returned) {
-      console.log('❌ Return-to-stock FAILED - StoreInventory.returnToStock returned false');
       return res.status(400).json({ error: 'Failed to return to stock' });
     }
     
-    console.log('✅ Return-to-stock completed successfully');
 
     const updatedInventory = await StoreInventory.findById(id);
 
@@ -707,7 +703,6 @@ router.post('/:id/return-to-stock', authenticateToken, requireStoreAdmin, [
       }
     };
     
-    console.log('✅ Return-to-stock SUCCESS - sending response:', { message: response.message });
     res.json(response);
 
   } catch (error) {
@@ -726,11 +721,9 @@ router.post('/:id/expire', authenticateToken, requireStoreAdmin, [
   body('reason').optional().isLength({ max: 500 }).withMessage('Expiration reason must be 500 characters or less')
 ], async (req, res) => {
   try {
-    console.log('💊 Expire endpoint hit:', { id: req.params.id, body: req.body });
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log('❌ Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
@@ -738,7 +731,6 @@ router.post('/:id/expire', authenticateToken, requireStoreAdmin, [
     const { quantity, reason } = req.body;
     const finalReason = reason && reason.trim() ? reason.trim() : 'Medication expired';
     
-    console.log('✅ Validation passed, proceeding with:', { id, quantity, finalReason });
 
     const inventory = await StoreInventory.findById(id);
     if (!inventory) {

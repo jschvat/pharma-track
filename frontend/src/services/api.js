@@ -338,9 +338,6 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:309
    */
   getAll: (params) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 DRUG API: Getting all drugs', { params });
-    }
     return api.get('/drugs/all', { params });
   },
 
@@ -368,9 +365,6 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:337
    */
   search: (params) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 DRUG API: Searching local database', { params });
-    }
     return api.get('/drugs/search', { params });
   },
 
@@ -397,7 +391,6 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:361
    */
   searchFDA: (params) => {
-    console.log('🔍 DRUG API: Searching FDA database', { params });
     return api.get('/drugs/search/fda', { params });
   },
 
@@ -418,7 +411,6 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:379
    */
   getById: (id) => {
-    console.log('🔍 DRUG API: Getting drug by ID', { id });
     return api.get(`/drugs/${id}`);
   },
 
@@ -449,7 +441,6 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:405
    */
   update: (id, drugData) => {
-    console.log('✏️ DRUG API: Updating drug', { id, drugData });
     return api.put(`/drugs/${id}`, drugData);
   },
 
@@ -471,7 +462,6 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:425
    */
   delete: (id) => {
-    console.log('🗑️ DRUG API: Deleting drug', { id });
     return api.delete(`/drugs/${id}`);
   },
 
@@ -493,7 +483,6 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:443
    */
   addFromFDA: (ndc) => {
-    console.log('➕ DRUG API: Adding drug from FDA', { ndc });
     return api.post('/drugs/add-from-fda', { ndc });
   },
 
@@ -525,11 +514,6 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:465
    */
   addFromFDAWithInventory: (data) => {
-    console.log('➕ DRUG API: Adding drug from FDA with inventory', { 
-      ndc: data.ndc, 
-      hasInitialInventory: !!data.initialInventory,
-      quantity: data.initialInventory?.quantity
-    });
     return api.post('/drugs/add-from-fda-with-inventory', data);
   },
 
@@ -547,7 +531,6 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:487
    */
   getStats: () => {
-    console.log('📊 DRUG API: Getting drug statistics');
     return api.get('/drugs/stats/overview');
   },
 
@@ -577,10 +560,6 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:509
    */
   addToInventory: (inventoryData) => {
-    console.log('📦 DRUG API: Adding drug to inventory', { 
-      drugId: inventoryData.drug_id,
-      quantity: inventoryData.quantity_on_hand
-    });
     return api.post('/drugs/inventory', inventoryData);
   },
 
@@ -603,10 +582,6 @@ export const drugAPI = {
    * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:533
    */
   checkDrugsExist: (ndcs) => {
-    console.log('✅ DRUG API: Checking drug existence', { 
-      ndcsCount: ndcs?.length,
-      sampleNDCs: ndcs?.slice(0, 3)
-    });
     return api.post('/drugs/check-exist', { ndcs });
   }
 };
