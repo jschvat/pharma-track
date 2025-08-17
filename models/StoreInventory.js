@@ -349,17 +349,20 @@ class StoreInventory {
    */
   static async getLowStock(storeId, limit = 50) {
     try {
-      const [rows] = await db.query(`
+      // Sanitize limit parameter to avoid injection
+      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
+      
+      const [rows] = await db.execute(`
         SELECT si.*, d.ndc, d.generic_name, d.brand_name, d.dosage_form, 
                d.strength, d.manufacturer_name
         FROM store_inventory si
         INNER JOIN drugs d ON si.drug_id = d.id
-        WHERE si.store_id = ${parseInt(storeId)} 
+        WHERE si.store_id = ? 
           AND si.is_active = TRUE 
           AND si.quantity_on_hand <= si.reorder_level
         ORDER BY (si.quantity_on_hand / NULLIF(si.reorder_level, 0)) ASC
-        LIMIT ${parseInt(limit)}
-      `);
+        LIMIT ${limitInt}
+      `, [parseInt(storeId)]);
       
       return rows;
     } catch (error) {
@@ -376,19 +379,23 @@ class StoreInventory {
    */
   static async getExpiring(storeId, days = 30, limit = 50) {
     try {
-      const [rows] = await db.query(`
+      // Sanitize parameters to avoid injection
+      const daysInt = Math.max(1, Math.min(parseInt(days) || 30, 365));
+      const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
+      
+      const [rows] = await db.execute(`
         SELECT si.*, d.ndc, d.generic_name, d.brand_name, d.dosage_form, 
                d.strength, d.manufacturer_name,
                DATEDIFF(si.expiration_date, CURDATE()) as days_until_expiration
         FROM store_inventory si
         INNER JOIN drugs d ON si.drug_id = d.id
-        WHERE si.store_id = ${parseInt(storeId)} 
+        WHERE si.store_id = ? 
           AND si.is_active = TRUE 
-          AND si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ${parseInt(days)} DAY)
+          AND si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
           AND si.expiration_date > CURDATE()
         ORDER BY si.expiration_date ASC
-        LIMIT ${parseInt(limit)}
-      `);
+        LIMIT ${limitInt}
+      `, [parseInt(storeId), daysInt]);
       
       return rows;
     } catch (error) {
@@ -445,40 +452,41 @@ class StoreInventory {
   static async findWithFilters(filters = {}, limit = 20, offset = 0) {
     try {
       let query = 'SELECT si.*, d.ndc, d.generic_name, d.brand_name, d.dosage_form, d.strength, d.manufacturer_name FROM store_inventory si INNER JOIN drugs d ON si.drug_id = d.id WHERE 1=1';
-      let whereConditions = [];
+      const params = [];
 
       if (filters.store_id) {
-        whereConditions.push(`si.store_id = ${parseInt(filters.store_id)}`);
+        query += ' AND si.store_id = ?';
+        params.push(parseInt(filters.store_id));
       }
 
       if (filters.is_active !== undefined) {
-        whereConditions.push(`si.is_active = ${filters.is_active ? 1 : 0}`);
+        query += ' AND si.is_active = ?';
+        params.push(filters.is_active ? 1 : 0);
       }
 
       if (filters.low_stock) {
-        whereConditions.push('si.quantity_on_hand <= si.reorder_level');
+        query += ' AND si.quantity_on_hand <= si.reorder_level';
       }
 
       if (filters.expiring_days) {
-        whereConditions.push(`si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ${parseInt(filters.expiring_days)} DAY)`);
+        query += ' AND si.expiration_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)';
+        params.push(parseInt(filters.expiring_days));
       }
 
       if (filters.search) {
-        const searchTerm = filters.search.replace(/'/g, "''");
-        whereConditions.push(`(d.generic_name LIKE '%${searchTerm}%' OR d.brand_name LIKE '%${searchTerm}%' OR d.ndc LIKE '%${searchTerm}%' OR si.lot_number LIKE '%${searchTerm}%')`);
-      }
-
-      if (whereConditions.length > 0) {
-        query += ' AND ' + whereConditions.join(' AND ');
+        query += ' AND (d.generic_name LIKE ? OR d.brand_name LIKE ? OR d.ndc LIKE ? OR si.lot_number LIKE ?)';
+        const searchPattern = `%${filters.search}%`;
+        params.push(searchPattern, searchPattern, searchPattern, searchPattern);
       }
 
       // Sanitize limit and offset parameters
       const limitInt = Math.max(1, Math.min(parseInt(limit) || 50, 1000));
       const offsetInt = Math.max(0, parseInt(offset) || 0);
       
+      // Using string interpolation for LIMIT/OFFSET to avoid MySQL2 compatibility issues
       query += ` ORDER BY d.generic_name, d.brand_name LIMIT ${limitInt} OFFSET ${offsetInt}`;
 
-      const [rows] = await db.query(query);
+      const [rows] = await db.execute(query, params);
       return rows;
     } catch (error) {
       handleDatabaseError(error);

@@ -88,16 +88,7 @@ const debugLog = {
         data: config.data
       });
       
-      // Special debug for login requests with exclamation marks
-      if (config.url?.includes('/auth/login') && config.data?.password?.includes('!')) {
-        console.log('🚨 LOGIN PASSWORD DEBUG:', {
-          originalPassword: config.data.password,
-          passwordLength: config.data.password.length,
-          hasExclamation: config.data.password.includes('!'),
-          jsonStringified: JSON.stringify(config.data),
-          dataType: typeof config.data
-        });
-      }
+      // Note: Password debugging removed for security reasons
     }
     config.requestStartTime = Date.now();
     return config;

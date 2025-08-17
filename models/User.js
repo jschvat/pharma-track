@@ -72,39 +72,39 @@ class User {
       FROM users u 
       LEFT JOIN stores s ON u.store_id = s.id 
       WHERE 1=1`;
-      let whereConditions = [];
+      const params = [];
 
       if (filters.store_id) {
-        whereConditions.push(`u.store_id = ${parseInt(filters.store_id)}`);
+        query += ' AND u.store_id = ?';
+        params.push(parseInt(filters.store_id));
       }
 
       if (filters.role) {
-        whereConditions.push(`u.role = '${filters.role.replace(/'/g, "''")}'`);
+        query += ' AND u.role = ?';
+        params.push(filters.role);
       }
 
       if (filters.is_active !== undefined) {
-        whereConditions.push(`u.is_active = ${filters.is_active ? 1 : 0}`);
+        query += ' AND u.is_active = ?';
+        params.push(filters.is_active ? 1 : 0);
       } else {
         // Default to only active users unless explicitly requesting all
-        whereConditions.push('u.is_active = 1');
+        query += ' AND u.is_active = 1';
       }
 
       if (filters.search) {
-        const searchTerm = filters.search.replace(/'/g, "''");
-        whereConditions.push(`(u.name LIKE '%${searchTerm}%' OR u.email LIKE '%${searchTerm}%')`);
-      }
-
-      if (whereConditions.length > 0) {
-        query += ' AND ' + whereConditions.join(' AND ');
+        query += ' AND (u.name LIKE ? OR u.email LIKE ?)';
+        params.push(`%${filters.search}%`, `%${filters.search}%`);
       }
 
       // Ensure limit and offset are proper integers  
       const limitInt = Math.max(1, Math.min(parseInt(limit) || 20, 1000)); // Sanitize: 1-1000 range
       const offsetInt = Math.max(0, parseInt(offset) || 0); // Sanitize: non-negative
       
+      // Using string interpolation for LIMIT/OFFSET to avoid MySQL2 compatibility issues
       query += ` ORDER BY u.date_created DESC LIMIT ${limitInt} OFFSET ${offsetInt}`;
 
-      const [rows] = await db.query(query);
+      const [rows] = await db.execute(query, params);
       return rows;
     } catch (error) {
       handleDatabaseError(error);
