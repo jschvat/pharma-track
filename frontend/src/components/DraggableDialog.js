@@ -19,12 +19,12 @@ const DraggableDialog = ({
 
   // Drag functionality
   const startDrag = (e) => {
-    console.log('startDrag called', e.button, e.target);
+    // console.log('startDrag called', e.button, e.target);
     if (e.button !== 0) return; // Only left mouse button
     
     const dialog = dialogRef.current;
     if (!dialog) {
-      console.log('No dialog ref');
+      // console.log('No dialog ref');
       return;
     }
     
@@ -34,7 +34,7 @@ const DraggableDialog = ({
     const currentX = rect.left;
     const currentY = rect.top;
     
-    console.log('Setting drag start', { currentX, currentY, clientX: e.clientX, clientY: e.clientY });
+    // console.log('Setting drag start', { currentX, currentY, clientX: e.clientX, clientY: e.clientY });
     
     setDragStart({
       x: e.clientX - currentX,
@@ -55,7 +55,7 @@ const DraggableDialog = ({
     const newX = e.clientX - dragStart.x;
     const newY = e.clientY - dragStart.y;
     
-    console.log('onDrag', { clientX: e.clientX, clientY: e.clientY, dragStartX: dragStart.x, dragStartY: dragStart.y, newX, newY });
+    // console.log('onDrag', { clientX: e.clientX, clientY: e.clientY, dragStartX: dragStart.x, dragStartY: dragStart.y, newX, newY });
     
     // Get actual dialog dimensions
     const dialog = dialogRef.current;
@@ -76,7 +76,7 @@ const DraggableDialog = ({
     const finalX = Math.max(minX, Math.min(newX, maxX));
     const finalY = Math.max(minY, Math.min(newY, maxY));
     
-    console.log('Setting position to', { finalX, finalY });
+    // console.log('Setting position to', { finalX, finalY });
     
     setDialogPosition({
       x: finalX,
@@ -85,20 +85,20 @@ const DraggableDialog = ({
   };
 
   const stopDrag = () => {
-    console.log('stopDrag called');
+    // console.log('stopDrag called');
     setIsDragging(false);
   };
 
   useEffect(() => {
-    console.log('useEffect isDragging changed:', isDragging);
+    // console.log('useEffect isDragging changed:', isDragging);
     if (isDragging) {
-      console.log('Adding event listeners');
+      // console.log('Adding event listeners');
       document.addEventListener('mousemove', onDrag);
       document.addEventListener('mouseup', stopDrag);
       document.body.style.userSelect = 'none';
       
       return () => {
-        console.log('Removing event listeners');
+        // console.log('Removing event listeners');
         document.removeEventListener('mousemove', onDrag);
         document.removeEventListener('mouseup', stopDrag);
         document.body.style.userSelect = '';

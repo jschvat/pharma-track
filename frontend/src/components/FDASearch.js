@@ -286,7 +286,7 @@ function FDASearch() {
    */
   const checkDrugExists = async (ndc) => {
     try {
-      console.log('Checking if drug exists with NDC:', ndc);
+      // console.log('Checking if drug exists with NDC:', ndc);
       
       if (!ndc || typeof ndc !== 'string') {
         console.warn('Invalid NDC provided to checkDrugExists:', ndc);
@@ -294,13 +294,13 @@ function FDASearch() {
       }
       
       const cleanNDC = ndc.replace(/[-]/g, '');
-      console.log('Clean NDC for search:', cleanNDC);
+      // console.log('Clean NDC for search:', cleanNDC);
       
       const response = await drugAPI.search({ ndc: cleanNDC, limit: 1 });
-      console.log('Drug existence check response:', response);
+      // console.log('Drug existence check response:', response);
       
       const exists = response.data.drugs && response.data.drugs.length > 0;
-      console.log('Drug exists:', exists);
+      // console.log('Drug exists:', exists);
       
       return exists;
     } catch (error) {
@@ -310,8 +310,8 @@ function FDASearch() {
   };
 
   const handleAddToDatabase = async (drug) => {
-    console.log('=== FRONTEND: handleAddToDatabase called ===');
-    console.log('Drug:', drug);
+    // console.log('=== FRONTEND: handleAddToDatabase called ===');
+    // console.log('Drug:', drug);
     
     try {
       // Validate input drug object
@@ -325,7 +325,7 @@ function FDASearch() {
         return;
       }
       
-      console.log('Drug validation passed, proceeding with addition');
+      // console.log('Drug validation passed, proceeding with addition');
 
     // Check if drug already exists in database
     setAddingToDatabase(true); // Show loading while checking
@@ -339,8 +339,8 @@ function FDASearch() {
       console.error('Error checking drug existence:', error);
     }
 
-    console.log('Opening modal for drug:', drug.ndc);
-    console.log('Drug packaging:', drug.packaging);
+    // console.log('Opening modal for drug:', drug.ndc);
+    // console.log('Drug packaging:', drug.packaging);
     
     setAddingToDatabase(false);
     
@@ -413,23 +413,23 @@ function FDASearch() {
       }
     }
 
-    console.log('=== FRONTEND: Submitting drug with inventory ===');
-    console.log('Selected drug:', selectedDrugForAdd);
-    console.log('Selected package NDC:', selectedPackageNDC);
-    console.log('Initial inventory form:', initialInventoryForm);
+    // console.log('=== FRONTEND: Submitting drug with inventory ===');
+    // console.log('Selected drug:', selectedDrugForAdd);
+    // console.log('Selected package NDC:', selectedPackageNDC);
+    // console.log('Initial inventory form:', initialInventoryForm);
 
     setAddingToDatabase(true);
     try {
       // Use selected package NDC if available, otherwise use main NDC
       const ndcToUse = selectedPackageNDC || selectedDrugForAdd.ndc;
-      console.log('NDC to use:', ndcToUse);
+      // console.log('NDC to use:', ndcToUse);
       
       if (!ndcToUse) {
         throw new Error('No NDC available - selectedPackageNDC and selectedDrugForAdd.ndc are both empty');
       }
       
       const standardizedNDC = standardizeNDC(ndcToUse);
-      console.log('Standardized NDC:', standardizedNDC);
+      // console.log('Standardized NDC:', standardizedNDC);
       
       if (!standardizedNDC) {
         throw new Error('NDC standardization failed - result is empty');
@@ -440,10 +440,10 @@ function FDASearch() {
         ndc: standardizedNDC,
         initialInventory: initialInventoryForm
       };
-      console.log('Request data being sent:', requestData);
+      // console.log('Request data being sent:', requestData);
       
       const response = await drugAPI.addFromFDAWithInventory(requestData);
-      console.log('Response from API:', response);
+      // console.log('Response from API:', response);
       
       // Show success message
       alert(`Drug "${selectedDrugForAdd.brand_name || selectedDrugForAdd.generic_name}" added to database with initial inventory!`);

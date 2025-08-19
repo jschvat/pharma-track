@@ -14,7 +14,7 @@ const logger = require('../config/logger');
  */
 const generalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 5000, // Development mode - Limit each IP to 5000 requests per windowMs
   message: {
     error: 'Too many requests',
     message: 'Rate limit exceeded. Please try again later.',
@@ -71,7 +71,7 @@ const authRateLimit = rateLimit({
  */
 const apiRateLimit = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 60, // 60 requests per minute for API endpoints
+  max: 1000, // Development mode - 1000 requests per minute for API endpoints
   keyGenerator: (req) => {
     // Use user ID if authenticated, otherwise IP
     return req.user?.id ? `user_${req.user.id}` : req.ip;

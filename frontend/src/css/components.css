@@ -15,6 +15,28 @@
   min-height: 200px;
 }
 
+/* Post-it Notes Card - Prevent hover movement */
+.stable-card {
+  transition: none !important;
+  transform: none !important;
+  position: static !important;
+}
+
+.stable-card:hover {
+  transform: none !important;
+  box-shadow: inherit !important;
+  transition: none !important;
+}
+
+.stable-card .card-header {
+  transition: none !important;
+  transform: none !important;
+}
+
+.stable-card .btn {
+  transform: none !important;
+}
+
 /* ===== LOGIN COMPONENT ===== */
 
 .login-container {
@@ -1167,6 +1189,29 @@
 
 .hamburger-menu[aria-expanded="true"] .hamburger-line:nth-child(3) {
   transform: translateY(-6px) rotate(-45deg);
+}
+
+/* ===== POST-IT NOTES COMPONENT ===== */
+
+/* Dynamic placeholder color for post-it note textareas */
+textarea[style*="--placeholder-color"]::placeholder {
+  color: var(--placeholder-color);
+  opacity: 0.8;
+}
+
+textarea[style*="--placeholder-color"]::-webkit-input-placeholder {
+  color: var(--placeholder-color);
+  opacity: 0.8;
+}
+
+textarea[style*="--placeholder-color"]::-moz-placeholder {
+  color: var(--placeholder-color);
+  opacity: 0.8;
+}
+
+textarea[style*="--placeholder-color"]:-ms-input-placeholder {
+  color: var(--placeholder-color);
+  opacity: 0.8;
 }
 
 /* ===== COMPONENT PLACEHOLDERS ===== */

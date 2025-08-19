@@ -2,6 +2,7 @@ const { pool: db } = require('../config/database');
 const { handleDatabaseError } = require('./ValidationError');
 const InventoryAuditLog = require('./InventoryAuditLog');
 const InventorySnapshot = require('./InventorySnapshot');
+const { debugger: devDebugger } = require('../utils/debugger');
 
 class StoreInventory {
   /**
@@ -11,6 +12,14 @@ class StoreInventory {
    * @returns {number} Inventory ID
    */
   static async add(inventoryData, performedBy = null) {
+    devDebugger.startTimer('inventory_add');
+    devDebugger.log('db', 'Adding new inventory item', {
+      storeId: inventoryData.store_id,
+      drugId: inventoryData.drug_id,
+      quantity: inventoryData.quantity_on_hand,
+      performedBy
+    });
+    
     const connection = await db.getConnection();
     
     try {
@@ -29,15 +38,19 @@ class StoreInventory {
       } = inventoryData;
 
       // Insert new inventory item
-      const [result] = await connection.execute(`
+      const query = `
         INSERT INTO store_inventory (
           store_id, drug_id, quantity_on_hand, reorder_level, unit_cost,
           selling_price, lot_number, expiration_date, supplier
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
+      `;
+      const params = [
         store_id, drug_id, quantity_on_hand, reorder_level, unit_cost,
         selling_price, lot_number, expiration_date, supplier
-      ]);
+      ];
+      
+      devDebugger.dbQuery(query, params);
+      const [result] = await connection.execute(query, params);
 
       const inventoryId = result.insertId;
 
@@ -78,10 +91,24 @@ class StoreInventory {
       }
 
       await connection.commit();
+      
+      const duration = devDebugger.endTimer('inventory_add');
+      devDebugger.log('db', 'Inventory item added successfully', {
+        inventoryId,
+        duration: `${duration}ms`,
+        storeId: store_id,
+        drugId: drug_id
+      });
+      
       return inventoryId;
       
     } catch (error) {
       await connection.rollback();
+      devDebugger.error(error, {
+        operation: 'inventory_add',
+        storeId: inventoryData.store_id,
+        drugId: inventoryData.drug_id
+      });
       console.error('Add inventory failed:', error.message);
       throw error;
     } finally {

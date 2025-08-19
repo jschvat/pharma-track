@@ -31,7 +31,7 @@ export const DebugProvider = ({ children }) => {
   useEffect(() => {
     if (isDebugMode) {
       // Initialize debug logging
-      console.log('🔍 Debug Context initialized');
+      // console.log('🔍 Debug Context initialized');
       
       // Update debug stats periodically
       const interval = setInterval(() => {
@@ -52,7 +52,7 @@ export const DebugProvider = ({ children }) => {
 
       // Monitor React hydration
       if (window.React && window.React.version) {
-        console.log('⚛️ React version:', window.React.version);
+        // console.log('⚛️ React version:', window.React.version);
       }
 
       return () => {
@@ -89,7 +89,7 @@ export const DebugProvider = ({ children }) => {
     // Performance logging (simplified for safe version)
     logPerformance: (metric, value, context) => {
       if (isDebugMode) {
-        console.log(`⚡ Performance: ${metric} = ${value}ms`, context);
+        // console.log(`⚡ Performance: ${metric} = ${value}ms`, context);
       }
     },
 
@@ -102,7 +102,7 @@ export const DebugProvider = ({ children }) => {
         try {
           const result = await fn(...args);
           const duration = performance.now() - start;
-          console.log(`⚡ Performance: ${label} = ${Math.round(duration)}ms`);
+          // console.log(`⚡ Performance: ${label} = ${Math.round(duration)}ms`);
           return result;
         } catch (error) {
           logError(error, `${label}_execution_error`);
@@ -128,7 +128,7 @@ export const DebugProvider = ({ children }) => {
       
       console.group(`🔍 State Inspector: ${stateName}`);
       console.table(state);
-      console.log('Raw state:', state);
+      // console.log('Raw state:', state);
       console.groupEnd();
     },
 
@@ -136,13 +136,13 @@ export const DebugProvider = ({ children }) => {
     debugAPI: {
       logCall: (method, url, data) => {
         if (isDebugMode) {
-          console.log(`🌐 API Call: ${method.toUpperCase()} ${url}`, data);
+          // console.log(`🌐 API Call: ${method.toUpperCase()} ${url}`, data);
         }
       },
       
       logResponse: (method, url, response, duration) => {
         if (isDebugMode) {
-          console.log(`✅ API Response: ${method.toUpperCase()} ${url} (${duration}ms)`, response);
+          // console.log(`✅ API Response: ${method.toUpperCase()} ${url} (${duration}ms)`, response);
         }
       },
       
@@ -176,9 +176,9 @@ export const DebugProvider = ({ children }) => {
       inspectComponent: (componentRef) => {
         if (componentRef && componentRef.current) {
           console.group('🔍 Component Inspector');
-          console.log('Component:', componentRef.current);
-          console.log('Props:', componentRef.current.props);
-          console.log('State:', componentRef.current.state);
+          // console.log('Component:', componentRef.current);
+          // console.log('Props:', componentRef.current.props);
+          // console.log('State:', componentRef.current.state);
           console.groupEnd();
         }
       }

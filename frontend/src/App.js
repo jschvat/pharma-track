@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { CacheProvider } from './contexts/CacheContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { DebugProvider } from './contexts/DebugContext';
 import { DebugErrorBoundary } from './utils/withDebugLogging';
@@ -18,12 +19,11 @@ import FDASearch from './components/FDASearch';
 import UserManagement from './components/UserManagement';
 import AdminStores from './components/AdminStores';
 import AdminSettings from './components/AdminSettings';
-import DebugStores from './components/DebugStores';
-import DebugExample from './components/DebugExample';
 // import DropdownRouteHandler from './components/DropdownRouteHandler';
 
 // Import debug utilities (development only) - using safe version to avoid React Router conflicts
 import './utils/safeDebugLogger';
+// import debugLogger from './utils/debugLogger'; // Temporarily disabled due to errors
 
 import './App.css';
 import './theme.css';
@@ -33,12 +33,10 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Disable dropdown enhancements for now
-  /*
+  // Debug logger temporarily disabled
   useEffect(() => {
-    initializeAllDropdownEnhancements();
+    // console.log('🐛 Debug logger disabled - using normal console');
   }, []);
-  */
 
   // Close mobile menu on resize to desktop
   useEffect(() => {
@@ -64,7 +62,8 @@ function App() {
     <DebugErrorBoundary>
       <DebugProvider>
         <ThemeProvider>
-          <AuthProvider>
+          <CacheProvider>
+            <AuthProvider>
             <Router>
               <div className="app-container">
                 <Routes>
@@ -98,8 +97,6 @@ function App() {
                                 <Route path="/admin/users" element={<UserManagement />} />
                                 <Route path="/admin/stores" element={<AdminStores />} />
                                 <Route path="/admin/settings" element={<AdminSettings />} />
-                                <Route path="/debug/stores" element={<DebugStores />} />
-                                <Route path="/debug/logging" element={<DebugExample />} />
                                 {/* Catch all route */}
                                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
                               </Routes>
@@ -112,7 +109,8 @@ function App() {
                 </Routes>
               </div>
             </Router>
-          </AuthProvider>
+            </AuthProvider>
+          </CacheProvider>
         </ThemeProvider>
       </DebugProvider>
     </DebugErrorBoundary>

@@ -76,11 +76,12 @@ const SearchFilterBar = ({
       options = [],
       placeholder,
       disabled = false,
+      key, // Extract key to prevent spreading it
       ...filterProps
     } = filter;
 
     return (
-      <div key={`filter-${index}`}>
+      <div key={key || `filter-${index}`}>
         {label && (
           <Form.Label className="mb-1 small text-muted">
             {label}

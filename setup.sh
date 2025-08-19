@@ -169,30 +169,48 @@ setup_mysql_docker() {
     done
 }
 
-# Run database migrations
+# Run complete database setup
 setup_database() {
-    log "Setting up database schema..."
+    log "Setting up complete database with all migrations..."
     
-    # Execute main schema
-    if [ -f "database/schema.sql" ]; then
-        log "Creating main database schema..."
-        docker exec -i $CONTAINER_NAME mysql -u root -p$DB_ROOT_PASSWORD $DB_NAME < database/schema.sql
-        success "Main schema created"
+    # Use the comprehensive database setup script
+    if [ -f "scripts/setup_complete_database.js" ]; then
+        log "Running complete database setup script..."
+        
+        # Set environment variables for the script
+        export DB_HOST=localhost
+        export DB_USER=$DB_USER  
+        export DB_PASSWORD=$DB_PASSWORD
+        export DB_NAME=$DB_NAME
+        
+        # Wait a bit more for database to be fully ready
+        sleep 3
+        
+        node scripts/setup_complete_database.js
+        success "Complete database setup completed"
     else
-        error "database/schema.sql not found"
-        exit 1
+        # Fallback to manual setup
+        warning "Complete setup script not found, using fallback method"
+        
+        # Execute main schema
+        if [ -f "database/schema.sql" ]; then
+            log "Creating main database schema..."
+            docker exec -i $CONTAINER_NAME mysql -u root -p$DB_ROOT_PASSWORD $DB_NAME < database/schema.sql
+            success "Main schema created"
+        else
+            error "database/schema.sql not found"
+            exit 1
+        fi
+        
+        # Execute drug schema if it exists
+        if [ -f "database/drug_schema.sql" ]; then
+            log "Creating drug/inventory schema..."
+            docker exec -i $CONTAINER_NAME mysql -u root -p$DB_ROOT_PASSWORD $DB_NAME < database/drug_schema.sql
+            success "Drug schema created"
+        else
+            warning "database/drug_schema.sql not found, skipping drug schema"
+        fi
     fi
-    
-    # Execute drug schema if it exists
-    if [ -f "database/drug_schema.sql" ]; then
-        log "Creating drug/inventory schema..."
-        docker exec -i $CONTAINER_NAME mysql -u root -p$DB_ROOT_PASSWORD $DB_NAME < database/drug_schema.sql
-        success "Drug schema created"
-    else
-        warning "database/drug_schema.sql not found, skipping drug schema"
-    fi
-    
-    success "Database setup completed"
 }
 
 # Setup frontend

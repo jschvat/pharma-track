@@ -1,3 +1,10 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Inventory
+ *   description: Store inventory management operations
+ */
+
 const express = require('express');
 const { validationResult, query, body } = require('express-validator');
 const StoreInventory = require('../models/StoreInventory');
@@ -15,6 +22,99 @@ const { VALIDATION } = require('../config/constants');
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/inventory/store/{storeId}:
+ *   get:
+ *     summary: Get store inventory
+ *     description: Retrieve all inventory items for a specific store with optional filtering
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: storeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Store ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Number of items per page
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: boolean
+ *         description: Filter by active status
+ *       - in: query
+ *         name: low_stock
+ *         schema:
+ *           type: boolean
+ *         description: Filter for low stock items only
+ *       - in: query
+ *         name: expiring_days
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 365
+ *         description: Filter for items expiring within specified days
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *           maxLength: 100
+ *         description: Search in drug names and NDC
+ *     responses:
+ *       200:
+ *         description: Inventory items retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     inventory:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/InventoryItem'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         page:
+ *                           type: integer
+ *                         limit:
+ *                           type: integer
+ *                         total:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Insufficient permissions for store access
+ */
 // Get all inventory items for a store
 router.get('/store/:storeId', authenticateToken, validateStoreParam, [
   verifyId('storeId'),
@@ -70,6 +170,39 @@ router.get('/store/:storeId', authenticateToken, validateStoreParam, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/{id}:
+ *   get:
+ *     summary: Get single inventory item
+ *     description: Retrieve detailed information for a specific inventory item
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Inventory item ID
+ *     responses:
+ *       200:
+ *         description: Inventory item retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 inventory:
+ *                   $ref: '#/components/schemas/InventoryItem'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied - insufficient permissions
+ *       404:
+ *         description: Inventory item not found
+ */
 // Get single inventory item  
 router.get('/:id', authenticateToken, validateInventoryAccess, [verifyId()], async (req, res) => {
   try {
@@ -86,6 +219,87 @@ router.get('/:id', authenticateToken, validateInventoryAccess, [verifyId()], asy
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory:
+ *   post:
+ *     summary: Add new inventory item
+ *     description: Create a new inventory item for the authenticated user's store
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               drug_id:
+ *                 type: integer
+ *                 minimum: 1
+ *                 description: Drug ID
+ *                 example: 1
+ *               quantity_on_hand:
+ *                 type: integer
+ *                 minimum: 0
+ *                 description: Initial quantity
+ *                 example: 100
+ *               reorder_level:
+ *                 type: integer
+ *                 minimum: 0
+ *                 description: Reorder threshold
+ *                 example: 20
+ *               unit_cost:
+ *                 type: number
+ *                 format: decimal
+ *                 minimum: 0
+ *                 description: Cost per unit
+ *                 example: 0.15
+ *               selling_price:
+ *                 type: number
+ *                 format: decimal
+ *                 minimum: 0
+ *                 description: Selling price per unit
+ *                 example: 0.25
+ *               lot_number:
+ *                 type: string
+ *                 maxLength: 50
+ *                 description: Batch/lot number
+ *                 example: "LOT12345"
+ *               expiration_date:
+ *                 type: string
+ *                 format: date
+ *                 description: Expiration date
+ *                 example: "2025-12-31"
+ *               supplier:
+ *                 type: string
+ *                 maxLength: 255
+ *                 description: Supplier name
+ *                 example: "ABC Pharmaceuticals"
+ *             required: [drug_id, quantity_on_hand, reorder_level, unit_cost, selling_price, expiration_date]
+ *     responses:
+ *       201:
+ *         description: Inventory item created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Inventory item added successfully"
+ *                 inventory:
+ *                   $ref: '#/components/schemas/InventoryItem'
+ *       400:
+ *         description: Validation error or duplicate item
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Insufficient permissions (store admin required)
+ *       404:
+ *         description: Drug not found
+ */
 // Add new inventory item
 router.post('/', authenticateToken, requireStoreAdmin, [
   body('drug_id').isInt({ min: 1 }).withMessage('Valid drug ID required'),
@@ -144,6 +358,84 @@ router.post('/', authenticateToken, requireStoreAdmin, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/{id}:
+ *   put:
+ *     summary: Update inventory item
+ *     description: Update an existing inventory item's details
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Inventory item ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               quantity_on_hand:
+ *                 type: integer
+ *                 minimum: 0
+ *                 description: Current quantity
+ *               reorder_level:
+ *                 type: integer
+ *                 minimum: 0
+ *                 description: Reorder threshold
+ *               unit_cost:
+ *                 type: number
+ *                 format: decimal
+ *                 minimum: 0
+ *                 description: Cost per unit
+ *               selling_price:
+ *                 type: number
+ *                 format: decimal
+ *                 minimum: 0
+ *                 description: Selling price per unit
+ *               lot_number:
+ *                 type: string
+ *                 maxLength: 50
+ *                 description: Batch/lot number
+ *               expiration_date:
+ *                 type: string
+ *                 format: date
+ *                 description: Expiration date
+ *               supplier:
+ *                 type: string
+ *                 maxLength: 255
+ *                 description: Supplier name
+ *               is_active:
+ *                 type: boolean
+ *                 description: Whether item is active
+ *     responses:
+ *       200:
+ *         description: Inventory item updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Inventory updated successfully"
+ *                 inventory:
+ *                   $ref: '#/components/schemas/InventoryItem'
+ *       400:
+ *         description: Validation error or no changes made
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied or insufficient permissions
+ *       404:
+ *         description: Inventory item not found
+ */
 // Update inventory item
 router.put('/:id', authenticateToken, requireStoreAdmin, [
   verifyId(),
@@ -196,6 +488,42 @@ router.put('/:id', authenticateToken, requireStoreAdmin, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/{id}:
+ *   delete:
+ *     summary: Delete inventory item
+ *     description: Permanently delete an inventory item from the store
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Inventory item ID
+ *     responses:
+ *       200:
+ *         description: Inventory item deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Inventory item deleted successfully"
+ *       400:
+ *         description: Failed to delete inventory item
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied or insufficient permissions
+ *       404:
+ *         description: Inventory item not found
+ */
 // Delete inventory item
 router.delete('/:id', authenticateToken, requireStoreAdmin, [verifyId()], async (req, res) => {
   try {
@@ -228,6 +556,67 @@ router.delete('/:id', authenticateToken, requireStoreAdmin, [verifyId()], async 
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/{id}/adjust-stock:
+ *   patch:
+ *     summary: Adjust stock quantity
+ *     description: Adjust inventory quantity with audit trail (positive or negative adjustment)
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Inventory item ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               adjustment:
+ *                 type: integer
+ *                 description: Quantity adjustment (positive to add, negative to subtract)
+ *                 example: -5
+ *               reason:
+ *                 type: string
+ *                 maxLength: 255
+ *                 description: Reason for adjustment
+ *                 example: "Manual count correction"
+ *             required: [adjustment]
+ *     responses:
+ *       200:
+ *         description: Stock adjusted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Stock adjusted successfully"
+ *                 inventory:
+ *                   $ref: '#/components/schemas/InventoryItem'
+ *                 adjustment:
+ *                   type: integer
+ *                   example: -5
+ *                 reason:
+ *                   type: string
+ *                   example: "Manual count correction"
+ *       400:
+ *         description: Validation error or adjustment would result in negative quantity
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied or insufficient permissions
+ *       404:
+ *         description: Inventory item not found
+ */
 // Adjust stock quantity
 router.patch('/:id/adjust-stock', authenticateToken, requireStoreAdmin, [
   verifyId(),
@@ -286,6 +675,63 @@ router.patch('/:id/adjust-stock', authenticateToken, requireStoreAdmin, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/{id}/set-quantity:
+ *   patch:
+ *     summary: Set stock quantity directly
+ *     description: Set inventory quantity to a specific value with audit trail
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Inventory item ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               quantity:
+ *                 type: integer
+ *                 minimum: 0
+ *                 description: New quantity to set
+ *                 example: 50
+ *             required: [quantity]
+ *     responses:
+ *       200:
+ *         description: Quantity updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Quantity updated successfully"
+ *                 inventory:
+ *                   $ref: '#/components/schemas/InventoryItem'
+ *                 old_quantity:
+ *                   type: integer
+ *                   example: 45
+ *                 new_quantity:
+ *                   type: integer
+ *                   example: 50
+ *       400:
+ *         description: Validation error or failed to update
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied or insufficient permissions
+ *       404:
+ *         description: Inventory item not found
+ */
 // Set stock quantity directly
 router.patch('/:id/set-quantity', authenticateToken, requireStoreAdmin, [
   verifyId(),
@@ -335,6 +781,51 @@ router.patch('/:id/set-quantity', authenticateToken, requireStoreAdmin, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/store/{storeId}/low-stock:
+ *   get:
+ *     summary: Get low stock items
+ *     description: Retrieve inventory items that are at or below their reorder level
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: storeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Store ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 50
+ *         description: Maximum number of items to return
+ *     responses:
+ *       200:
+ *         description: Low stock items retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 low_stock:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/InventoryItem'
+ *                 total:
+ *                   type: integer
+ *                   description: Number of low stock items
+ *                   example: 12
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied - insufficient permissions for store
+ */
 // Get low stock items
 router.get('/store/:storeId/low-stock', authenticateToken, [
   verifyId('storeId'),
@@ -365,6 +856,63 @@ router.get('/store/:storeId/low-stock', authenticateToken, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/store/{storeId}/expiring:
+ *   get:
+ *     summary: Get expiring items
+ *     description: Retrieve inventory items that are expiring within specified days
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: storeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Store ID
+ *       - in: query
+ *         name: days
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 365
+ *           default: 30
+ *         description: Number of days to look ahead for expiring items
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 50
+ *         description: Maximum number of items to return
+ *     responses:
+ *       200:
+ *         description: Expiring items retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 expiring:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/InventoryItem'
+ *                 total:
+ *                   type: integer
+ *                   description: Number of expiring items
+ *                   example: 8
+ *                 days:
+ *                   type: integer
+ *                   description: Days ahead checked
+ *                   example: 30
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied - insufficient permissions for store
+ */
 // Get expiring items
 router.get('/store/:storeId/expiring', authenticateToken, [
   verifyId('storeId'),
@@ -397,6 +945,59 @@ router.get('/store/:storeId/expiring', authenticateToken, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/store/{storeId}/stats:
+ *   get:
+ *     summary: Get inventory statistics
+ *     description: Retrieve statistical overview of store inventory (totals, low stock count, etc.)
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: storeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Store ID
+ *     responses:
+ *       200:
+ *         description: Inventory statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     total_items:
+ *                       type: integer
+ *                       description: Total number of inventory items
+ *                       example: 145
+ *                     total_quantity:
+ *                       type: integer
+ *                       description: Total quantity across all items
+ *                       example: 12450
+ *                     low_stock_count:
+ *                       type: integer
+ *                       description: Number of items below reorder level
+ *                       example: 12
+ *                     expired_count:
+ *                       type: integer
+ *                       description: Number of expired items
+ *                       example: 3
+ *                     total_value:
+ *                       type: number
+ *                       format: decimal
+ *                       description: Total inventory value
+ *                       example: 15420.75
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied - insufficient permissions for store
+ */
 // Get inventory statistics
 router.get('/store/:storeId/stats', authenticateToken, [verifyId('storeId')], async (req, res) => {
   try {
@@ -420,6 +1021,99 @@ router.get('/store/:storeId/stats', authenticateToken, [verifyId('storeId')], as
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/bulk/adjust-stock:
+ *   post:
+ *     summary: Bulk adjust stock quantities
+ *     description: Adjust multiple inventory items' quantities in a single operation
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               adjustments:
+ *                 type: array
+ *                 minItems: 1
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventory_id:
+ *                       type: integer
+ *                       minimum: 1
+ *                       description: Inventory item ID
+ *                       example: 1
+ *                     adjustment:
+ *                       type: integer
+ *                       description: Quantity adjustment
+ *                       example: -5
+ *                     reason:
+ *                       type: string
+ *                       maxLength: 255
+ *                       description: Reason for adjustment
+ *                       example: "Bulk inventory correction"
+ *                   required: [inventory_id, adjustment]
+ *             required: [adjustments]
+ *           example:
+ *             adjustments:
+ *               - inventory_id: 1
+ *                 adjustment: -5
+ *                 reason: "Damaged goods"
+ *               - inventory_id: 2
+ *                 adjustment: 10
+ *                 reason: "Found additional stock"
+ *     responses:
+ *       200:
+ *         description: Bulk stock adjustment completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Bulk stock adjustment completed"
+ *                 successful:
+ *                   type: integer
+ *                   description: Number of successful adjustments
+ *                   example: 8
+ *                 failed:
+ *                   type: integer
+ *                   description: Number of failed adjustments
+ *                   example: 2
+ *                 results:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       inventory_id:
+ *                         type: integer
+ *                       adjustment:
+ *                         type: integer
+ *                       status:
+ *                         type: string
+ *                         example: "success"
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       inventory_id:
+ *                         type: integer
+ *                       error:
+ *                         type: string
+ *       400:
+ *         description: Validation errors
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Insufficient permissions (store admin required)
+ */
 // Bulk operations
 router.post('/bulk/adjust-stock', authenticateToken, requireStoreAdmin, [
   body('adjustments').isArray({ min: 1 }).withMessage('Adjustments must be a non-empty array'),
@@ -512,6 +1206,106 @@ router.post('/bulk/adjust-stock', authenticateToken, requireStoreAdmin, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/bulk/update:
+ *   put:
+ *     summary: Bulk update inventory items
+ *     description: Update multiple inventory items' properties in a single operation
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               updates:
+ *                 type: array
+ *                 minItems: 1
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     inventory_id:
+ *                       type: integer
+ *                       minimum: 1
+ *                       description: Inventory item ID
+ *                       example: 1
+ *                     reorder_level:
+ *                       type: integer
+ *                       minimum: 0
+ *                       description: New reorder level
+ *                     unit_cost:
+ *                       type: number
+ *                       format: decimal
+ *                       minimum: 0
+ *                       description: New unit cost
+ *                     selling_price:
+ *                       type: number
+ *                       format: decimal
+ *                       minimum: 0
+ *                       description: New selling price
+ *                     supplier:
+ *                       type: string
+ *                       maxLength: 255
+ *                       description: Supplier name
+ *                   required: [inventory_id]
+ *             required: [updates]
+ *           example:
+ *             updates:
+ *               - inventory_id: 1
+ *                 reorder_level: 25
+ *                 unit_cost: 0.18
+ *               - inventory_id: 2
+ *                 selling_price: 0.35
+ *                 supplier: "New Supplier Co"
+ *     responses:
+ *       200:
+ *         description: Bulk inventory update completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Bulk inventory update completed"
+ *                 successful:
+ *                   type: integer
+ *                   description: Number of successful updates
+ *                   example: 15
+ *                 failed:
+ *                   type: integer
+ *                   description: Number of failed updates
+ *                   example: 1
+ *                 results:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       inventory_id:
+ *                         type: integer
+ *                       status:
+ *                         type: string
+ *                         example: "success"
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       inventory_id:
+ *                         type: integer
+ *                       error:
+ *                         type: string
+ *       400:
+ *         description: Validation errors
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Insufficient permissions (store admin required)
+ */
 // Bulk update inventory items
 router.put('/bulk/update', authenticateToken, requireStoreAdmin, [
   body('updates').isArray({ min: 1 }).withMessage('Updates must be a non-empty array'),
@@ -588,6 +1382,83 @@ router.put('/bulk/update', authenticateToken, requireStoreAdmin, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/{id}/fill-prescription:
+ *   post:
+ *     summary: Fill prescription
+ *     description: Process a prescription fill, reducing inventory and creating audit trail
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Inventory item ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               quantity:
+ *                 type: integer
+ *                 minimum: 1
+ *                 description: Quantity to dispense
+ *                 example: 30
+ *               prescription_number:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 100
+ *                 description: Prescription reference number
+ *                 example: "RX123456789"
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 description: Additional notes
+ *                 example: "30-day supply for patient John Doe"
+ *             required: [quantity, prescription_number]
+ *     responses:
+ *       200:
+ *         description: Prescription filled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Prescription filled successfully"
+ *                 inventory:
+ *                   $ref: '#/components/schemas/InventoryItem'
+ *                 transaction:
+ *                   type: object
+ *                   properties:
+ *                     type:
+ *                       type: string
+ *                       example: "prescription_fill"
+ *                     quantity:
+ *                       type: integer
+ *                       example: 30
+ *                     prescription_number:
+ *                       type: string
+ *                       example: "RX123456789"
+ *                     reason:
+ *                       type: string
+ *                       example: "30-day supply for patient John Doe"
+ *       400:
+ *         description: Validation error or insufficient quantity
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied or insufficient permissions
+ *       404:
+ *         description: Inventory item not found
+ */
 // Fill prescription
 router.post('/:id/fill-prescription', authenticateToken, requireStoreAdmin, [
   verifyId(),
@@ -648,6 +1519,82 @@ router.post('/:id/fill-prescription', authenticateToken, requireStoreAdmin, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/{id}/return-to-stock:
+ *   post:
+ *     summary: Return medication to stock
+ *     description: Return previously dispensed medication back to inventory
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Inventory item ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               quantity:
+ *                 type: integer
+ *                 minimum: 1
+ *                 description: Quantity to return
+ *                 example: 10
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 description: Reason for return
+ *                 example: "Patient returned unused medication"
+ *               reference_number:
+ *                 type: string
+ *                 maxLength: 100
+ *                 description: Reference number (original prescription, etc.)
+ *                 example: "RX123456789"
+ *             required: [quantity]
+ *     responses:
+ *       200:
+ *         description: Medication returned to stock successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Medication returned to stock successfully"
+ *                 inventory:
+ *                   $ref: '#/components/schemas/InventoryItem'
+ *                 transaction:
+ *                   type: object
+ *                   properties:
+ *                     type:
+ *                       type: string
+ *                       example: "return_to_stock"
+ *                     quantity:
+ *                       type: integer
+ *                       example: 10
+ *                     reason:
+ *                       type: string
+ *                       example: "Patient returned unused medication"
+ *                     reference_number:
+ *                       type: string
+ *                       example: "RX123456789"
+ *       400:
+ *         description: Validation error or operation failed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied or insufficient permissions
+ *       404:
+ *         description: Inventory item not found
+ */
 // Return to stock
 router.post('/:id/return-to-stock', authenticateToken, requireStoreAdmin, [
   verifyId(),
@@ -714,6 +1661,74 @@ router.post('/:id/return-to-stock', authenticateToken, requireStoreAdmin, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/{id}/expire:
+ *   post:
+ *     summary: Expire medication
+ *     description: Mark medication as expired and remove from available inventory
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Inventory item ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               quantity:
+ *                 type: integer
+ *                 minimum: 1
+ *                 description: Quantity to expire
+ *                 example: 25
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 description: Reason for expiration
+ *                 example: "Expired on 2025-08-01"
+ *             required: [quantity]
+ *     responses:
+ *       200:
+ *         description: Medication expired successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Medication expired successfully"
+ *                 inventory:
+ *                   $ref: '#/components/schemas/InventoryItem'
+ *                 transaction:
+ *                   type: object
+ *                   properties:
+ *                     type:
+ *                       type: string
+ *                       example: "expire"
+ *                     quantity:
+ *                       type: integer
+ *                       example: 25
+ *                     reason:
+ *                       type: string
+ *                       example: "Expired on 2025-08-01"
+ *       400:
+ *         description: Validation error or insufficient quantity
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied or insufficient permissions
+ *       404:
+ *         description: Inventory item not found
+ */
 // Expire medication
 router.post('/:id/expire', authenticateToken, requireStoreAdmin, [
   verifyId(),
@@ -774,6 +1789,78 @@ router.post('/:id/expire', authenticateToken, requireStoreAdmin, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/{id}/audit:
+ *   post:
+ *     summary: Audit inventory
+ *     description: Perform inventory audit by setting actual counted quantity
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Inventory item ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               actual_quantity:
+ *                 type: integer
+ *                 minimum: 0
+ *                 description: Actual counted quantity
+ *                 example: 85
+ *               reason:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 500
+ *                 description: Audit reason/notes
+ *                 example: "Monthly inventory count - discrepancy found"
+ *             required: [actual_quantity, reason]
+ *     responses:
+ *       200:
+ *         description: Inventory audit completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Inventory audit completed successfully"
+ *                 inventory:
+ *                   $ref: '#/components/schemas/InventoryItem'
+ *                 audit_result:
+ *                   type: object
+ *                   properties:
+ *                     quantity_before:
+ *                       type: integer
+ *                       example: 90
+ *                     quantity_after:
+ *                       type: integer
+ *                       example: 85
+ *                     adjustment:
+ *                       type: integer
+ *                       example: -5
+ *                     reason:
+ *                       type: string
+ *                       example: "Monthly inventory count - discrepancy found"
+ *       400:
+ *         description: Validation error or audit failed
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied or insufficient permissions
+ *       404:
+ *         description: Inventory item not found
+ */
 // Audit inventory
 router.post('/:id/audit', authenticateToken, requireStoreAdmin, [
   verifyId(),
@@ -835,6 +1922,56 @@ router.post('/:id/audit', authenticateToken, requireStoreAdmin, [
   }
 });
 
+/**
+ * @swagger
+ * /api/inventory/{id}/running-total:
+ *   get:
+ *     summary: Get running total for inventory item
+ *     description: Retrieve running total of all transactions for a specific inventory item
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Inventory item ID
+ *     responses:
+ *       200:
+ *         description: Running total retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 inventory_id:
+ *                   type: integer
+ *                   example: 1
+ *                 drug_info:
+ *                   type: object
+ *                   properties:
+ *                     generic_name:
+ *                       type: string
+ *                       example: "acetaminophen"
+ *                     brand_name:
+ *                       type: string
+ *                       example: "Tylenol"
+ *                     ndc:
+ *                       type: string
+ *                       example: "12345-678-90"
+ *                 running_total:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/AuditLogEntry'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied - insufficient permissions
+ *       404:
+ *         description: Inventory item not found
+ */
 // Get running total for inventory item
 router.get('/:id/running-total', authenticateToken, [verifyId()], async (req, res) => {
   try {
@@ -867,6 +2004,229 @@ router.get('/:id/running-total', authenticateToken, [verifyId()], async (req, re
     res.status(500).json({ 
       error: 'Failed to get running total',
       message: error.message 
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/inventory/store/{storeId}/consolidated:
+ *   get:
+ *     summary: Get consolidated inventory data for a store
+ *     description: Returns all inventory data including items, stats, low stock, and expiring items in one optimized call
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: storeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Store ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Number of items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term for filtering items
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: boolean
+ *         description: Filter by active status
+ *       - in: query
+ *         name: low_stock
+ *         schema:
+ *           type: boolean
+ *         description: Filter for low stock items only
+ *       - in: query
+ *         name: expiring
+ *         schema:
+ *           type: boolean
+ *         description: Filter for expiring items only
+ *     responses:
+ *       200:
+ *         description: Consolidated inventory data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     inventory:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     pagination:
+ *                       type: object
+ *                     stats:
+ *                       type: object
+ *                     low_stock:
+ *                       type: array
+ *                     expiring:
+ *                       type: array
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Server error
+ */
+router.get('/store/:storeId/consolidated', authenticateToken, validateStoreParam, [
+  verifyId('storeId'),
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100').toInt(),
+  query('search').optional().isLength({ min: 1, max: 100 }).withMessage('Search term must be between 1 and 100 characters'),
+  query('active').optional().isBoolean().withMessage('Active must be boolean').toBoolean(),
+  query('low_stock').optional().isBoolean().withMessage('Low stock must be boolean').toBoolean(),
+  query('expiring').optional().isBoolean().withMessage('Expiring must be boolean').toBoolean()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
+      return res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        details: errors.array()
+      });
+    }
+    const { storeId } = req.params;
+    const { 
+      page = 1, 
+      limit = 20, 
+      search, 
+      active = true, 
+      low_stock = false, 
+      expiring = false 
+    } = req.query;
+
+    // Build consolidated response
+    const consolidatedData = {
+      inventory: [],
+      pagination: {},
+      stats: {},
+      low_stock: [],
+      expiring: []
+    };
+
+    // Prepare filter parameters for main inventory query
+    const filters = {
+      store_id: parseInt(storeId),
+      is_active: active,
+      search: search || undefined,
+      low_stock: low_stock || undefined,
+      expiring_days: expiring ? 30 : undefined
+    };
+
+    // Remove undefined values
+    Object.keys(filters).forEach(key => 
+      filters[key] === undefined && delete filters[key]
+    );
+
+
+    // Calculate offset for pagination
+    const offset = (page - 1) * limit;
+
+    // Execute all queries in parallel for optimal performance
+    const [
+      inventoryResult,
+      countResult,
+      statsResult,
+      lowStockResult,
+      expiringResult
+    ] = await Promise.allSettled([
+      // Main inventory items with pagination
+      StoreInventory.findWithFilters(filters, limit, offset),
+      
+      // Total count for pagination
+      StoreInventory.countWithFilters(filters),
+      
+      // Inventory statistics
+      StoreInventory.getStats(storeId),
+      
+      // Low stock items (top 10)
+      StoreInventory.getLowStock(storeId, { limit: 10 }),
+      
+      // Expiring items (top 10, next 30 days)
+      StoreInventory.getExpiring(storeId, { days: 30, limit: 10 })
+    ]);
+
+    // Process inventory result
+    if (inventoryResult.status === 'fulfilled') {
+      consolidatedData.inventory = inventoryResult.value || [];
+    } else {
+      console.error('Inventory query failed:', inventoryResult.reason);
+    }
+
+    // Process count result for pagination
+    if (countResult.status === 'fulfilled') {
+      const total = countResult.value || 0;
+      consolidatedData.pagination = {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      };
+    } else {
+      console.error('Count query failed:', countResult.reason);
+      consolidatedData.pagination = {
+        page,
+        limit,
+        total: 0,
+        pages: 0
+      };
+    }
+
+    // Process stats result
+    if (statsResult.status === 'fulfilled') {
+      consolidatedData.stats = statsResult.value || {};
+    } else {
+      console.error('Stats query failed:', statsResult.reason);
+    }
+
+    // Process low stock result
+    if (lowStockResult.status === 'fulfilled') {
+      consolidatedData.low_stock = lowStockResult.value || [];
+    } else {
+      console.error('Low stock query failed:', lowStockResult.reason);
+    }
+
+    // Process expiring result
+    if (expiringResult.status === 'fulfilled') {
+      consolidatedData.expiring = expiringResult.value || [];
+    } else {
+      console.error('Expiring query failed:', expiringResult.reason);
+    }
+    
+    
+    res.json({
+      success: true,
+      data: consolidatedData
+    });
+
+  } catch (error) {
+    console.error('Consolidated inventory error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to load inventory data'
     });
   }
 });

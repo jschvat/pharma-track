@@ -1,3 +1,10 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Authentication
+ *   description: User authentication and session management
+ */
+
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { validationResult, body } = require('express-validator');
@@ -108,6 +115,59 @@ router.post('/register', registerLimiter, [
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Authenticate user and get access token
+ *     description: Login with email and password to receive a JWT token for API access
+ *     tags: [Authentication]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *           examples:
+ *             admin:
+ *               summary: Admin login
+ *               value:
+ *                 email: admin@pharmatrak.com
+ *                 password: Admin123!
+ *                 rememberMe: false
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               success: false
+ *               error: Invalid credentials
+ *       429:
+ *         description: Too many login attempts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               success: false
+ *               error: Too many login attempts from this IP, please try again after 15 minutes.
+ */
 router.post('/login', loginLimiter, [
   verifyEmail(),
   body('password').notEmpty().withMessage('Password required')
@@ -155,6 +215,32 @@ router.post('/login', loginLimiter, [
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get current user profile
+ *     description: Retrieve the authenticated user's profile information with fresh data from database
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized or inactive user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 // Get current user profile with fresh data
 router.get('/me', authenticateToken, async (req, res) => {
   try {

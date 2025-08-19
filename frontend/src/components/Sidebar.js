@@ -52,13 +52,13 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
 
   const toggleDropdown = (key) => {
     if (collapsed) return; // Don't allow dropdowns in collapsed mode
-    console.log('Toggling dropdown:', key); // Debug log
+    // console.log('Toggling dropdown:', key); // Debug log
     setOpenDropdowns(prev => {
       const newState = {
         ...prev,
         [key]: !prev[key]
       };
-      console.log('New dropdown state:', newState); // Debug log
+      // console.log('New dropdown state:', newState); // Debug log
       return newState;
     });
   };

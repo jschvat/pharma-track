@@ -21,7 +21,7 @@ class SafeDebugLogger {
 
   initializeLogger() {
     try {
-      console.log('🔍 Safe Debug Logger initialized for development');
+      // console.log('🔍 Safe Debug Logger initialized for development');
       
       // Setup minimal error tracking
       this.setupErrorTracking();
@@ -29,7 +29,7 @@ class SafeDebugLogger {
       // Add keyboard shortcuts for debug tools
       this.setupKeyboardShortcuts();
       
-      console.log('✅ Safe Debug Logger setup complete');
+      // console.log('✅ Safe Debug Logger setup complete');
     } catch (error) {
       console.error('❌ Safe Debug Logger initialization failed:', error);
       this.isDevelopment = false;
@@ -205,7 +205,7 @@ class SafeDebugLogger {
       );
       
       if (data) {
-        console.log('Data:', data);
+        // console.log('Data:', data);
       }
       
       console.groupEnd();
@@ -328,7 +328,7 @@ class SafeDebugLogger {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      console.log('📥 Debug logs exported');
+      // console.log('📥 Debug logs exported');
     } catch (error) {
       console.error('Could not export logs:', error);
     }
@@ -338,7 +338,7 @@ class SafeDebugLogger {
   clearLogs() {
     try {
       this.logs = [];
-      console.log('🧹 Debug logs cleared');
+      // console.log('🧹 Debug logs cleared');
       
       const logContainer = document.getElementById('debug-logs');
       if (logContainer) {

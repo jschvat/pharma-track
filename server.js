@@ -15,12 +15,19 @@ const auditLogRoutes = require('./routes/auditLog');
 const storeSettingsRoutes = require('./routes/storeSettings');
 const reportsRoutes = require('./routes/reports');
 const godModeRoutes = require('./routes/godMode');
+const backupRoutes = require('./routes/backup');
+const healthRoutes = require('./routes/health');
+const postItNotesRoutes = require('./routes/postItNotes');
+const dashboardRoutes = require('./routes/dashboard');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { sanitizeInput } = require('./middleware/validation');
 const { sanitizeAndTrim, checkDataIntegrity } = require('./middleware/dataVerification');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// API Documentation setup
+const { specs, swaggerUi, swaggerUiOptions } = require('./config/swagger');
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -132,9 +139,28 @@ app.use('/api/store-access', require('./routes/storeAccess'));
 app.use('/api/stores', storeSettingsRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/god-mode', godModeRoutes); // God mode super administrator routes
+app.use('/api/backup', backupRoutes); // Backup and disaster recovery routes
+app.use('/api/health', healthRoutes); // Health monitoring routes
+app.use('/api/notes', postItNotesRoutes); // Post-it notes routes
+app.use('/api/dashboard', dashboardRoutes); // Consolidated dashboard data routes
+app.use('/api/debug', require('./routes/debug')); // Debug logging routes (development only)
+
+// API Documentation endpoint
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerUiOptions));
+
+// Redirect /docs to /api/docs for convenience
+app.get('/docs', (req, res) => {
+  res.redirect('/api/docs');
+});
 
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Server is running' });
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'Server is running',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    documentation: '/api/docs'
+  });
 });
 
 app.use(notFoundHandler);

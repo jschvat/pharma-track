@@ -1,0 +1,154 @@
+/* Post-it Note Styles */
+.post-it-note {
+  font-family: 'Comic Sans MS', 'Marker Felt', 'Chalkduster', cursive, sans-serif;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease-in-out;
+  transform-origin: center center;
+}
+
+.post-it-note:hover {
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.post-it-note.dragging {
+  transform: rotate(5deg) scale(1.05);
+  box-shadow: 
+    0 12px 24px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.15);
+  cursor: grabbing !important;
+}
+
+.post-it-note textarea {
+  font-family: inherit;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.post-it-note .content-area {
+  min-height: 120px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+/* Color-specific shadows for depth */
+.post-it-yellow {
+  box-shadow: 
+    0 4px 8px rgba(255, 193, 7, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.post-it-pink {
+  box-shadow: 
+    0 4px 8px rgba(233, 30, 99, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.post-it-blue {
+  box-shadow: 
+    0 4px 8px rgba(33, 150, 243, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.post-it-green {
+  box-shadow: 
+    0 4px 8px rgba(76, 175, 80, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.post-it-orange {
+  box-shadow: 
+    0 4px 8px rgba(255, 152, 0, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.post-it-purple {
+  box-shadow: 
+    0 4px 8px rgba(156, 39, 176, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Add note button styles */
+.add-post-it-btn {
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.add-post-it-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 16px rgba(255, 193, 7, 0.4);
+}
+
+/* Control buttons on hover */
+.post-it-controls {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.post-it-note:hover .post-it-controls {
+  opacity: 1;
+}
+
+/* Ensure notes stay above other content */
+.post-it-container {
+  pointer-events: none;
+}
+
+.post-it-note {
+  pointer-events: auto;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .post-it-note {
+    width: 160px !important;
+    height: 160px !important;
+    font-size: 12px;
+  }
+  
+  .add-post-it-btn {
+    width: 50px;
+    height: 50px;
+    bottom: 20px;
+    right: 20px;
+  }
+}
+
+/* Animation for new notes */
+@keyframes popIn {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(1deg);
+    opacity: 1;
+  }
+}
+
+.post-it-note.new-note {
+  animation: popIn 0.4s ease-out;
+}
+
+/* Subtle paper texture effect */
+.post-it-note::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0);
+  background-size: 8px 8px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.3;
+}

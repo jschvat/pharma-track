@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Card, Alert, Button, Badge } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
-import { inventoryAPI, auditAPI, drugAPI, storeAPI } from '../services/api';
+import { dashboardAPI } from '../services/api';
 import { Link } from 'react-router-dom';
+import { PostItContainer } from './PostItNote';
+import PostItNotesSection from './PostItNotesSection';
 import '../css/components.css';
 
 const Dashboard = () => {
@@ -17,6 +19,9 @@ const Dashboard = () => {
     storeStats: null
   });
   const [error, setError] = useState('');
+  const [notePositions, setNotePositions] = useState(new Map()); // Store previous positions
+  const [notesData, setNotesData] = useState({ notes: [], loading: true }); // Shared notes data
+  const notesContainerRef = useRef(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -27,52 +32,18 @@ const Dashboard = () => {
       setLoading(true);
       setError('');
 
-      const promises = [];
+      // Use consolidated dashboard API call instead of multiple calls
+      const response = await dashboardAPI.getDashboardData();
+      const dashboardData = response.data.data;
 
-      // Get inventory stats
-      if (user.store_id) {
-        promises.push(
-          inventoryAPI.getStats(user.store_id),
-          inventoryAPI.getLowStock(user.store_id, { limit: 5 }),
-          inventoryAPI.getExpiring(user.store_id, { days: 30, limit: 5 }),
-          auditAPI.getStoreHistory(user.store_id, { limit: 5 })
-        );
-      }
-
-      // Admin gets additional stats
-      if (isAdmin()) {
-        promises.push(
-          drugAPI.getStats(),
-          storeAPI.getStats(),
-          auditAPI.getRecentTransactions({ limit: 10 })
-        );
-      }
-
-      const results = await Promise.allSettled(promises);
-      
-      let resultIndex = 0;
-      const newStats = { ...stats };
-
-      if (user.store_id) {
-        newStats.inventory = results[resultIndex]?.value?.data?.stats || null;
-        resultIndex++;
-        newStats.lowStock = results[resultIndex]?.value?.data?.low_stock || [];
-        resultIndex++;
-        newStats.expiring = results[resultIndex]?.value?.data?.expiring || [];
-        resultIndex++;
-        newStats.recentTransactions = results[resultIndex]?.value?.data?.history || [];
-        resultIndex++;
-      }
-
-      if (isAdmin()) {
-        newStats.drugStats = results[resultIndex]?.value?.data?.stats || null;
-        resultIndex++;
-        newStats.storeStats = results[resultIndex]?.value?.data?.stats || null;
-        resultIndex++;
-        if (results[resultIndex]?.value?.data?.recent_transactions) {
-          newStats.recentTransactions = results[resultIndex].value.data.recent_transactions;
-        }
-      }
+      const newStats = {
+        inventory: dashboardData.inventory_stats,
+        lowStock: dashboardData.low_stock || [],
+        expiring: dashboardData.expiring || [],
+        recentTransactions: dashboardData.recent_transactions || [],
+        drugStats: dashboardData.drug_stats,
+        storeStats: dashboardData.store_stats
+      };
 
       setStats(newStats);
     } catch (err) {
@@ -81,6 +52,80 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Note management functions
+  const moveAllNotesToCard = () => {
+    const notes = document.querySelectorAll('[data-note-id]');
+    const cardElement = document.querySelector('[data-notes-card]');
+    
+    if (!cardElement) return;
+    
+    const cardRect = cardElement.getBoundingClientRect();
+    
+    notes.forEach((note, index) => {
+      const noteId = note.getAttribute('data-note-id');
+      const currentPos = {
+        x: note.style.left ? parseInt(note.style.left) : 0,
+        y: note.style.top ? parseInt(note.style.top) : 0
+      };
+      
+      // Store current position for restoration
+      setNotePositions(prev => new Map(prev.set(noteId, currentPos)));
+      
+      // Calculate position within card
+      const newX = cardRect.left + 20 + (index % 3) * 120;
+      const newY = cardRect.top + 80 + Math.floor(index / 3) * 100;
+      
+      note.style.left = `${newX}px`;
+      note.style.top = `${newY}px`;
+      note.style.zIndex = '999';
+      
+      // Trigger update event to save new position
+      window.dispatchEvent(new CustomEvent('updateNotePosition', {
+        detail: { noteId, position: { x: newX, y: newY } }
+      }));
+    });
+  };
+
+  const restoreNotesToPreviousPositions = () => {
+    const notes = document.querySelectorAll('[data-note-id]');
+    
+    notes.forEach(note => {
+      const noteId = note.getAttribute('data-note-id');
+      const savedPosition = notePositions.get(noteId);
+      
+      if (savedPosition) {
+        note.style.left = `${savedPosition.x}px`;
+        note.style.top = `${savedPosition.y}px`;
+        
+        // Trigger update event
+        window.dispatchEvent(new CustomEvent('updateNotePosition', {
+          detail: { noteId, position: savedPosition }
+        }));
+      }
+    });
+  };
+
+  const bringAllNotesForward = () => {
+    const notes = document.querySelectorAll('[data-note-id]');
+    const maxZIndex = Math.max(...Array.from(notes).map(n => parseInt(n.style.zIndex) || 1000));
+    
+    notes.forEach(note => {
+      note.style.zIndex = `${maxZIndex + 100}`;
+    });
+  };
+
+  const moveAllNotesBehind = () => {
+    const notes = document.querySelectorAll('[data-note-id]');
+    
+    notes.forEach(note => {
+      note.style.zIndex = '500'; // Behind most content but visible
+    });
+  };
+
+  const addNewNote = () => {
+    window.dispatchEvent(new CustomEvent('addPostItNote'));
   };
 
   if (loading) {
@@ -94,6 +139,7 @@ const Dashboard = () => {
   }
 
   return (
+    <>
     <Container className="dashboard-container">
       <Row className="mb-4">
         <Col>
@@ -111,6 +157,26 @@ const Dashboard = () => {
         <Row className="mb-4">
           <Col>
             <Alert variant="danger">{error}</Alert>
+          </Col>
+        </Row>
+      )}
+
+      {/* Post-it Notes Section - Moved to Top */}
+      {user?.store_id && (
+        <Row className="mb-4">
+          <Col>
+            <div data-notes-card>
+              <PostItNotesSection 
+                notesData={notesData}
+                actionBarProps={{
+                  addNewNote,
+                  moveAllNotesToCard,
+                  restoreNotesToPreviousPositions,
+                  bringAllNotesForward,
+                  moveAllNotesBehind
+                }}
+              />
+            </div>
           </Col>
         </Row>
       )}
@@ -351,6 +417,10 @@ const Dashboard = () => {
         </Col>
       </Row>
     </Container>
+    
+    {/* Post-it Notes Container */}
+    <PostItContainer onNotesUpdate={setNotesData} />
+  </>
   );
 };
 

@@ -1,4 +1,11 @@
 /**
+ * @swagger
+ * tags:
+ *   name: Drugs
+ *   description: Drug and FDA database management operations
+ */
+
+/**
  * Drug Management API Routes
  * 
  * Comprehensive RESTful API for drug and inventory management in the PharmaTraK system.
@@ -140,6 +147,118 @@ const router = express.Router();
  * - fdaResult: Individual FDA result object
  * - packaging: Packaging information from FDA data
  * - transformed: Standardized result object
+ * 
+ * @swagger
+ * /api/drugs/search/fda:
+ *   get:
+ *     summary: Search FDA drug database
+ *     description: Search the FDA National Drug Code database using various criteria with caching and performance monitoring
+ *     tags: [Drugs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: ndc
+ *         schema:
+ *           type: string
+ *           pattern: ^[0-9\-]{10,14}$
+ *         description: National Drug Code (format XXXXX-XXXX-XX)
+ *         example: "12345-678-90"
+ *       - in: query
+ *         name: generic_name
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *           maxLength: 100
+ *         description: Generic drug name
+ *         example: "acetaminophen"
+ *       - in: query
+ *         name: brand_name
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *           maxLength: 100
+ *         description: Brand/trade name
+ *         example: "Tylenol"
+ *       - in: query
+ *         name: manufacturer
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *           maxLength: 100
+ *         description: Manufacturer name
+ *         example: "Johnson & Johnson"
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         description: Maximum number of results to return
+ *     responses:
+ *       200:
+ *         description: FDA search results with metadata
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 results:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       ndc:
+ *                         type: string
+ *                         example: "12345-678-90"
+ *                       generic_name:
+ *                         type: string
+ *                         example: "acetaminophen"
+ *                       brand_name:
+ *                         type: string
+ *                         example: "Tylenol"
+ *                       manufacturer_name:
+ *                         type: string
+ *                         example: "Johnson & Johnson"
+ *                       dosage_form:
+ *                         type: string
+ *                         example: "TABLET"
+ *                       route:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                         example: ["ORAL"]
+ *                       strength:
+ *                         type: string
+ *                         example: "325 mg/1"
+ *                       package_description:
+ *                         type: string
+ *                         example: "100 TABLET in 1 BOTTLE"
+ *                 total:
+ *                   type: integer
+ *                   description: Total results available
+ *                   example: 25
+ *                 fromCache:
+ *                   type: boolean
+ *                   description: Whether results came from cache
+ *                   example: false
+ *                 responseTime:
+ *                   type: integer
+ *                   description: API response time in milliseconds
+ *                   example: 1250
+ *       400:
+ *         description: Invalid query parameters or no search criteria provided
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: No results found matching criteria
+ *       500:
+ *         description: FDA API error or internal server error
  * 
  * Location: /home/jason/Development/claude/pharmatrak/routes/drugs.js:130
  */

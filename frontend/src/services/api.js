@@ -43,7 +43,7 @@ import axios from 'axios';
  * 
  * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:44
  */
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 
 /**
  * Debug logging for API calls
@@ -80,13 +80,13 @@ const debugLog = {
   request: (config) => {
     // Debug logging disabled in production
     if (process.env.NODE_ENV === 'development') {
-      console.log(`🔵 API REQUEST: ${config.method?.toUpperCase()} ${config.url}`, {
-        timestamp: new Date().toISOString(),
-        method: config.method,
-        url: config.url,
-        params: config.params,
-        data: config.data
-      });
+      // console.log(`🔵 API REQUEST: ${config.method?.toUpperCase()} ${config.url}`, {
+      //   timestamp: new Date().toISOString(),
+      //   method: config.method,
+      //   url: config.url,
+      //   params: config.params,
+      //   data: config.data
+      // });
       
       // Note: Password debugging removed for security reasons
     }
@@ -111,12 +111,12 @@ const debugLog = {
     
     // Debug logging disabled in production
     if (process.env.NODE_ENV === 'development') {
-      console.log(`🟢 API RESPONSE: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, {
-        timestamp: new Date().toISOString(),
-        status: response.status,
-        statusText: response.statusText,
-        duration: duration ? `${duration}ms` : null
-      });
+      // console.log(`🟢 API RESPONSE: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+      //   timestamp: new Date().toISOString(),
+      //   status: response.status,
+      //   statusText: response.statusText,
+      //   duration: duration ? `${duration}ms` : null
+      // });
     }
     return response;
   },
@@ -588,6 +588,7 @@ export const drugAPI = {
 
 export const inventoryAPI = {
   getByStore: (storeId, params) => api.get(`/inventory/store/${storeId}`, { params }),
+  getConsolidated: (storeId, params) => api.get(`/inventory/store/${storeId}/consolidated`, { params }),
   getById: (id) => api.get(`/inventory/${id}`),
   create: (inventoryData) => api.post('/inventory', inventoryData),
   update: (id, inventoryData) => api.put(`/inventory/${id}`, inventoryData),
@@ -623,6 +624,10 @@ export const storeAccessAPI = {
   grantAccess: (userId, storeId, accessLevel) => api.post('/store-access/grant-access', { userId, storeId, accessLevel }),
   revokeAccess: (userId, storeId) => api.post('/store-access/revoke-access', { userId, storeId }),
   getStoreUsers: (storeId) => api.get(`/store-access/store/${storeId}/users`),
+};
+
+export const dashboardAPI = {
+  getDashboardData: () => api.get('/dashboard/data'),
 };
 
 // Import and re-export the store settings API

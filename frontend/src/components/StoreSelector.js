@@ -1,37 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Card, Button, Spinner, Alert, Row, Col, Badge } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
+import { useCachedStores } from '../hooks/useCachedStores';
 import { storeAccessAPI } from '../services/api';
 import '../css/components.css';
 
 const StoreSelector = ({ show, onStoreSelected, onClose }) => {
   const { user, refreshUser } = useAuth();
-  const [stores, setStores] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { stores, loading, error: storesError, loadStores } = useCachedStores();
   const [selecting, setSelecting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (show) {
-      loadUserStores();
+    if (show && stores.length === 0) {
+      loadStores();
     }
-  }, [show]);
+  }, [show, stores.length, loadStores]);
 
-  const loadUserStores = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      
-      const response = await storeAccessAPI.getMyStores();
-      setStores(response.data.stores || []);
-      
-    } catch (err) {
-      console.error('Failed to load stores:', err);
+  // Map cached stores error to local error state
+  useEffect(() => {
+    if (storesError) {
       setError('Failed to load accessible stores');
-    } finally {
-      setLoading(false);
+    } else {
+      setError('');
     }
-  };
+  }, [storesError]);
 
   const handleStoreSelection = async (storeId) => {
     try {

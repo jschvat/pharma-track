@@ -1,0 +1,303 @@
+/**
+ * User Management Component Styles
+ * 
+ * Professional gradient button styles and dialog styling
+ * extracted from UserManagement.js for better maintainability.
+ */
+
+/* Gradient Button Styles */
+.btn-gradient-edit {
+  background: #2563eb !important;
+  border: none !important;
+  border-bottom: 2px solid #1e40af !important;
+  border-radius: 6px !important;
+  color: white !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  font-size: 10px !important;
+  letter-spacing: 0.5px !important;
+  padding: 7px 14px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2) !important;
+}
+
+.btn-gradient-edit:hover {
+  background: #1d4ed8 !important;
+  border-bottom: 2px solid #1e40af !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3) !important;
+  color: white !important;
+}
+
+.btn-gradient-edit:active {
+  transform: translateY(0) !important;
+  background: #1e40af !important;
+  border-bottom: 2px solid #1e3a8a !important;
+}
+
+.btn-gradient-password {
+  background: #d97706 !important;
+  border: none !important;
+  border-bottom: 2px solid #92400e !important;
+  border-radius: 6px !important;
+  color: white !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  font-size: 10px !important;
+  letter-spacing: 0.5px !important;
+  padding: 7px 14px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.2) !important;
+}
+
+.btn-gradient-password:hover {
+  background: #b45309 !important;
+  border-bottom: 2px solid #92400e !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(217, 119, 6, 0.3) !important;
+  color: white !important;
+}
+
+.btn-gradient-password:active {
+  transform: translateY(0) !important;
+  background: #92400e !important;
+  border-bottom: 2px solid #78350f !important;
+}
+
+.btn-gradient-delete {
+  background: #dc2626 !important;
+  border: none !important;
+  border-bottom: 2px solid #991b1b !important;
+  border-radius: 6px !important;
+  color: white !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  font-size: 10px !important;
+  letter-spacing: 0.5px !important;
+  padding: 7px 14px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2) !important;
+}
+
+.btn-gradient-delete:hover {
+  background: #b91c1c !important;
+  border-bottom: 2px solid #991b1b !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3) !important;
+  color: white !important;
+}
+
+.btn-gradient-delete:active {
+  transform: translateY(0) !important;
+  background: #991b1b !important;
+  border-bottom: 2px solid #7f1d1d !important;
+}
+
+.btn-gradient-disabled {
+  background: #6b7280 !important;
+  border: none !important;
+  border-bottom: 2px solid #4b5563 !important;
+  border-radius: 6px !important;
+  color: white !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  font-size: 10px !important;
+  letter-spacing: 0.5px !important;
+  padding: 7px 14px !important;
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+}
+
+.btn-gradient-disabled:hover {
+  background: #6b7280 !important;
+  border-bottom: 2px solid #4b5563 !important;
+  color: white !important;
+  opacity: 0.6 !important;
+  transform: none !important;
+}
+
+/* Professional Windows-style dialog */
+.professional-dialog .modal-dialog {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  width: 420px !important;
+  max-width: 90vw !important;
+  transition: none !important;
+}
+
+.professional-dialog .modal-dialog.dragging {
+  top: 0 !important;
+  left: 0 !important;
+  transform: none !important;
+}
+
+.professional-dialog .modal-content {
+  border-radius: 0 !important;
+  border: 2px solid #2c3e50 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+  position: relative !important;
+}
+
+.professional-dialog .modal-header {
+  background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%) !important;
+  border-bottom: none !important;
+  border-radius: 0 !important;
+  padding: 6px 8px !important;
+  min-height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  cursor: move !important;
+  user-select: none !important;
+}
+
+.professional-dialog .modal-header:active {
+  cursor: grabbing !important;
+}
+
+.professional-dialog .modal-title {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: white !important;
+  margin: 0 !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+.professional-dialog .btn-close {
+  background: #e81123 !important;
+  border: none !important;
+  font-size: 12px !important;
+  color: white !important;
+  padding: 0 !important;
+  width: 24px !important;
+  height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 1 !important;
+  margin: 0 !important;
+}
+
+.professional-dialog .btn-close:hover {
+  background: #f1707a !important;
+  color: white !important;
+}
+
+.professional-dialog .btn-close::before {
+  content: '×' !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+}
+
+.professional-dialog .modal-body {
+  padding: 16px !important;
+  background: #f0f0f0 !important;
+  font-size: 13px !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  line-height: 1.4 !important;
+}
+
+.professional-dialog .modal-footer {
+  background: #f0f0f0 !important;
+  border-top: 1px solid #d0d0d0 !important;
+  border-radius: 0 !important;
+  padding: 8px 16px !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+}
+
+.professional-dialog .modal-footer .btn {
+  font-size: 11px !important;
+  padding: 4px 16px !important;
+  min-width: 75px !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+/* Form styling for professional dialogs */
+.professional-dialog .form-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  margin-bottom: 4px !important;
+  color: #333 !important;
+}
+
+.professional-dialog .form-control {
+  font-size: 12px !important;
+  padding: 4px 8px !important;
+  border: 1px solid #ccc !important;
+  border-radius: 2px !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+.professional-dialog .form-control:focus {
+  border-color: #0078d4 !important;
+  box-shadow: 0 0 0 1px #0078d4 !important;
+}
+
+.professional-dialog .form-select {
+  font-size: 12px !important;
+  padding: 4px 8px !important;
+  border: 1px solid #ccc !important;
+  border-radius: 2px !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+/* User management specific styles */
+.user-management-container {
+  padding: 20px;
+}
+
+.user-actions-column {
+  width: 160px;
+  text-align: center;
+}
+
+.user-status-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.user-role-badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+}
+
+/* Table styling */
+.user-table th {
+  background-color: #f8f9fa;
+  border-top: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+.user-table td {
+  vertical-align: middle;
+  font-size: 0.875rem;
+}
+
+.user-table .btn-group {
+  gap: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .user-actions-column {
+    width: auto;
+  }
+  
+  .user-table .btn-group {
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .professional-dialog .modal-dialog {
+    width: 95vw !important;
+    max-width: 95vw !important;
+  }
+}

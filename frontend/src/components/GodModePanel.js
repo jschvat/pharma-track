@@ -135,7 +135,7 @@ const GodModePanel = () => {
     // Show notification (you can replace this with your notification system)
     const showNotification = (message, type) => {
         // For now, just use alert - replace with proper notification system
-        console.log(`${type.toUpperCase()}: ${message}`);
+        // console.log(`${type.toUpperCase()}: ${message}`);
         
         // Create a temporary notification element
         const notification = document.createElement('div');

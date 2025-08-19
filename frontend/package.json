@@ -52,5 +52,6 @@
     "@testing-library/user-event": "^14.6.1",
     "axios-mock-adapter": "^2.1.0",
     "msw": "^2.10.4"
-  }
+  },
+  "proxy": "http://localhost:3001"
 }

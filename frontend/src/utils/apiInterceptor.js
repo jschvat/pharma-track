@@ -21,7 +21,7 @@ class APIInterceptor {
   setupInterceptors() {
     this.interceptFetch();
     this.interceptAxios();
-    console.log('🌐 API Interceptor initialized for development logging');
+    // console.log('🌐 API Interceptor initialized for development logging');
   }
 
   // Intercept native fetch
@@ -153,7 +153,7 @@ class APIInterceptor {
         }
       );
 
-      console.log('📡 Axios interceptors setup for API logging');
+      // console.log('📡 Axios interceptors setup for API logging');
     }, 1000); // Delay to ensure axios is loaded
   }
 }
