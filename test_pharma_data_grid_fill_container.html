@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaDataGrid Fill Container Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Test styles for fill container functionality */
+        .test-container {
+            width: 100%;
+            max-width: 800px;
+            border: 2px dashed #007bff;
+            padding: 20px;
+            margin: 20px auto;
+            background-color: #f8f9fa;
+        }
+        
+        .test-grid {
+            display: grid;
+            width: 100%;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .test-header {
+            background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 25%, #e9ecef 75%, #d3d8de 100%);
+            border-right: 1px solid #adb5bd;
+            padding: 12px;
+            font-weight: 600;
+            position: relative;
+            overflow: visible;
+        }
+        
+        .test-cell {
+            padding: 8px 12px;
+            border-right: 1px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .test-resize-handle {
+            position: absolute;
+            top: 0;
+            right: -3px;
+            bottom: 0;
+            width: 6px;
+            cursor: col-resize;
+            background-color: rgba(13, 110, 253, 0.1);
+            border-right: 2px solid transparent;
+            transition: all 0.2s ease;
+            z-index: 15;
+            border-radius: 2px;
+            opacity: 0.8;
+        }
+        
+        .test-resize-handle:hover {
+            background-color: rgba(13, 110, 253, 0.4) !important;
+            border-right: 2px solid #007bff !important;
+            box-shadow: 0 0 4px rgba(13, 110, 253, 0.5);
+            opacity: 1;
+        }
+        
+        .test-resize-handle.active {
+            background-color: #007bff !important;
+            border-right: 2px solid #0056b3 !important;
+            box-shadow: 0 0 6px rgba(13, 110, 253, 0.8);
+            opacity: 1;
+            height: 200vh !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>PharmaDataGrid Fill Container Test</h2>
+        <p class="text-muted">Test the fillContainer prop functionality that makes columns expand to fill the full area.</p>
+        
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="fillMode" id="fixedMode" value="fixed" checked>
+                    <label class="form-check-label" for="fixedMode">
+                        <strong>Fixed Width Mode</strong> (fillContainer=false)
+                    </label>
+                    <div class="text-muted small">Columns use exact pixel widths</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="fillMode" id="fillMode" value="fill">
+                    <label class="form-check-label" for="fillMode">
+                        <strong>Fill Container Mode</strong> (fillContainer=true)
+                    </label>
+                    <div class="text-muted small">Columns expand to fill full width</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="test-status" class="alert alert-info">
+            <strong>Status:</strong> <span id="status-text">Fixed width mode - columns use exact pixel widths</span>
+        </div>
+        
+        <div class="test-container">
+            <div class="test-grid" id="testGrid">
+                <!-- Headers -->
+                <div class="test-header" data-column="drug_name">
+                    Drug Name
+                    <div class="test-resize-handle" data-column="drug_name"></div>
+                </div>
+                <div class="test-header" data-column="ndc">
+                    NDC
+                    <div class="test-resize-handle" data-column="ndc"></div>
+                </div>
+                <div class="test-header" data-column="strength">
+                    Strength
+                    <div class="test-resize-handle" data-column="strength"></div>
+                </div>
+                <div class="test-header" data-column="stock">
+                    Stock
+                    <!-- No resize handle on last column -->
+                </div>
+                
+                <!-- Data Rows -->
+                <div class="test-cell">Acetaminophen 325mg</div>
+                <div class="test-cell">12345-678-90</div>
+                <div class="test-cell">325mg</div>
+                <div class="test-cell">100</div>
+                
+                <div class="test-cell">Ibuprofen 200mg</div>
+                <div class="test-cell">98765-432-10</div>
+                <div class="test-cell">200mg</div>
+                <div class="test-cell">75</div>
+                
+                <div class="test-cell">Aspirin 81mg</div>
+                <div class="test-cell">55555-111-22</div>
+                <div class="test-cell">81mg</div>
+                <div class="test-cell">200</div>
+            </div>
+        </div>
+        
+        <div class="alert alert-secondary mt-4">
+            <h6>Testing Instructions:</h6>
+            <ul>
+                <li>Switch between <strong>Fixed Width Mode</strong> and <strong>Fill Container Mode</strong> using the radio buttons</li>
+                <li>In Fixed Width Mode: Columns maintain exact pixel widths, may not fill container</li>
+                <li>In Fill Container Mode: Columns expand proportionally to fill the full container width</li>
+                <li>Try resizing columns by dragging the resize handles to see how each mode behaves</li>
+                <li>Note how column proportions are maintained in Fill Container Mode</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Column configuration
+        const columnWidths = {
+            drug_name: 200,
+            ndc: 150,
+            strength: 120,
+            stock: 100
+        };
+        
+        let isResizing = false;
+        let resizingColumn = null;
+        let startX = 0;
+        let isFillMode = false;
+        
+        function updateStatus(message) {
+            document.getElementById('status-text').textContent = message;
+        }
+        
+        function updateGridLayout() {
+            const grid = document.getElementById('testGrid');
+            
+            if (isFillMode) {
+                // Fill container mode - use fr units based on relative weights
+                const totalWeight = Object.values(columnWidths).reduce((sum, width) => sum + Math.round(width / 50), 0);
+                const columns = [];
+                
+                Object.values(columnWidths).forEach(width => {
+                    const weight = Math.max(1, Math.round(width / 50));
+                    columns.push(`${weight}fr`);
+                });
+                
+                grid.style.gridTemplateColumns = columns.join(' ');
+                updateStatus(`Fill container mode - columns expand to fill width using weights: ${columns.join(', ')}`);
+            } else {
+                // Fixed width mode - use exact pixel widths
+                const columns = Object.values(columnWidths).map(width => `${width}px`);
+                grid.style.gridTemplateColumns = columns.join(' ');
+                updateStatus(`Fixed width mode - columns use exact widths: ${columns.join(', ')}`);
+            }
+        }
+        
+        function handleResizeStart(e) {
+            const handle = e.target;
+            const columnName = handle.dataset.column;
+            const header = handle.closest('.test-header');
+            
+            if (!header) return;
+            
+            const headerRect = header.getBoundingClientRect();
+            
+            isResizing = true;
+            resizingColumn = columnName;
+            startX = headerRect.left;
+            
+            handle.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            
+            document.addEventListener('mousemove', handleResizeMove);
+            document.addEventListener('mouseup', handleResizeEnd);
+            
+            updateStatus(`🚀 Resizing ${columnName}...`);
+        }
+        
+        function handleResizeMove(e) {
+            if (!isResizing || !resizingColumn) return;
+            
+            const newWidth = Math.max(50, e.clientX - startX);
+            columnWidths[resizingColumn] = newWidth;
+            
+            updateGridLayout();
+        }
+        
+        function handleResizeEnd() {
+            if (!isResizing) return;
+            
+            document.querySelectorAll('.test-resize-handle').forEach(handle => {
+                handle.classList.remove('active');
+            });
+            
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            
+            document.removeEventListener('mousemove', handleResizeMove);
+            document.removeEventListener('mouseup', handleResizeEnd);
+            
+            updateStatus(`✅ Finished resizing ${resizingColumn}`);
+            
+            isResizing = false;
+            resizingColumn = null;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up resize handles
+            document.querySelectorAll('.test-resize-handle').forEach(handle => {
+                handle.addEventListener('mousedown', handleResizeStart);
+            });
+            
+            // Set up mode toggle
+            document.querySelectorAll('input[name="fillMode"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    isFillMode = this.value === 'fill';
+                    updateGridLayout();
+                });
+            });
+            
+            // Initial layout
+            updateGridLayout();
+        });
+    </script>
+</body>
+</html>

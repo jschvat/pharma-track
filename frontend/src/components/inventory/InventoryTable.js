@@ -18,8 +18,8 @@
  */
 
 import React from 'react';
-import { Card, Table, Spinner, Badge, Dropdown, ButtonGroup } from 'react-bootstrap';
-import CardHeader from '../common/CardHeader';
+import { Badge } from 'react-bootstrap';
+import { PharmaCard, PharmaTable } from '../common/PharmaComponents';
 
 /**
  * InventoryTable Component - Displays inventory items in table format
@@ -91,155 +91,132 @@ const InventoryTable = ({
     return badges;
   };
 
-  // Action dropdown menu
-  const ActionDropdown = ({ item }) => (
-    <Dropdown as={ButtonGroup} size="sm">
-      <Dropdown.Toggle 
-        variant="outline-secondary" 
-        size="sm"
-        style={{fontSize: '0.7rem', padding: '2px 8px'}}
-      >
-        Actions
-      </Dropdown.Toggle>
-      <Dropdown.Menu>
-        <Dropdown.Item 
-          onClick={(e) => {
-            e.stopPropagation();
-            onTransaction('prescription', item);
-          }}
-          disabled={item.quantity_on_hand === 0}
-        >
-          📝 Fill Prescription
-        </Dropdown.Item>
-        <Dropdown.Item 
-          onClick={(e) => {
-            e.stopPropagation();
-            onTransaction('return', item);
-          }}
-        >
-          ↩️ Return to Stock
-        </Dropdown.Item>
-        <Dropdown.Item 
-          onClick={(e) => {
-            e.stopPropagation();
-            onTransaction('expire', item);
-          }}
-          disabled={item.quantity_on_hand === 0}
-        >
-          ⚠️ Expire Medication
-        </Dropdown.Item>
-        <Dropdown.Item 
-          onClick={(e) => {
-            e.stopPropagation();
-            onTransaction('audit', item);
-          }}
-        >
-          🔍 Audit Count
-        </Dropdown.Item>
-      </Dropdown.Menu>
-    </Dropdown>
-  );
 
   // Loading state
   if (loading) {
     return (
-      <Card className="inventory-card">
-        <CardHeader
-          title="Loading Inventory..."
-          subtitle="Please wait"
-        />
-        <Card.Body>
-          <div className="text-center py-4">
-            <Spinner animation="border" variant="primary" />
-          </div>
-        </Card.Body>
-      </Card>
+      <PharmaCard
+        title="Loading Inventory..."
+        subtitle="Please wait"
+        loading={true}
+        loadingRows={5}
+        className="inventory-card"
+      />
     );
   }
 
-  return (
-    <Card className="inventory-card">
-      <CardHeader
-        title={`Inventory Items (${pagination.total || 0})`}
-        subtitle="💡 Click on any row to view transaction history"
-      />
-      <Card.Body>
-        <div className="inventory-table-container">
-          <div className="table-responsive">
-            <Table striped hover size="sm">
-              <thead>
-                <tr>
-                  <th>Drug</th>
-                  <th>NDC</th>
-                  <th>Stock</th>
-                  <th>Status</th>
-                  <th>Unit Cost</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inventory.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="text-center text-muted py-4">
-                      No inventory items found
-                    </td>
-                  </tr>
-                ) : (
-                  inventory.map((item) => (
-                    <React.Fragment key={item.id}>
-                      <tr 
-                        style={{verticalAlign: 'middle', cursor: 'pointer'}}
-                        onClick={() => onRowClick(item)}
-                        className="inventory-row"
-                      >
-                        <td>
-                          <div>
-                            <div className="fw-bold small">{item.generic_name}</div>
-                            {item.brand_name && (
-                              <div className="text-muted" style={{fontSize: '0.75rem'}}>
-                                {item.brand_name}
-                              </div>
-                            )}
-                            <div className="text-muted" style={{fontSize: '0.7rem'}}>
-                              {item.dosage_form} {item.strength}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="small font-monospace">{item.ndc}</td>
-                        <td>
-                          <div>
-                            <span className="fw-bold">{item.quantity_on_hand}</span>
-                            <div className="text-muted" style={{fontSize: '0.7rem'}}>
-                              Reorder: {item.reorder_level}
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <div className="d-flex flex-column align-items-start">
-                            {getStatusBadge(item)}
-                            {item.expiration_date && (
-                              <div className="text-muted" style={{fontSize: '0.6rem'}}>
-                                Exp: {new Date(item.expiration_date).toLocaleDateString()}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="small">
-                          {formatCurrency(item.unit_cost)}
-                        </td>
-                        <td onClick={(e) => e.stopPropagation()}>
-                          <ActionDropdown item={item} />
-                        </td>
-                      </tr>
-                    </React.Fragment>
-                  ))
-                )}
-              </tbody>
-            </Table>
+  // Define columns for PharmaTable
+  const tableColumns = [
+    {
+      field: 'generic_name',
+      label: 'Drug',
+      render: (value, row) => (
+        <div>
+          <div className="fw-bold small">{value}</div>
+          {row.brand_name && (
+            <div className="text-muted" style={{fontSize: '0.75rem'}}>
+              {row.brand_name}
+            </div>
+          )}
+          <div className="text-muted" style={{fontSize: '0.7rem'}}>
+            {row.dosage_form} {row.strength}
           </div>
         </div>
-      </Card.Body>
-    </Card>
+      )
+    },
+    {
+      field: 'ndc',
+      label: 'NDC',
+      cellClassName: 'small font-monospace'
+    },
+    {
+      field: 'quantity_on_hand',
+      label: 'Stock',
+      render: (value, row) => (
+        <div>
+          <span className="fw-bold">{value}</span>
+          <div className="text-muted" style={{fontSize: '0.7rem'}}>
+            Reorder: {row.reorder_level}
+          </div>
+        </div>
+      )
+    },
+    {
+      field: 'status',
+      label: 'Status',
+      render: (value, row) => (
+        <div className="d-flex flex-column align-items-start">
+          {getStatusBadge(row)}
+          {row.expiration_date && (
+            <div className="text-muted" style={{fontSize: '0.6rem'}}>
+              Exp: {new Date(row.expiration_date).toLocaleDateString()}
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      field: 'unit_cost',
+      label: 'Unit Cost',
+      type: 'currency',
+      cellClassName: 'small'
+    }
+  ];
+
+  // Define actions for each row
+  const tableActions = [
+    {
+      label: '📝',
+      variant: 'outline-primary',
+      tooltip: 'Fill Prescription',
+      onClick: (row) => onTransaction('prescription', row),
+      disabled: (row) => row.quantity_on_hand === 0
+    },
+    {
+      label: '↩️',
+      variant: 'outline-success',
+      tooltip: 'Return to Stock',
+      onClick: (row) => onTransaction('return', row)
+    },
+    {
+      label: '⚠️',
+      variant: 'outline-warning',
+      tooltip: 'Expire Medication',
+      onClick: (row) => onTransaction('expire', row),
+      disabled: (row) => row.quantity_on_hand === 0
+    },
+    {
+      label: '🔍',
+      variant: 'outline-secondary',
+      tooltip: 'Audit Count',
+      onClick: (row) => onTransaction('audit', row)
+    }
+  ];
+
+  return (
+    <PharmaCard
+      title={`Inventory Items (${pagination.total || 0})`}
+      subtitle="💡 Click on any row to view transaction history"
+      headerIcon="📦"
+      className="inventory-card"
+    >
+      <PharmaTable
+        data={inventory}
+        columns={tableColumns}
+        actions={tableActions}
+        loading={loading}
+        loadingRows={5}
+        emptyMessage="No inventory items found"
+        emptyIcon="📦"
+        onRowClick={onRowClick}
+        striped={true}
+        hover={true}
+        size="sm"
+        responsive={true}
+        actionsPosition="end"
+        className="inventory-table-container"
+      />
+    </PharmaCard>
   );
 };
 

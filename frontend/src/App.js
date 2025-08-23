@@ -19,6 +19,7 @@ import FDASearch from './components/FDASearch';
 import UserManagement from './components/UserManagement';
 import AdminStores from './components/AdminStores';
 import AdminSettings from './components/AdminSettings';
+import DevelopmentRoutes from './routes/DevelopmentRoutes';
 // import DropdownRouteHandler from './components/DropdownRouteHandler';
 
 // Import debug utilities (development only) - using safe version to avoid React Router conflicts
@@ -97,6 +98,8 @@ function App() {
                                 <Route path="/admin/users" element={<UserManagement />} />
                                 <Route path="/admin/stores" element={<AdminStores />} />
                                 <Route path="/admin/settings" element={<AdminSettings />} />
+                                {/* Development Routes - Only available in development */}
+                                <Route path="/dev/*" element={<DevelopmentRoutes />} />
                                 {/* Catch all route */}
                                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
                               </Routes>

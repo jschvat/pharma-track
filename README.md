@@ -66,7 +66,7 @@ pharmatrak/
 ├── 📁 database/                 # SQL schemas and migrations
 ├── 📁 services/                 # Business services (PDF, etc.)
 ├── 📁 tests/                    # Comprehensive test suites
-├── 📁 docs/                     # Documentation
+├── 📁 documentation/           # 📚 Comprehensive documentation hub
 ├── 📁 scripts/                  # Setup and utility scripts
 └── server.js                    # Main Express server
 ```
@@ -150,7 +150,7 @@ Authorization: Bearer <token>
 - **Drugs**: `/api/drugs/` - Drug information and FDA search
 - **Audit**: `/api/audit/` - Transaction history and reports
 
-**📖 Complete API Documentation**: See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
+**📖 Complete API Documentation**: See [documentation/api/API_DOCUMENTATION.md](./documentation/api/API_DOCUMENTATION.md)
 
 ## 🧩 Component Architecture
 
@@ -185,7 +185,7 @@ Authorization: Bearer <token>
 - **Full-Text Search**: Optimized drug name searching
 - **Audit Triggers**: Automatic transaction logging
 
-**📖 Database Documentation**: See [BACKEND_README.md](./BACKEND_README.md)
+**📖 Database Documentation**: See [documentation/backend/BACKEND_README.md](./documentation/backend/BACKEND_README.md)
 
 ## 🧪 Testing
 
@@ -290,7 +290,7 @@ docker-compose ps
 docker-compose logs -f
 ```
 
-**📖 Deployment Guide**: See [docs/deployment/](./docs/deployment/)
+**📖 Deployment Guide**: See [documentation/deployment/](./documentation/deployment/)
 
 ## 🛠️ Maintenance
 
@@ -320,12 +320,16 @@ npm test
 
 ## 📚 Documentation
 
-### Project Documentation
-- **[PROJECT_GUIDE.md](./PROJECT_GUIDE.md)**: Complete navigation guide
-- **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)**: Full API reference
-- **[BACKEND_README.md](./BACKEND_README.md)**: Backend architecture
-- **[frontend/README.md](./frontend/README.md)**: Frontend components
-- **[CLEANUP_GUIDE.md](./CLEANUP_GUIDE.md)**: Code organization guide
+### 🏠 Main Documentation Hub
+**[📚 documentation/INDEX.md](./documentation/INDEX.md)** - **Start here!** Complete documentation index with organized categories
+
+### Key Documentation
+- **[🔧 Error Repairs Log](./documentation/guides/error-repairs-log.html)**: Recent fixes and solutions
+- **[⚙️ Setup Guide](./documentation/setup/SETUP.md)**: Installation and setup instructions  
+- **[🔌 API Reference](./documentation/api/API_DOCUMENTATION.md)**: Complete API documentation
+- **[🖥️ Backend Architecture](./documentation/backend/BACKEND_README.md)**: Server architecture guide
+- **[🎨 Frontend Components](./documentation/frontend/FRONTEND_README.md)**: UI component library
+- **[🗄️ Database Schema](./documentation/database/database-schema.md)**: Database structure guide
 
 ### Component Documentation
 - Individual components include JSDoc headers
@@ -369,8 +373,8 @@ MIT License - See LICENSE file for details
 
 ## 👥 Support
 - **Issues**: GitHub Issues for bug reports
-- **Documentation**: Check docs/ directory for detailed guides
-- **API Reference**: See API_DOCUMENTATION.md for endpoint details
+- **Documentation**: Check [documentation/](./documentation/) directory for detailed guides
+- **API Reference**: See [documentation/api/API_DOCUMENTATION.md](./documentation/api/API_DOCUMENTATION.md) for endpoint details
 
 ---
 

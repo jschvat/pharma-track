@@ -1,0 +1,402 @@
+/* PharmaTraK Component Gallery Styles */
+
+.component-gallery {
+  background-color: var(--bg-primary, #f8f9fa);
+  min-height: 100vh;
+}
+
+.gallery-sidebar {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.gallery-header h2 {
+  color: #2c3e50;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.nav-pills .nav-link {
+  border-radius: 6px;
+  margin-bottom: 4px;
+  color: #495057;
+  transition: all 0.2s ease;
+}
+
+.nav-pills .nav-link:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.nav-pills .nav-link.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.nav-pills .nav-link.active .badge {
+  background-color: rgba(255,255,255,0.2) !important;
+  color: white !important;
+}
+
+.gallery-content {
+  padding-left: 2rem;
+}
+
+.category-header {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.category-header h3 {
+  color: #2c3e50;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.component-card {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.component-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.component-card .card-header {
+  border-bottom: 2px solid #dee2e6;
+}
+
+.example-section {
+  margin-bottom: 2rem;
+}
+
+.example-section:last-child {
+  margin-bottom: 0;
+}
+
+.example-section h6 {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #007bff;
+}
+
+.example-preview {
+  background: #f8f9fa !important;
+  border: 2px dashed #dee2e6 !important;
+  border-radius: 8px !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.example-preview::before {
+  content: "Live Example";
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: #007bff;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+/* Custom component styles for gallery */
+.sortable {
+  user-select: none;
+}
+
+.sortable:hover {
+  background-color: #f8f9fa;
+}
+
+.hover-bg-light:hover {
+  background-color: #f8f9fa !important;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Tooltip positioning */
+.tooltip-top {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 5px;
+}
+
+.tooltip-bottom {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 5px;
+}
+
+.tooltip-left {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 5px;
+}
+
+.tooltip-right {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 5px;
+}
+
+.tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.tooltip-top .tooltip-arrow {
+  top: 100%;
+  left: 50%;
+  margin-left: -4px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid #343a40;
+}
+
+.tooltip-bottom .tooltip-arrow {
+  bottom: 100%;
+  left: 50%;
+  margin-left: -4px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 4px solid #343a40;
+}
+
+/* Pharmacy-specific styling */
+.pharma-component-placeholder {
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.drug-info-card {
+  border-left: 4px solid #28a745;
+  background: #f8fff9;
+}
+
+.prescription-card {
+  border-left: 4px solid #007bff;
+  background: #f8f9ff;
+}
+
+.warning-card {
+  border-left: 4px solid #ffc107;
+  background: #fffef8;
+}
+
+.danger-card {
+  border-left: 4px solid #dc3545;
+  background: #fff8f8;
+}
+
+/* Demo-specific styles */
+.info-group {
+  margin-bottom: 0.5rem;
+}
+
+.prescription-details {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #f8f9fa;
+}
+
+.prescription-directions {
+  border: 1px solid #bee5eb;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #e8f7fa;
+}
+
+.interaction-check {
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #fffef7;
+}
+
+.inventory-item {
+  border-bottom: 1px solid #eee;
+  padding: 0.75rem 0;
+}
+
+.inventory-item:last-child {
+  border-bottom: none;
+}
+
+.process-steps {
+  list-style: none;
+  padding: 0;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  color: #6c757d;
+}
+
+.step.completed {
+  color: #28a745;
+}
+
+.step i {
+  width: 20px;
+  text-align: center;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .gallery-content {
+    padding-left: 0;
+    margin-top: 2rem;
+  }
+  
+  .gallery-sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 2rem;
+  }
+  
+  .category-header {
+    padding: 1.5rem;
+  }
+  
+  .example-preview {
+    padding: 1rem !important;
+  }
+}
+
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); }
+  to { transform: scale(1); }
+}
+
+/* Code snippet styling (if needed) */
+.code-snippet {
+  background: #282c34;
+  color: #abb2bf;
+  padding: 1rem;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 0.875rem;
+  overflow-x: auto;
+}
+
+/* Component status indicators */
+.component-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-stable {
+  color: #28a745;
+}
+
+.status-beta {
+  color: #ffc107;
+}
+
+.status-experimental {
+  color: #dc3545;
+}
+
+/* Accessibility indicators */
+.a11y-compliant {
+  border: 2px solid #28a745;
+}
+
+.a11y-warning {
+  border: 2px solid #ffc107;
+}
+
+.a11y-error {
+  border: 2px solid #dc3545;
+}
+
+/* Interactive elements */
+.interactive-demo {
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  padding: 1rem;
+  background: white;
+}
+
+.interactive-demo:hover {
+  border-color: #0056b3;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Loading states */
+.loading-placeholder {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Dark mode support disabled - using app theme instead */
+/* 
+@media (prefers-color-scheme: dark) {
+  .component-gallery {
+    background-color: #1a1a1a;
+    color: #e9ecef;
+  }
+  
+  .gallery-sidebar,
+  .category-header,
+  .component-card {
+    background: #2d3748;
+    color: #e9ecef;
+  }
+  
+  .example-preview {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+  }
+}
+*/

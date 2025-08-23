@@ -5,6 +5,18 @@
  * in collapsed and expanded sidebar states.
  */
 
+/* Button nav-link styling - make buttons behave like anchor links */
+button.nav-link {
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+}
+
 /* Base icon container */
 .nav-icon-container {
   display: inline-flex;

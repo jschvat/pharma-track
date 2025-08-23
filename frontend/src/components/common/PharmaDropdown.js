@@ -61,7 +61,6 @@ const PharmaDropdown = ({
   const [calculatedMenuHeight, setCalculatedMenuHeight] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
-  const hiddenMeasurementRef = useRef(null);
   const toggleRef = useRef(null);
   
   /**
@@ -97,8 +96,9 @@ const PharmaDropdown = ({
       maxTextWidth = Math.max(maxTextWidth, textWidth);
     });
     
-    // Add padding for Bootstrap dropdown item styling (approximately 50px total)
-    const calculatedWidth = maxTextWidth + 50;
+    // Add padding for Bootstrap dropdown item styling (approximately 90px total)
+    // Account for: padding (48px) + margins (22px) + search/clear controls (20px)
+    const calculatedWidth = maxTextWidth + 90;
     
     // Calculate height based on number of items
     const itemHeight = size === 'sm' ? 32 : 38; // Approximate Bootstrap dropdown item height
@@ -140,9 +140,12 @@ const PharmaDropdown = ({
    */
   useEffect(() => {
     if (autoSize && options.length > 0) {
-      const dimensions = calculateMenuDimensions();
-      setCalculatedMenuWidth(dimensions.width);
-      setCalculatedMenuHeight(dimensions.height);
+      // Use setTimeout to ensure DOM is ready
+      setTimeout(() => {
+        const dimensions = calculateMenuDimensions();
+        setCalculatedMenuWidth(dimensions.width);
+        setCalculatedMenuHeight(dimensions.height);
+      }, 10);
     }
   }, [options, autoSize, maxMenuWidth, maxMenuHeight, minWidth, size, searchable, clearable, selectedValue, searchTerm]);
   
@@ -473,28 +476,6 @@ const PharmaDropdown = ({
       </button>
       
       <CustomMenu />
-      
-      {/* Hidden element for text width measurement */}
-      {autoSize && (
-        <div 
-          ref={hiddenMeasurementRef}
-          style={{ 
-            position: 'absolute',
-            visibility: 'hidden',
-            height: 'auto',
-            width: 'auto',
-            whiteSpace: 'nowrap',
-            fontSize: size === 'sm' ? '12px' : '14px',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            top: '-9999px',
-            left: '-9999px'
-          }}
-        >
-          {options.map(option => (
-            <div key={option.value}>{option.label}</div>
-          ))}
-        </div>
-      )}
     </>
   );
 };

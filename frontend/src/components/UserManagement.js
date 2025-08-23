@@ -3,13 +3,12 @@ import {
   Container, 
   Row, 
   Col, 
-  Card, 
   Table, 
-  Button, 
   Badge, 
   Form, 
-  Modal, 
-  Alert, 
+  Modal,
+  Button,
+  Alert,
   Spinner,
   InputGroup,
   Pagination,
@@ -24,7 +23,7 @@ import FormModal from './common/FormModal';
 import DataTable from './common/DataTable';
 import ActionButtonGroup from './common/ActionButtonGroup';
 import SearchFilterBar from './common/SearchFilterBar';
-import CardHeader from './common/CardHeader';
+import { PharmaCard, PharmaAlert, PharmaButton, PharmaModal } from './common/PharmaComponents';
 
 // Custom CSS for professional solid buttons
 const buttonStyles = `
@@ -768,9 +767,9 @@ const UserManagement = () => {
   if (!isAdmin()) {
     return (
       <Container fluid className="p-4">
-        <Alert variant="danger">
-          Access denied. You must be an admin to access this page.
-        </Alert>
+        <PharmaAlert variant="danger" title="Access Denied" icon="🚫">
+          You must be an admin to access this page.
+        </PharmaAlert>
       </Container>
     );
   }
@@ -779,22 +778,20 @@ const UserManagement = () => {
     <Container fluid className="p-4">
       <Row>
         <Col>
-          <Card>
-            <CardHeader
-              title="User Management"
-              subtitle="Manage users in your store"
-              action={{
-                label: "Add User",
-                icon: "fas fa-plus",
-                onClick: openCreateModal,
-                variant: "primary"
-              }}
-            />
-            
-            <Card.Body>
+          <PharmaCard
+            title="User Management"
+            subtitle="Manage users in your store"
+            headerIcon="👥"
+            headerActions={[{
+              label: 'Add User',
+              variant: 'primary',
+              icon: '➕',
+              onClick: openCreateModal
+            }]}
+          >
               {/* Alerts */}
-              {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
-              {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
+              {error && <PharmaAlert variant="danger" dismissible onClose={() => setError('')}>{error}</PharmaAlert>}
+              {success && <PharmaAlert variant="success" dismissible onClose={() => setSuccess('')} autoClose={true}>{success}</PharmaAlert>}
               
               <SearchFilterBar
                 searchPlaceholder="Search users..."
@@ -823,7 +820,7 @@ const UserManagement = () => {
                   }
                 ]}
                 additionalActions={
-                  <Button 
+                  <PharmaButton 
                     variant="outline-secondary" 
                     onClick={() => {
                       setSearchTerm('');
@@ -833,7 +830,7 @@ const UserManagement = () => {
                     }}
                   >
                     Clear
-                  </Button>
+                  </PharmaButton>
                 }
                 showCard={false}
               />
@@ -853,8 +850,7 @@ const UserManagement = () => {
                   onPageChange: setCurrentPage
                 }}
               />
-            </Card.Body>
-          </Card>
+          </PharmaCard>
         </Col>
       </Row>
 

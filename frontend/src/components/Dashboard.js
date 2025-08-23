@@ -1,10 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Container, Row, Col, Card, Alert, Button, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Badge } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { dashboardAPI } from '../services/api';
 import { Link } from 'react-router-dom';
 import { PostItContainer } from './PostItNote';
 import PostItNotesSection from './PostItNotesSection';
+import { 
+  PharmaCard, 
+  PharmaAlert, 
+  PharmaButton, 
+  StatsCard, 
+  PharmaTable,
+  PharmaTabs,
+  InventoryProgress,
+  PharmaDataGrid
+} from './common/PharmaComponents';
 import '../css/components.css';
 
 const Dashboard = () => {
@@ -156,7 +166,9 @@ const Dashboard = () => {
       {error && (
         <Row className="mb-4">
           <Col>
-            <Alert variant="danger">{error}</Alert>
+            <PharmaAlert variant="danger" dismissible onClose={() => setError('')}>
+              {error}
+            </PharmaAlert>
           </Col>
         </Row>
       )}
@@ -181,40 +193,68 @@ const Dashboard = () => {
         </Row>
       )}
 
-      {/* Inventory Stats */}
+      {/* Enhanced Inventory Stats with Progress Indicators */}
       {stats.inventory && (
         <Row className="mb-4">
           <Col md={3}>
-            <Card className="h-100 border-primary">
-              <Card.Body className="text-center">
-                <h3 className="text-primary">{stats.inventory.total_items}</h3>
-                <p className="text-muted mb-0">Total Items</p>
-              </Card.Body>
-            </Card>
+            <PharmaCard variant="primary" className="h-100">
+              <div className="text-center">
+                <div className="display-6 fw-bold text-primary mb-2">
+                  📦 {stats.inventory.total_items}
+                </div>
+                <div className="small text-muted mb-3">Total Items</div>
+                <InventoryProgress 
+                  value={Math.min((stats.inventory.active_items / stats.inventory.total_items) * 100, 100)}
+                  label="Active Stock Ratio"
+                  size="sm"
+                />
+              </div>
+            </PharmaCard>
           </Col>
           <Col md={3}>
-            <Card className="h-100 border-success">
-              <Card.Body className="text-center">
-                <h3 className="text-success">{stats.inventory.active_items}</h3>
-                <p className="text-muted mb-0">Active Items</p>
-              </Card.Body>
-            </Card>
+            <PharmaCard variant="success" className="h-100">
+              <div className="text-center">
+                <div className="display-6 fw-bold text-success mb-2">
+                  ✅ {stats.inventory.active_items}
+                </div>
+                <div className="small text-muted mb-3">Active Items</div>
+                <InventoryProgress 
+                  value={85} // Example threshold value
+                  label="Inventory Health"
+                  size="sm"
+                />
+              </div>
+            </PharmaCard>
           </Col>
           <Col md={3}>
-            <Card className="h-100 border-warning">
-              <Card.Body className="text-center">
-                <h3 className="text-warning">{stats.inventory.low_stock_items}</h3>
-                <p className="text-muted mb-0">Low Stock</p>
-              </Card.Body>
-            </Card>
+            <PharmaCard variant="warning" className="h-100">
+              <div className="text-center">
+                <div className="display-6 fw-bold text-warning mb-2">
+                  ⚠️ {stats.inventory.low_stock_items}
+                </div>
+                <div className="small text-muted mb-3">Low Stock</div>
+                <InventoryProgress 
+                  value={Math.max(100 - (stats.inventory.low_stock_items / stats.inventory.total_items) * 100, 0)}
+                  label="Stock Level Health"
+                  size="sm"
+                />
+              </div>
+            </PharmaCard>
           </Col>
           <Col md={3}>
-            <Card className="h-100 border-danger">
-              <Card.Body className="text-center">
-                <h3 className="text-danger">{stats.inventory.expiring_items}</h3>
-                <p className="text-muted mb-0">Expiring Soon</p>
-              </Card.Body>
-            </Card>
+            <PharmaCard variant="danger" className="h-100">
+              <div className="text-center">
+                <div className="display-6 fw-bold text-danger mb-2">
+                  🚨 {stats.inventory.expiring_items}
+                </div>
+                <div className="small text-muted mb-3">Expiring Soon</div>
+                <InventoryProgress 
+                  value={Math.max(100 - (stats.inventory.expiring_items / stats.inventory.total_items) * 100, 0)}
+                  label="Freshness Score"
+                  size="sm"
+                />
+              </div>
+            </PharmaCard>
           </Col>
         </Row>
       )}
@@ -224,196 +264,291 @@ const Dashboard = () => {
         <Row className="mb-4">
           <Col md={6}>
             {stats.storeStats && (
-              <Card>
-                <Card.Header>
-                  <h5 className="mb-0">System Overview</h5>
-                </Card.Header>
-                <Card.Body>
-                  <Row>
-                    <Col>
-                      <strong>Total Stores:</strong> {stats.storeStats.total_stores}
-                    </Col>
-                    <Col>
-                      <strong>States:</strong> {stats.storeStats.unique_states}
-                    </Col>
-                  </Row>
-                </Card.Body>
-              </Card>
+              <PharmaCard
+                title="System Overview"
+                headerIcon="🏪"
+                variant="info"
+                shadow="md"
+              >
+                <Row>
+                  <Col>
+                    <strong>Total Stores:</strong> {stats.storeStats.total_stores}
+                  </Col>
+                  <Col>
+                    <strong>States:</strong> {stats.storeStats.unique_states}
+                  </Col>
+                </Row>
+              </PharmaCard>
             )}
           </Col>
           <Col md={6}>
             {stats.drugStats && (
-              <Card>
-                <Card.Header>
-                  <h5 className="mb-0">Drug Database</h5>
-                </Card.Header>
-                <Card.Body>
-                  <Row>
-                    <Col>
-                      <strong>Total Drugs:</strong> {stats.drugStats.total_drugs}
-                    </Col>
-                    <Col>
-                      <strong>Active:</strong> {stats.drugStats.active_drugs}
-                    </Col>
-                  </Row>
-                </Card.Body>
-              </Card>
+              <PharmaCard
+                title="Drug Database"
+                headerIcon="💊"
+                variant="primary"
+                shadow="md"
+              >
+                <Row>
+                  <Col>
+                    <strong>Total Drugs:</strong> {stats.drugStats.total_drugs}
+                  </Col>
+                  <Col>
+                    <strong>Active:</strong> {stats.drugStats.active_drugs}
+                  </Col>
+                </Row>
+              </PharmaCard>
             )}
           </Col>
         </Row>
       )}
 
-      <Row>
-        {/* Low Stock Items */}
-        {stats.lowStock.length > 0 && (
-          <Col md={6} className="mb-4">
-            <Card>
-              <Card.Header className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Low Stock Alert</h5>
-                <Link to="/inventory?filter=low_stock" className="btn btn-sm btn-outline-warning">
-                  View All
-                </Link>
-              </Card.Header>
-              <Card.Body>
-                {stats.lowStock.slice(0, 5).map((item, index) => (
-                  <div key={index} className="d-flex justify-content-between align-items-center mb-2">
-                    <div>
-                      <strong>{item.generic_name}</strong>
-                      {item.brand_name && <div className="small text-muted">{item.brand_name}</div>}
+      {/* Enhanced Inventory Alerts with PharmaTabs */}
+      <Row className="mb-4">
+        <Col>
+          <PharmaTabs
+            variant="pills"
+            showBadges={true}
+            showIcons={true}
+            tabs={[
+              {
+                id: 'low-stock',
+                label: 'Low Stock',
+                icon: '⚠️',
+                badge: { content: stats.lowStock.length, variant: 'warning' },
+                content: (
+                  <PharmaCard variant="warning">
+                    <div className="mb-3 d-flex justify-content-between align-items-center">
+                      <h6 className="mb-0">Items needing reorder</h6>
+                      <PharmaButton 
+                        variant="outline-warning" 
+                        size="sm"
+                        onClick={() => window.location.href = '/inventory?filter=low_stock'}
+                      >
+                        View All
+                      </PharmaButton>
                     </div>
-                    <Badge bg="warning">{item.quantity_on_hand} left</Badge>
-                  </div>
-                ))}
-              </Card.Body>
-            </Card>
-          </Col>
-        )}
-
-        {/* Expiring Items */}
-        {stats.expiring.length > 0 && (
-          <Col md={6} className="mb-4">
-            <Card>
-              <Card.Header className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Expiring Soon</h5>
-                <Link to="/inventory?filter=expiring" className="btn btn-sm btn-outline-danger">
-                  View All
-                </Link>
-              </Card.Header>
-              <Card.Body>
-                {stats.expiring.slice(0, 5).map((item, index) => (
-                  <div key={index} className="d-flex justify-content-between align-items-center mb-2">
-                    <div>
-                      <strong>{item.generic_name}</strong>
-                      <div className="small text-muted">
-                        Expires: {new Date(item.expiration_date).toLocaleDateString()}
+                    {stats.lowStock.length > 0 ? (
+                      <div className="row g-2">
+                        {stats.lowStock.slice(0, 8).map((item, index) => (
+                          <div key={index} className="col-md-6">
+                            <div className="border rounded p-2 bg-light">
+                              <div className="d-flex justify-content-between align-items-start">
+                                <div className="flex-grow-1">
+                                  <strong className="small">{item.generic_name}</strong>
+                                  {item.brand_name && <div className="text-muted" style={{fontSize: '0.75rem'}}>{item.brand_name}</div>}
+                                  <div className="text-muted" style={{fontSize: '0.7rem'}}>
+                                    Reorder at: {item.reorder_level}
+                                  </div>
+                                </div>
+                                <Badge bg="warning" className="ms-2">{item.quantity_on_hand}</Badge>
+                              </div>
+                              <InventoryProgress 
+                                value={(item.quantity_on_hand / item.reorder_level) * 100}
+                                size="sm"
+                                showLabel={false}
+                                className="mt-2"
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
+                    ) : (
+                      <div className="text-center py-3 text-muted">
+                        <div style={{fontSize: '2rem'}}>✅</div>
+                        <div>All items are well stocked!</div>
+                      </div>
+                    )}
+                  </PharmaCard>
+                )
+              },
+              {
+                id: 'expiring',
+                label: 'Expiring Soon',
+                icon: '🚨',
+                badge: { content: stats.expiring.length, variant: 'danger' },
+                content: (
+                  <PharmaCard variant="danger">
+                    <div className="mb-3 d-flex justify-content-between align-items-center">
+                      <h6 className="mb-0">Items expiring within 30 days</h6>
+                      <PharmaButton 
+                        variant="outline-danger" 
+                        size="sm"
+                        onClick={() => window.location.href = '/inventory?filter=expiring'}
+                      >
+                        View All
+                      </PharmaButton>
                     </div>
-                    <Badge bg="danger">{item.days_until_expiration} days</Badge>
-                  </div>
-                ))}
-              </Card.Body>
-            </Card>
-          </Col>
-        )}
-
-        {/* Recent Transactions */}
-        {stats.recentTransactions.length > 0 && (
-          <Col md={12} className="mb-4">
-            <Card>
-              <Card.Header className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">Recent Transactions</h5>
-                <Link to="/audit/transactions" className="btn btn-sm btn-outline-primary">
-                  View All
-                </Link>
-              </Card.Header>
-              <Card.Body>
-                <div className="table-responsive">
-                  <table className="table table-sm">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Drug</th>
-                        <th>Quantity</th>
-                        <th>User</th>
-                        {isAdmin() && <th>Store</th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {stats.recentTransactions.slice(0, 8).map((transaction, index) => (
-                        <tr key={index}>
-                          <td className="small">
-                            {new Date(transaction.transaction_date).toLocaleDateString()}
-                          </td>
-                          <td>
-                            <Badge 
-                              bg={
-                                transaction.transaction_type === 'prescription_fill' ? 'primary' :
-                                transaction.transaction_type === 'return_to_stock' ? 'success' :
-                                transaction.transaction_type === 'expire' ? 'danger' :
-                                'secondary'
-                              }
-                              className="small"
-                            >
-                              {transaction.transaction_type.replace('_', ' ')}
-                            </Badge>
-                          </td>
-                          <td className="small">
-                            {transaction.generic_name}
-                            {transaction.brand_name && (
-                              <div className="text-muted">{transaction.brand_name}</div>
-                            )}
-                          </td>
-                          <td>
-                            <span className={transaction.quantity_change < 0 ? 'text-danger' : 'text-success'}>
-                              {transaction.quantity_change > 0 ? '+' : ''}{transaction.quantity_change}
-                            </span>
-                          </td>
-                          <td className="small">{transaction.performed_by_name}</td>
-                          {isAdmin() && <td className="small">{transaction.store_name}</td>}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-        )}
+                    {stats.expiring.length > 0 ? (
+                      <div className="row g-2">
+                        {stats.expiring.slice(0, 8).map((item, index) => (
+                          <div key={index} className="col-md-6">
+                            <div className="border rounded p-2 bg-light">
+                              <div className="d-flex justify-content-between align-items-start">
+                                <div className="flex-grow-1">
+                                  <strong className="small">{item.generic_name}</strong>
+                                  {item.brand_name && <div className="text-muted" style={{fontSize: '0.75rem'}}>{item.brand_name}</div>}
+                                  <div className="text-muted" style={{fontSize: '0.7rem'}}>
+                                    Expires: {new Date(item.expiration_date).toLocaleDateString()}
+                                  </div>
+                                </div>
+                                <Badge bg="danger" className="ms-2">{item.days_until_expiration}d</Badge>
+                              </div>
+                              <InventoryProgress 
+                                type="expiration"
+                                value={(item.days_until_expiration / 30) * 100}
+                                size="sm"
+                                showLabel={false}
+                                className="mt-2"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-3 text-muted">
+                        <div style={{fontSize: '2rem'}}>🗓️</div>
+                        <div>No items expiring soon</div>
+                      </div>
+                    )}
+                  </PharmaCard>
+                )
+              },
+              {
+                id: 'recent',
+                label: 'Recent Activity',
+                icon: '📊',
+                badge: { content: stats.recentTransactions.length, variant: 'info' },
+                content: (
+                  <PharmaCard variant="info">
+                    <div className="mb-3 d-flex justify-content-between align-items-center">
+                      <h6 className="mb-0">Latest inventory transactions</h6>
+                      <PharmaButton 
+                        variant="outline-info" 
+                        size="sm"
+                        onClick={() => window.location.href = '/audit/transactions'}
+                      >
+                        View All
+                      </PharmaButton>
+                    </div>
+                    {stats.recentTransactions.length > 0 ? (
+                      <PharmaDataGrid
+                        data={stats.recentTransactions.slice(0, 6)}
+                        columns={[
+                          {
+                            field: 'transaction_date',
+                            label: 'Date',
+                            type: 'date',
+                            render: (value) => new Date(value).toLocaleDateString()
+                          },
+                          {
+                            field: 'transaction_type',
+                            label: 'Type',
+                            render: (value) => (
+                              <Badge 
+                                bg={
+                                  value === 'prescription_fill' ? 'primary' :
+                                  value === 'return_to_stock' ? 'success' :
+                                  value === 'expire' ? 'danger' :
+                                  'secondary'
+                                }
+                                style={{fontSize: '0.6rem'}}
+                              >
+                                {value.replace('_', ' ')}
+                              </Badge>
+                            )
+                          },
+                          {
+                            field: 'generic_name',
+                            label: 'Drug'
+                          },
+                          {
+                            field: 'quantity_change',
+                            label: 'Change',
+                            render: (value) => (
+                              <span className={value < 0 ? 'text-danger fw-bold' : 'text-success fw-bold'}>
+                                {value > 0 ? '+' : ''}{value}
+                              </span>
+                            )
+                          }
+                        ]}
+                        paginated={false}
+                        searchable={false}
+                        filterable={false}
+                        size="sm"
+                        className="compact-grid"
+                      />
+                    ) : (
+                      <div className="text-center py-3 text-muted">
+                        <div style={{fontSize: '2rem'}}>📋</div>
+                        <div>No recent activity</div>
+                      </div>
+                    )}
+                  </PharmaCard>
+                )
+              }
+            ]}
+            className="dashboard-alerts-tabs"
+          />
+        </Col>
       </Row>
+
 
       {/* Quick Actions */}
       <Row>
         <Col>
-          <Card>
-            <Card.Header>
-              <h5 className="mb-0">Quick Actions</h5>
-            </Card.Header>
-            <Card.Body>
-              <Row>
-                <Col md={3} className="mb-2">
-                  <Button as={Link} to="/inventory/add" variant="primary" className="w-100">
-                    Add Inventory
-                  </Button>
-                </Col>
-                <Col md={3} className="mb-2">
-                  <Button as={Link} to="/drugs/search" variant="outline-primary" className="w-100">
-                    Search FDA
-                  </Button>
-                </Col>
-                <Col md={3} className="mb-2">
-                  <Button as={Link} to="/audit/ndc" variant="outline-secondary" className="w-100">
-                    NDC Report
-                  </Button>
-                </Col>
-                <Col md={3} className="mb-2">
-                  <Button as={Link} to="/inventory/transactions" variant="outline-success" className="w-100">
-                    Transactions
-                  </Button>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
+          <PharmaCard
+            title="Quick Actions"
+            headerIcon="⚡"
+            variant="secondary"
+          >
+            <Row>
+              <Col md={3} className="mb-2">
+                <PharmaButton 
+                  as={Link} 
+                  to="/inventory/add" 
+                  variant="primary" 
+                  className="w-100"
+                  icon="📦"
+                >
+                  Add Inventory
+                </PharmaButton>
+              </Col>
+              <Col md={3} className="mb-2">
+                <PharmaButton 
+                  as={Link} 
+                  to="/drugs/search" 
+                  variant="outline-primary" 
+                  className="w-100"
+                  icon="🔍"
+                >
+                  Search FDA
+                </PharmaButton>
+              </Col>
+              <Col md={3} className="mb-2">
+                <PharmaButton 
+                  as={Link} 
+                  to="/audit/ndc" 
+                  variant="outline-secondary" 
+                  className="w-100"
+                  icon="📋"
+                >
+                  NDC Report
+                </PharmaButton>
+              </Col>
+              <Col md={3} className="mb-2">
+                <PharmaButton 
+                  as={Link} 
+                  to="/inventory/transactions" 
+                  variant="outline-success" 
+                  className="w-100"
+                  icon="📊"
+                >
+                  Transactions
+                </PharmaButton>
+              </Col>
+            </Row>
+          </PharmaCard>
         </Col>
       </Row>
     </Container>

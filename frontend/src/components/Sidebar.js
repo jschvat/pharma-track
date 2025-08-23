@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import HamburgerMenu from './HamburgerMenu';
 import NavIcon from './common/NavIcon';
+import DevelopmentNavItem from './DevelopmentNavItem';
 import '../css/components.css';
 import '../css/nav-icons.css';
 
@@ -249,13 +250,10 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
     if (item.dropdown) {
       return (
         <div className={`nav-dropdown ${openDropdowns[item.key] ? 'open' : ''}`} data-debug={`${item.key}: ${openDropdowns[item.key] ? 'OPEN' : 'CLOSED'}`}>
-          <a
-            href="#"
+          <button
+            type="button"
             className="nav-link"
-            onClick={(e) => {
-              e.preventDefault();
-              toggleDropdown(item.key);
-            }}
+            onClick={() => toggleDropdown(item.key)}
           >
             <div className="nav-dropdown-toggle">
               <span>
@@ -269,7 +267,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
               </span>
               <i className="fas fa-chevron-down nav-dropdown-icon"></i>
             </div>
-          </a>
+          </button>
           <div className="nav-dropdown-menu">
             {item.items.map((subItem, index) => (
               <div key={index} className="nav-item">
@@ -381,13 +379,10 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
             <div className="nav-section-title">Appearance</div>
             <div className="nav-item">
               <div className={`nav-dropdown ${openDropdowns.theme ? 'open' : ''}`}>
-                <a
-                  href="#"
+                <button
+                  type="button"
                   className="nav-link"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toggleDropdown('theme');
-                  }}
+                  onClick={() => toggleDropdown('theme')}
                 >
                   <div className="nav-dropdown-content">
                     <span>
@@ -401,15 +396,14 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
                     </span>
                     <i className="fas fa-chevron-down nav-dropdown-icon"></i>
                   </div>
-                </a>
+                </button>
                 <div className="nav-dropdown-menu">
                   {availableThemes.map((theme) => (
                     <div key={theme.value} className="nav-item">
-                      <a
-                        href="#"
+                      <button
+                        type="button"
                         className={`nav-link nav-dropdown-item ${currentTheme === theme.value ? 'active' : ''}`}
-                        onClick={(e) => {
-                          e.preventDefault();
+                        onClick={() => {
                           changeTheme(theme.value);
                           if (mobileOpen) {
                             onMobileToggle();
@@ -417,7 +411,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
                         }}
                       >
                         <span className="nav-link-text">{theme.label}</span>
-                      </a>
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -425,18 +419,18 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
             </div>
           </div>
 
+          {/* Development Section - Only in development mode */}
+          <DevelopmentNavItem />
+
           {/* User Section */}
           <div className="nav-section sidebar-user-section">
             <div className="nav-section-title">Account</div>
             <div className="nav-item">
               <div className={`nav-dropdown ${openDropdowns.user ? 'open' : ''}`}>
-                <a
-                  href="#"
+                <button
+                  type="button"
                   className="nav-link"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toggleDropdown('user');
-                  }}
+                  onClick={() => toggleDropdown('user')}
                 >
                   <div className="nav-dropdown-toggle">
                     <span>
@@ -450,7 +444,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
                     </span>
                     <i className="fas fa-chevron-down nav-dropdown-icon"></i>
                   </div>
-                </a>
+                </button>
                 <div className="nav-dropdown-menu">
                   <div className="nav-item">
                     <a
@@ -477,16 +471,13 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
                     </a>
                   </div>
                   <div className="nav-item">
-                    <a
-                      href="#"
+                    <button
+                      type="button"
                       className="nav-link nav-dropdown-item"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleLogout();
-                      }}
+                      onClick={() => handleLogout()}
                     >
                       <span className="nav-link-text">Logout</span>
-                    </a>
+                    </button>
                   </div>
                 </div>
               </div>

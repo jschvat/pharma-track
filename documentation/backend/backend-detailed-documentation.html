@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaTraK - Backend API Function Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8f9fa; }
+        .sidebar { background: #1a252f; color: white; min-height: 100vh; position: fixed; width: 320px; overflow-y: auto; z-index: 1000; }
+        .content { margin-left: 320px; padding: 20px; }
+        .sidebar .nav-link { color: #bdc3c7; padding: 6px 15px; border-radius: 0; font-size: 14px; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: #2c3e50; color: white; }
+        .endpoint-card { margin-bottom: 25px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .endpoint-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .route-header { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; margin: 30px 0 20px 0; }
+        .json-code { background: #2d3748; color: #e2e8f0; border-radius: 8px; max-height: 400px; overflow-y: auto; font-size: 13px; }
+        .file-ref { font-family: 'Monaco', 'Menlo', monospace; font-size: 11px; background: #e9ecef; padding: 2px 6px; border-radius: 3px; color: #495057; }
+        .http-method { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .method-get { background: #28a745; color: white; }
+        .method-post { background: #007bff; color: white; }
+        .method-put { background: #ffc107; color: black; }
+        .method-delete { background: #dc3545; color: white; }
+        .middleware-badge { background: #6c757d; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; margin: 1px; }
+        .model-badge { background: #17a2b8; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; }
+        .validation-badge { background: #fd7e14; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; }
+        .error-code { background: #dc3545; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin: 1px; }
+        .success-code { background: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin: 1px; }
+        .param-table { font-size: 13px; }
+        .param-table th { background: #f8f9fa; font-weight: 600; }
+        .hierarchy { border-left: 3px solid #dee2e6; padding-left: 15px; margin-left: 10px; }
+        .frontend-link { background: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; text-decoration: none; }
+        .frontend-link:hover { background: #1e7e34; color: white; }
+        .business-logic { background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 12px; }
+        .security-note { background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; padding: 12px; }
+        .database-op { background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 6px; padding: 10px; margin: 5px 0; }
+        .nav-pills .nav-link.active { background-color: #2c3e50; }
+        .accordion-button:not(.collapsed) { background-color: #e7f3ff; color: #004085; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="p-3">
+            <h5><i class="fas fa-server me-2"></i>Backend API</h5>
+            <small class="text-muted">Route & Model Function Reference</small>
+            <div class="mt-2">
+                <a href="frontend-detailed-documentation.html" class="frontend-link">
+                    <i class="fas fa-desktop me-1"></i>Frontend Docs
+                </a>
+            </div>
+        </div>
+        
+        <nav class="nav nav-pills flex-column">
+            <a class="nav-link active" href="#overview">
+                <i class="fas fa-home me-2"></i>Overview
+            </a>
+            
+            <!-- Authentication Routes -->
+            <div class="nav-link text-light bg-secondary"><strong>Authentication Routes</strong></div>
+            <div class="hierarchy">
+                <a class="nav-link function-nav" href="#auth-login">POST /auth/login</a>
+                <a class="nav-link function-nav" href="#auth-me">GET /auth/me</a>
+                <a class="nav-link function-nav" href="#auth-logout">POST /auth/logout</a>
+            </div>
+            
+            <!-- Inventory Routes -->
+            <div class="nav-link text-light bg-secondary"><strong>Inventory Routes</strong></div>
+            <div class="hierarchy">
+                <a class="nav-link function-nav" href="#get-inventory-store">GET /inventory/store/:id</a>
+                <a class="nav-link function-nav" href="#post-inventory">POST /inventory</a>
+                <a class="nav-link function-nav" href="#post-fill-prescription">POST /inventory/:id/fill-prescription</a>
+                <a class="nav-link function-nav" href="#post-return-stock">POST /inventory/:id/return-to-stock</a>
+                <a class="nav-link function-nav" href="#post-expire">POST /inventory/:id/expire</a>
+                <a class="nav-link function-nav" href="#post-audit">POST /inventory/:id/audit</a>
+                <a class="nav-link function-nav" href="#get-inventory-stats">GET /inventory/store/:id/stats</a>
+                <a class="nav-link function-nav" href="#get-low-stock">GET /inventory/store/:id/low-stock</a>
+                <a class="nav-link function-nav" href="#get-expiring">GET /inventory/store/:id/expiring</a>
+            </div>
+            
+            <!-- User Routes -->
+            <div class="nav-link text-light bg-secondary"><strong>User Routes</strong></div>
+            <div class="hierarchy">
+                <a class="nav-link function-nav" href="#get-users">GET /users</a>
+                <a class="nav-link function-nav" href="#post-users">POST /users</a>
+                <a class="nav-link function-nav" href="#put-users">PUT /users/:id</a>
+                <a class="nav-link function-nav" href="#delete-user">DELETE /users/:id</a>
+                <a class="nav-link function-nav" href="#put-user-password">PUT /users/:id/password</a>
+            </div>
+            
+            <!-- Drug Routes -->
+            <div class="nav-link text-light bg-secondary"><strong>Drug Routes</strong></div>
+            <div class="hierarchy">
+                <a class="nav-link function-nav" href="#fda-search">GET /drugs/search/fda</a>
+                <a class="nav-link function-nav" href="#check-drugs-exist">POST /drugs/check-exist</a>
+                <a class="nav-link function-nav" href="#add-drug-with-inventory">POST /drugs/add-from-fda-with-inventory</a>
+            </div>
+            
+            <!-- Model Functions -->
+            <div class="nav-link text-light bg-secondary"><strong>Model Functions</strong></div>
+            <div class="hierarchy">
+                <a class="nav-link function-nav" href="#store-inventory-model">StoreInventory Model</a>
+                <a class="nav-link function-nav" href="#user-model">User Model</a>
+                <a class="nav-link function-nav" href="#drug-model">Drug Model</a>
+            </div>
+            
+            <a class="nav-link" href="#middleware">
+                <i class="fas fa-shield-alt me-2"></i>Middleware
+            </a>
+            <a class="nav-link" href="#validation">
+                <i class="fas fa-check-circle me-2"></i>Validation Rules
+            </a>
+            <a class="nav-link" href="#database-patterns">
+                <i class="fas fa-database me-2"></i>Database Patterns
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Overview Section -->
+        <section id="overview">
+            <div class="card endpoint-card">
+                <div class="card-header route-header">
+                    <h2><i class="fas fa-server me-2"></i>Backend API Documentation</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4>Complete Backend Function Reference</h4>
+                            <p class="lead">This documentation provides detailed analysis of all backend API routes, middleware, model methods, and database operations in the PharmaTraK system, including request/response formats, business logic, and error handling.</p>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-link me-2"></i>
+                                <strong>Cross-Reference:</strong> Each endpoint includes links to the frontend functions that call it. 
+                                Click the <span class="frontend-link">Frontend Docs</span> button to view corresponding component documentation.
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h5>API Statistics</h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-route text-primary me-2"></i><strong>45+</strong> API Endpoints</li>
+                                <li><i class="fas fa-shield-alt text-success me-2"></i><strong>8</strong> Middleware Functions</li>
+                                <li><i class="fas fa-database text-warning me-2"></i><strong>15</strong> Model Classes</li>
+                                <li><i class="fas fa-check text-info me-2"></i><strong>25+</strong> Validation Rules</li>
+                                <li><i class="fas fa-lock text-secondary me-2"></i><strong>JWT</strong> Authentication</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Authentication Routes -->
+        <section id="auth-routes">
+            <div class="card endpoint-card">
+                <div class="card-header route-header">
+                    <h2><i class="fas fa-shield-alt me-2"></i>Authentication Routes</h2>
+                    <small class="text-light">File: <span class="file-ref text-light">routes/auth.js</span></small>
+                </div>
+            </div>
+
+            <!-- POST /auth/login -->
+            <div class="card endpoint-card" id="auth-login">
+                <div class="card-header endpoint-header">
+                    <h4>
+                        <span class="http-method method-post">POST</span>
+                        <code>/api/auth/login</code>
+                    </h4>
+                    <span class="file-ref">routes/auth.js:23-66</span>
+                    <a href="frontend-detailed-documentation.html#login-handleSubmit" class="frontend-link ms-2">
+                        <i class="fas fa-desktop me-1"></i>Frontend: Login.handleSubmit()
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Authenticates user credentials and returns JWT token with user information for application access.</p>
+                            
+                            <h5>Middleware Stack</h5>
+                            <span class="middleware-badge">express.json()</span>
+                            <span class="middleware-badge">cors()</span>
+                            <span class="middleware-badge">validateLogin</span>
+                            
+                            <h5>Model Methods Called</h5>
+                            <div class="model-badge">User.findByEmail()</div>
+                            <div class="model-badge">User.comparePassword()</div>
+                            
+                            <h5>Request Validation</h5>
+                            <table class="table table-sm param-table">
+                                <thead>
+                                    <tr>
+                                        <th>Field</th>
+                                        <th>Type</th>
+                                        <th>Validation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>email</code></td>
+                                        <td>string</td>
+                                        <td>Required, valid email format</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>password</code></td>
+                                        <td>string</td>
+                                        <td>Required, min 6 characters</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>rememberMe</code></td>
+                                        <td>boolean</td>
+                                        <td>Optional, default false</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Request Body</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "email": "admin@pharmatrak.com",
+  "password": "Admin123!",
+  "rememberMe": false
+}</code></pre>
+                            
+                            <h5>Success Response (200)</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTY5ODQ3NjQwMCwiZXhwIjoxNjk4NTYyODAwfQ.signature",
+  "user": {
+    "id": 1,
+    "name": "Demo Admin",
+    "email": "admin@pharmatrak.com",
+    "phone": "5551234567",
+    "address": "123 Admin Lane",
+    "store_id": 1,
+    "active_store_id": 1,
+    "store_name": "PharmaTraK Demo Store",
+    "active_store_name": "PharmaTraK Demo Store",
+    "role": "god_mode"
+  }
+}</code></pre>
+                            
+                            <h5>Error Responses</h5>
+                            <span class="error-code">400</span> Validation errors
+                            <span class="error-code">401</span> Invalid credentials
+                            <span class="error-code">403</span> Account deactivated
+                            <span class="error-code">429</span> Rate limited
+                            <span class="error-code">500</span> Server error
+                            
+                            <div class="business-logic mt-3">
+                                <h6><i class="fas fa-cogs me-2"></i>Business Logic</h6>
+                                <ul class="mb-0">
+                                    <li>Email normalized to lowercase</li>
+                                    <li>Password compared using bcrypt</li>
+                                    <li>JWT token expiration: 24h (normal), 30 days (remember me)</li>
+                                    <li>Inactive users rejected with 403</li>
+                                    <li>Store information included for context</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GET /auth/me -->
+            <div class="card endpoint-card" id="auth-me">
+                <div class="card-header endpoint-header">
+                    <h4>
+                        <span class="http-method method-get">GET</span>
+                        <code>/api/auth/me</code>
+                    </h4>
+                    <span class="file-ref">routes/auth.js:67-88</span>
+                    <a href="frontend-detailed-documentation.html#protected-route" class="frontend-link ms-2">
+                        <i class="fas fa-desktop me-1"></i>Frontend: ProtectedRoute
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Validates JWT token and returns current user information for authenticated sessions and route protection.</p>
+                            
+                            <h5>Middleware Stack</h5>
+                            <span class="middleware-badge">authenticateToken</span>
+                            
+                            <h5>Model Methods Called</h5>
+                            <div class="model-badge">User.findById()</div>
+                            
+                            <h5>Security Features</h5>
+                            <ul>
+                                <li>JWT token validation</li>
+                                <li>User existence verification</li>
+                                <li>Active status check</li>
+                                <li>Store context inclusion</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Request Headers</h5>
+                            <pre class="json-code"><code class="language-http">Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+                            
+                            <h5>Success Response (200)</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "user": {
+    "id": 1,
+    "name": "Demo Admin",
+    "email": "admin@pharmatrak.com",
+    "role": "god_mode",
+    "store_id": 1,
+    "store_name": "PharmaTraK Demo Store",
+    "is_active": true
+  }
+}</code></pre>
+                            
+                            <h5>Error Responses</h5>
+                            <span class="error-code">401</span> Invalid/expired token
+                            <span class="error-code">403</span> User deactivated
+                            <span class="error-code">404</span> User not found
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Inventory Routes -->
+        <section id="inventory-routes">
+            <div class="card endpoint-card">
+                <div class="card-header route-header">
+                    <h2><i class="fas fa-boxes me-2"></i>Inventory Management Routes</h2>
+                    <small class="text-light">File: <span class="file-ref text-light">routes/inventory.js</span></small>
+                </div>
+            </div>
+
+            <!-- GET /inventory/store/:id -->
+            <div class="card endpoint-card" id="get-inventory-store">
+                <div class="card-header endpoint-header">
+                    <h4>
+                        <span class="http-method method-get">GET</span>
+                        <code>/api/inventory/store/:storeId</code>
+                    </h4>
+                    <span class="file-ref">routes/inventory.js:23-66</span>
+                    <a href="frontend-detailed-documentation.html#inventory-loadInventory" class="frontend-link ms-2">
+                        <i class="fas fa-desktop me-1"></i>Frontend: Inventory.loadInventory()
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Retrieves paginated inventory data for a specific store with comprehensive filtering, search, and sorting capabilities.</p>
+                            
+                            <h5>Middleware Stack</h5>
+                            <span class="middleware-badge">authenticateToken</span>
+                            <span class="middleware-badge">validateStoreParam</span>
+                            <span class="middleware-badge">requireStoreAccess</span>
+                            
+                            <h5>Model Methods Called</h5>
+                            <div class="model-badge">StoreInventory.findWithFilters()</div>
+                            <div class="model-badge">StoreInventory.countWithFilters()</div>
+                            
+                            <h5>Query Parameters</h5>
+                            <table class="table table-sm param-table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Default</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>page</code></td>
+                                        <td>integer</td>
+                                        <td>1</td>
+                                        <td>Page number (≥1)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>limit</code></td>
+                                        <td>integer</td>
+                                        <td>20</td>
+                                        <td>Items per page (1-100)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>active</code></td>
+                                        <td>boolean</td>
+                                        <td>true</td>
+                                        <td>Show only active items</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>search</code></td>
+                                        <td>string</td>
+                                        <td>null</td>
+                                        <td>Search term (1-100 chars)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>low_stock</code></td>
+                                        <td>boolean</td>
+                                        <td>false</td>
+                                        <td>Show only low stock items</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>expiring_days</code></td>
+                                        <td>integer</td>
+                                        <td>null</td>
+                                        <td>Days until expiration (1-365)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Sample Request</h5>
+                            <pre class="json-code"><code class="language-http">GET /api/inventory/store/1?page=1&limit=20&search=acetaminophen&active=true&low_stock=false</code></pre>
+                            
+                            <h5>Success Response (200)</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "inventory": [
+    {
+      "id": 123,
+      "store_id": 1,
+      "drug_id": 12,
+      "quantity_on_hand": 896,
+      "reorder_level": 264,
+      "unit_cost": "29.5600",
+      "selling_price": "106.2700",
+      "lot_number": "LOT123ABC",
+      "expiration_date": "2025-12-31",
+      "supplier": "Cardinal Health",
+      "is_active": 1,
+      "last_updated": "2025-08-15T20:44:40.000Z",
+      "ndc": "00003-0232-21",
+      "generic_name": "Acetaminophen",
+      "brand_name": "TYLENOL Regular Strength",
+      "dosage_form": "TABLET",
+      "strength": "325 mg",
+      "manufacturer_name": "McNeil Consumer Healthcare"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 145,
+    "pages": 8
+  }
+}</code></pre>
+                            
+                            <h5>Validation & Error Codes</h5>
+                            <span class="validation-badge">Page ≥ 1</span>
+                            <span class="validation-badge">Limit 1-100</span>
+                            <span class="validation-badge">Search 1-100 chars</span>
+                            <br><br>
+                            <span class="error-code">400</span> Invalid parameters
+                            <span class="error-code">403</span> Store access denied
+                            <span class="error-code">404</span> Store not found
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- POST /inventory/:id/fill-prescription -->
+            <div class="card endpoint-card" id="post-fill-prescription">
+                <div class="card-header endpoint-header">
+                    <h4>
+                        <span class="http-method method-post">POST</span>
+                        <code>/api/inventory/:id/fill-prescription</code>
+                    </h4>
+                    <span class="file-ref">routes/inventory.js:145-188</span>
+                    <a href="frontend-detailed-documentation.html#inventory-handleTransaction" class="frontend-link ms-2">
+                        <i class="fas fa-desktop me-1"></i>Frontend: Inventory.handleTransaction()
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Processes prescription dispensing by reducing inventory quantity and creating complete audit trail with prescription tracking.</p>
+                            
+                            <h5>Middleware Stack</h5>
+                            <span class="middleware-badge">authenticateToken</span>
+                            <span class="middleware-badge">requireStoreAdmin</span>
+                            <span class="middleware-badge">validateInventoryTransaction</span>
+                            
+                            <h5>Model Methods Called</h5>
+                            <div class="model-badge">StoreInventory.findById()</div>
+                            <div class="model-badge">StoreInventory.fillPrescription()</div>
+                            
+                            <h5>Request Validation</h5>
+                            <table class="table table-sm param-table">
+                                <thead>
+                                    <tr>
+                                        <th>Field</th>
+                                        <th>Type</th>
+                                        <th>Validation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>quantity</code></td>
+                                        <td>integer</td>
+                                        <td>Required, > 0, ≤ 9999</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>prescription_number</code></td>
+                                        <td>string</td>
+                                        <td>Required, 5-50 chars</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>reason</code></td>
+                                        <td>string</td>
+                                        <td>Optional, max 500 chars</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Request Body</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "quantity": 30,
+  "prescription_number": "RX789012345",
+  "reason": "Prescription fill for chronic condition"
+}</code></pre>
+                            
+                            <h5>Success Response (200)</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "message": "Prescription filled successfully",
+  "transaction": {
+    "inventory_id": 123,
+    "quantity_filled": 30,
+    "quantity_before": 896,
+    "quantity_after": 866,
+    "prescription_number": "RX789012345",
+    "transaction_id": 1547,
+    "transaction_date": "2025-08-16T10:30:00Z"
+  }
+}</code></pre>
+                            
+                            <div class="business-logic">
+                                <h6><i class="fas fa-cogs me-2"></i>Business Logic</h6>
+                                <ul class="mb-0">
+                                    <li>Validates sufficient inventory before dispensing</li>
+                                    <li>Creates audit log with prescription reference</li>
+                                    <li>Updates inventory snapshot for real-time tracking</li>
+                                    <li>Transaction rolled back on any failure</li>
+                                    <li>Prescription number stored for returns</li>
+                                </ul>
+                            </div>
+                            
+                            <h5>Error Responses</h5>
+                            <span class="error-code">400</span> Insufficient inventory
+                            <span class="error-code">404</span> Item not found
+                            <span class="error-code">422</span> Invalid prescription format
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- POST /inventory/:id/audit -->
+            <div class="card endpoint-card" id="post-audit">
+                <div class="card-header endpoint-header">
+                    <h4>
+                        <span class="http-method method-post">POST</span>
+                        <code>/api/inventory/:id/audit</code>
+                    </h4>
+                    <span class="file-ref">routes/inventory.js:278-321</span>
+                    <a href="frontend-detailed-documentation.html#inventory-handleTransaction" class="frontend-link ms-2">
+                        <i class="fas fa-desktop me-1"></i>Frontend: Inventory.handleTransaction()
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Performs inventory audit by setting actual physical count, allowing corrections for discrepancies and maintaining regulatory compliance.</p>
+                            
+                            <h5>Middleware Stack</h5>
+                            <span class="middleware-badge">authenticateToken</span>
+                            <span class="middleware-badge">requireStoreAdmin</span>
+                            <span class="middleware-badge">validateAuditData</span>
+                            
+                            <h5>Model Methods Called</h5>
+                            <div class="model-badge">StoreInventory.findById()</div>
+                            <div class="model-badge">StoreInventory.auditInventory()</div>
+                            
+                            <h5>Special Features</h5>
+                            <ul>
+                                <li>Allows negative quantities (corrections)</li>
+                                <li>Records adjustment reasons</li>
+                                <li>Maintains complete audit trail</li>
+                                <li>Compliance with pharmacy regulations</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Request Body</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "actual_quantity": 87,
+  "reason": "Physical inventory count - Q1 2025 discrepancy found"
+}</code></pre>
+                            
+                            <h5>Success Response (200)</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "message": "Inventory audit completed successfully",
+  "audit_result": {
+    "inventory_id": 123,
+    "quantity_before": 96,
+    "actual_quantity": 87,
+    "adjustment": -9,
+    "reason": "Physical inventory count - Q1 2025 discrepancy found",
+    "audit_date": "2025-08-16T14:30:00Z",
+    "performed_by": "John Doe",
+    "transaction_id": 1548
+  }
+}</code></pre>
+                            
+                            <div class="database-op">
+                                <h6><i class="fas fa-database me-2"></i>Database Operations</h6>
+                                <ol class="mb-0">
+                                    <li>Lock inventory row with <code>FOR UPDATE</code></li>
+                                    <li>Update quantity to actual count</li>
+                                    <li>Insert audit log entry</li>
+                                    <li>Update snapshot table</li>
+                                    <li>Commit transaction</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Management Routes -->
+        <section id="user-routes">
+            <div class="card endpoint-card">
+                <div class="card-header route-header">
+                    <h2><i class="fas fa-users me-2"></i>User Management Routes</h2>
+                    <small class="text-light">File: <span class="file-ref text-light">routes/users.js</span></small>
+                </div>
+            </div>
+
+            <!-- DELETE /users/:id -->
+            <div class="card endpoint-card" id="delete-user">
+                <div class="card-header endpoint-header">
+                    <h4>
+                        <span class="http-method method-delete">DELETE</span>
+                        <code>/api/users/:id</code>
+                    </h4>
+                    <span class="file-ref">routes/users.js:203-286</span>
+                    <a href="frontend-detailed-documentation.html#user-handleDeleteUser" class="frontend-link ms-2">
+                        <i class="fas fa-desktop me-1"></i>Frontend: UserManagement.handleDeleteUser()
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Performs user account deactivation (soft delete) with comprehensive business rule validation and role-based access control.</p>
+                            
+                            <h5>Middleware Stack</h5>
+                            <span class="middleware-badge">authenticateToken</span>
+                            <span class="middleware-badge">requireAdminRole</span>
+                            <span class="middleware-badge">validateUserParam</span>
+                            
+                            <h5>Model Methods Called</h5>
+                            <div class="model-badge">User.findById()</div>
+                            <div class="model-badge">User.findWithFilters()</div>
+                            <div class="model-badge">User.delete() (soft)</div>
+                            
+                            <h5>Complex Business Rules</h5>
+                            <div class="accordion" id="businessRulesAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#self-protection">
+                                            Self-Protection Rule
+                                        </button>
+                                    </h2>
+                                    <div id="self-protection" class="accordion-collapse collapse show">
+                                        <div class="accordion-body">
+                                            Users cannot delete their own accounts to prevent accidental lockouts.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#admin-protection">
+                                            Admin Protection Rule
+                                        </button>
+                                    </h2>
+                                    <div id="admin-protection" class="accordion-collapse collapse">
+                                        <div class="accordion-body">
+                                            Regular admin users cannot delete other admin users. Only god_mode users have this privilege.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#last-admin">
+                                            Last Admin Rule
+                                        </button>
+                                    </h2>
+                                    <div id="last-admin" class="accordion-collapse collapse">
+                                        <div class="accordion-body">
+                                            Cannot delete the last admin for a store. Each store must maintain at least one admin user.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Business Logic Flow</h5>
+                            <pre class="json-code"><code class="language-javascript">// 1. Self-deletion check
+if (targetUser.id === currentUser.id) {
+  return 403; // Cannot delete own account
+}
+
+// 2. Admin deletion privilege check
+if (targetUser.role === 'admin') {
+  if (currentUser.role !== 'god_mode') {
+    return 403; // Regular admins can't delete admins
+  }
+  
+  // 3. Last admin check for god_mode users
+  const activeAdmins = await User.findWithFilters({
+    role: 'admin',
+    store_id: targetUser.store_id,
+    is_active: true
+  });
+  
+  if (activeAdmins.length === 1) {
+    return 400; // Cannot delete last admin
+  }
+}
+
+// 4. Perform soft delete
+await User.delete(targetUser.id);</code></pre>
+                            
+                            <h5>Success Response (200)</h5>
+                            <pre class="json-code"><code class="language-json">{
+  "message": "User deactivated successfully",
+  "user": {
+    "id": 5,
+    "name": "John Doe",
+    "is_active": false,
+    "deactivated_at": "2025-08-16T14:30:00Z"
+  }
+}</code></pre>
+                            
+                            <h5>Error Responses</h5>
+                            <div class="mt-2">
+                                <span class="error-code">400</span> Last admin protection
+                                <span class="error-code">403</span> Insufficient privileges
+                                <span class="error-code">404</span> User not found
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- StoreInventory Model -->
+        <section id="store-inventory-model">
+            <div class="card endpoint-card">
+                <div class="card-header route-header">
+                    <h2><i class="fas fa-database me-2"></i>StoreInventory Model Functions</h2>
+                    <small class="text-light">File: <span class="file-ref text-light">models/StoreInventory.js</span></small>
+                </div>
+            </div>
+
+            <!-- adjustStock Method -->
+            <div class="card endpoint-card" id="adjust-stock-method">
+                <div class="card-header endpoint-header">
+                    <h4>
+                        <i class="fas fa-exchange-alt me-2"></i>
+                        <code>static async adjustStock(id, adjustment, reason, performedBy, transactionType, referenceNumber)</code>
+                    </h4>
+                    <span class="file-ref">models/StoreInventory.js:259-342</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Purpose</h5>
+                            <p>Core method for all inventory quantity changes with transaction safety, audit logging, and business rule enforcement.</p>
+                            
+                            <h5>Parameters</h5>
+                            <table class="table table-sm param-table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>id</code></td>
+                                        <td>number</td>
+                                        <td>Inventory item ID</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>adjustment</code></td>
+                                        <td>number</td>
+                                        <td>Quantity change (+/-)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>reason</code></td>
+                                        <td>string</td>
+                                        <td>Transaction reason</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>performedBy</code></td>
+                                        <td>number</td>
+                                        <td>User ID</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>transactionType</code></td>
+                                        <td>string</td>
+                                        <td>Transaction category</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>referenceNumber</code></td>
+                                        <td>string</td>
+                                        <td>Optional reference</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <h5>Transaction Types</h5>
+                            <span class="validation-badge">prescription_fill</span>
+                            <span class="validation-badge">return_to_stock</span>
+                            <span class="validation-badge">expire</span>
+                            <span class="validation-badge">audit</span>
+                            <span class="validation-badge">shipment_received</span>
+                            <span class="validation-badge">initial_inventory</span>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Database Operations Sequence</h5>
+                            <div class="database-op">
+                                <h6>1. Lock & Validate</h6>
+                                <pre class="json-code"><code class="language-sql">SELECT * FROM store_inventory 
+WHERE id = ? FOR UPDATE</code></pre>
+                            </div>
+                            
+                            <div class="database-op">
+                                <h6>2. Business Rule Check</h6>
+                                <pre class="json-code"><code class="language-javascript">const quantityAfter = quantityBefore + adjustment;
+if (quantityAfter < 0 && transactionType !== 'audit') {
+  throw new Error('Insufficient inventory');
+}</code></pre>
+                            </div>
+                            
+                            <div class="database-op">
+                                <h6>3. Update Inventory</h6>
+                                <pre class="json-code"><code class="language-sql">UPDATE store_inventory 
+SET quantity_on_hand = ?, 
+    last_updated = CURRENT_TIMESTAMP 
+WHERE id = ?</code></pre>
+                            </div>
+                            
+                            <div class="database-op">
+                                <h6>4. Log Transaction</h6>
+                                <pre class="json-code"><code class="language-sql">INSERT INTO inventory_audit_log 
+(inventory_id, store_id, drug_id, 
+ transaction_type, quantity_change, 
+ quantity_before, quantity_after, 
+ reason, reference_number, performed_by) 
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)</code></pre>
+                            </div>
+                            
+                            <div class="database-op">
+                                <h6>5. Update Snapshot</h6>
+                                <pre class="json-code"><code class="language-sql">INSERT INTO store_inventory_snapshot (...) 
+ON DUPLICATE KEY UPDATE ...</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Middleware Section -->
+        <section id="middleware">
+            <div class="card endpoint-card">
+                <div class="card-header route-header">
+                    <h2><i class="fas fa-shield-alt me-2"></i>Middleware Functions</h2>
+                    <small class="text-light">File: <span class="file-ref text-light">middleware/auth.js</span></small>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>Authentication Middleware</h4>
+                            
+                            <h5>authenticateToken</h5>
+                            <div class="security-note">
+                                <h6><i class="fas fa-lock me-2"></i>JWT Token Validation</h6>
+                                <ul class="mb-0">
+                                    <li>Extracts Bearer token from Authorization header</li>
+                                    <li>Verifies JWT signature and expiration</li>
+                                    <li>Adds user information to request object</li>
+                                    <li>Returns 401 for invalid/expired tokens</li>
+                                </ul>
+                            </div>
+                            
+                            <h5>requireAdminRole</h5>
+                            <div class="security-note">
+                                <h6><i class="fas fa-user-shield me-2"></i>Role-Based Access Control</h6>
+                                <ul class="mb-0">
+                                    <li>Checks user role from authenticated request</li>
+                                    <li>Allows 'admin' and 'god_mode' roles</li>
+                                    <li>Returns 403 for insufficient permissions</li>
+                                    <li>Used for administrative endpoints</li>
+                                </ul>
+                            </div>
+                            
+                            <h5>requireStoreAdmin</h5>
+                            <div class="security-note">
+                                <h6><i class="fas fa-store me-2"></i>Store-Level Access Control</h6>
+                                <ul class="mb-0">
+                                    <li>Validates user has admin rights for specific store</li>
+                                    <li>god_mode users can access all stores</li>
+                                    <li>Regular admins limited to assigned store</li>
+                                    <li>Used for inventory and store management</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Validation Middleware</h4>
+                            
+                            <h5>validateStoreParam</h5>
+                            <pre class="json-code"><code class="language-javascript">// Validates store ID parameter
+body('storeId')
+  .isInt({ min: 1 })
+  .withMessage('Store ID must be positive integer')
+  .custom(async (storeId) => {
+    const store = await Store.findById(storeId);
+    if (!store) {
+      throw new Error('Store not found');
+    }
+    return true;
+  })</code></pre>
+                            
+                            <h5>validateInventoryTransaction</h5>
+                            <pre class="json-code"><code class="language-javascript">// Validates transaction data
+[
+  body('quantity')
+    .isInt({ min: 1, max: 9999 })
+    .withMessage('Quantity must be 1-9999'),
+  body('reason')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Reason max 500 characters'),
+  body('reference_number')
+    .optional()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Reference 1-100 characters')
+]</code></pre>
+                            
+                            <h5>dataVerification</h5>
+                            <div class="security-note">
+                                <h6><i class="fas fa-check-double me-2"></i>Input Sanitization</h6>
+                                <ul class="mb-0">
+                                    <li>SQL injection prevention</li>
+                                    <li>XSS attack mitigation</li>
+                                    <li>Parameter type validation</li>
+                                    <li>Length and format enforcement</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Database Patterns Section -->
+        <section id="database-patterns">
+            <div class="card endpoint-card">
+                <div class="card-header route-header">
+                    <h2><i class="fas fa-database me-2"></i>Database Transaction Patterns</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>Transaction Safety Pattern</h4>
+                            <pre class="json-code"><code class="language-javascript">const connection = await db.getConnection();
+try {
+  await connection.beginTransaction();
+  
+  // Row-level locking for concurrency
+  const [rows] = await connection.execute(
+    'SELECT * FROM table WHERE id = ? FOR UPDATE',
+    [id]
+  );
+  
+  // Business logic validation
+  if (!isValidOperation(data)) {
+    throw new Error('Business rule violation');
+  }
+  
+  // Multiple related operations
+  await connection.execute('UPDATE...', [...]);
+  await connection.execute('INSERT...', [...]);
+  
+  await connection.commit();
+  return result;
+  
+} catch (error) {
+  await connection.rollback();
+  throw error;
+} finally {
+  connection.release();
+}</code></pre>
+                            
+                            <h4>Audit Trail Pattern</h4>
+                            <pre class="json-code"><code class="language-javascript">// Every significant change logged
+await connection.execute(`
+  INSERT INTO inventory_audit_log (
+    inventory_id, store_id, drug_id,
+    transaction_type, quantity_change,
+    quantity_before, quantity_after,
+    reason, performed_by, reference_number
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`, [
+  inventoryId, storeId, drugId,
+  'prescription_fill', -30,
+  896, 866,
+  'Prescription fill', userId, 'RX123456'
+]);</code></pre>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Soft Delete Pattern</h4>
+                            <pre class="json-code"><code class="language-javascript">// Preserve data integrity
+static async delete(id) {
+  const [result] = await db.execute(
+    `UPDATE users 
+     SET is_active = FALSE, 
+         updated_at = CURRENT_TIMESTAMP 
+     WHERE id = ?`,
+    [id]
+  );
+  return result.affectedRows > 0;
+}
+
+// Filter out inactive by default
+static async findActive() {
+  const [rows] = await db.execute(
+    'SELECT * FROM users WHERE is_active = TRUE'
+  );
+  return rows;
+}</code></pre>
+                            
+                            <h4>Snapshot Pattern</h4>
+                            <pre class="json-code"><code class="language-javascript">// Real-time inventory tracking
+await connection.execute(`
+  INSERT INTO store_inventory_snapshot (
+    store_id, drug_id, quantity_on_hand,
+    last_transaction_id, last_transaction_date,
+    last_transaction_type, last_updated_by
+  ) VALUES (?, ?, ?, ?, NOW(), ?, ?)
+  ON DUPLICATE KEY UPDATE
+    quantity_on_hand = quantity_on_hand + ?,
+    last_transaction_id = ?,
+    last_transaction_date = NOW(),
+    last_transaction_type = ?,
+    last_updated_by = ?,
+    updated_at = CURRENT_TIMESTAMP
+`, [
+  storeId, drugId, newQuantity, 
+  auditLogId, transactionType, userId,
+  quantityChange, auditLogId, 
+  transactionType, userId
+]);</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script>
+        // Navigation and scrolling functionality
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Update active nav link
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                }
+            });
+        });
+        
+        // Intersection observer for active sections
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('id');
+                    const navLink = document.querySelector(`a[href="#${id}"]`);
+                    if (navLink) {
+                        document.querySelectorAll('.nav-link').forEach(link => {
+                            link.classList.remove('active');
+                        });
+                        navLink.classList.add('active');
+                    }
+                }
+            });
+        }, { threshold: 0.3 });
+        
+        document.querySelectorAll('section[id], .endpoint-card[id]').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>

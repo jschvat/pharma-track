@@ -24,6 +24,7 @@ import { drugAPI } from '../services/api';
 import DOMPurify from 'dompurify';
 import FormField from './common/FormField';
 import FormModal from './common/FormModal';
+import { PharmaButton, PharmaModal } from './common/PharmaComponents';
 
 /**
  * FDASearch Component - Main component for FDA drug database searches
@@ -679,11 +680,11 @@ function FDASearch() {
               <form onSubmit={handleSearch}>
                 {/* Search Type Selection - Simplified */}
                 <div className="mb-4">
-                  <label className="form-label">
+                  <div id="search-type-label" className="form-label">
                     <strong>Search Type:</strong>
                     <i className="bi bi-info-circle ms-2 text-info" title="Choose how to search the FDA database. Drugs already in your inventory will be greyed out."></i>
-                  </label>
-                  <div className="btn-group d-block" role="group">
+                  </div>
+                  <div className="btn-group d-block" role="group" aria-labelledby="search-type-label">
                     <button
                       type="button"
                       className={`btn me-2 mb-2 ${searchType === 'ndc' ? 'btn-primary' : 'btn-outline-primary'}`}

@@ -26,6 +26,9 @@ const { sanitizeAndTrim, checkDataIntegrity } = require('./middleware/dataVerifi
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for rate limiting when behind React dev server proxy
+app.set('trust proxy', 1);
+
 // API Documentation setup
 const { specs, swaggerUi, swaggerUiOptions } = require('./config/swagger');
 
@@ -44,7 +47,9 @@ const corsOptions = {
     'http://localhost:3000',
     'http://127.0.0.1:3000', 
     'http://localhost:3001',
-    'http://127.0.0.1:3001'
+    'http://127.0.0.1:3001',
+    'http://localhost:3002',
+    'http://127.0.0.1:3002'
   ],
   credentials: true,
   optionsSuccessStatus: 200,
