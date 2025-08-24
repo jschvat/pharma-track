@@ -297,7 +297,7 @@ export const storeAPI = {
 
 export const userAPI = {
   getAll: (params) => api.get('/users', { params }),
-  getAllStores: (params) => api.get('/users/all', { params }),
+  getAllUsers: (params) => api.get('/users/all', { params }),
   getById: (id) => api.get(`/users/${id}`),
   create: (userData) => api.post('/users', userData),
   update: (id, userData) => api.put(`/users/${id}`, userData),

@@ -120,7 +120,7 @@ router.get('/', authenticateToken, requireAdminRole, [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100').toInt(),
   query('store_id').optional().isInt({ min: 1 }).withMessage('Store ID must be positive integer').toInt(),
-  query('role').optional().isIn(['admin', 'user']).withMessage('Role must be admin or user'),
+  query('role').optional().isIn(['admin', 'user', 'god_mode']).withMessage('Role must be admin, user, or god_mode'),
   query('active').optional().isBoolean().withMessage('Active must be boolean').toBoolean(),
   query('search').optional().isLength({ min: 1, max: 100 }).withMessage('Search must be 1-100 characters')
 ], async (req, res) => {
@@ -162,7 +162,7 @@ router.get('/all', authenticateToken, requireAdminRole, [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100').toInt(),
   query('store_id').optional().isInt({ min: 1 }).withMessage('Store ID must be positive integer').toInt(),
-  query('role').optional().isIn(['admin', 'user']).withMessage('Role must be admin or user'),
+  query('role').optional().isIn(['admin', 'user', 'god_mode']).withMessage('Role must be admin, user, or god_mode'),
   query('active').optional().isBoolean().withMessage('Active must be boolean').toBoolean(),
   query('search').optional().isLength({ min: 1, max: 100 }).withMessage('Search must be 1-100 characters')
 ], async (req, res) => {

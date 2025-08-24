@@ -18,9 +18,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Button, Spinner, Alert, Form, Dropdown } from 'react-bootstrap';
+import { Button, Spinner, Alert, Form } from 'react-bootstrap';
 import DraggableDialog from '../DraggableDialog';
 import FormField from '../common/FormField';
+import PharmaDropdown from '../common/PharmaDropdown';
 
 /**
  * TransactionModal Component - Handles inventory transaction operations
@@ -267,43 +268,47 @@ const TransactionModal = ({
       
       <div className="mb-3">
         <label className="form-label">Select Prescription to Return <span className="text-danger">*</span></label>
-        <Dropdown>
-          <Dropdown.Toggle variant="outline-secondary" className="w-100 text-start">
-            {transactionForm.reference_number ? 
+        <PharmaDropdown
+          variant="outline-secondary"
+          className="w-100"
+          trigger="click"
+          pharmaType="capsule"
+          label={
+            transactionForm.reference_number ? 
               `Rx# ${transactionForm.reference_number}` : 
               'Choose a prescription...'
-            }
-          </Dropdown.Toggle>
-          <Dropdown.Menu className="w-100">
-            {availablePrescriptions.length === 0 ? (
-              <Dropdown.Item disabled>No prescriptions available for return</Dropdown.Item>
-            ) : (
-              availablePrescriptions.map((rx) => (
-                <Dropdown.Item 
-                  key={rx.prescription_number}
-                  onClick={() => {
-                    setTransactionForm({
-                      ...transactionForm, 
-                      reference_number: rx.prescription_number,
-                      quantity: ''
-                    });
-                    clearValidationError('reference_number');
-                  }}
-                >
-                  <div className="prescription-table">
-                    <div className="prescription-row">
-                      <div className="prescription-cell rx-number">Rx #{rx.prescription_number}</div>
-                      <div className="prescription-cell date">{formatDate(rx.fill_date)}</div>
-                      <div className="prescription-cell time">{formatTime(rx.fill_date)}</div>
-                      <div className="prescription-cell user">{rx.filled_by || 'Unknown'}</div>
-                      <div className="prescription-cell quantity">Qty: {rx.available_for_return}</div>
-                    </div>
+          }
+          fullWidth={true}
+        >
+          {availablePrescriptions.length === 0 ? (
+            <div className="dropdown-item disabled">No prescriptions available for return</div>
+          ) : (
+            availablePrescriptions.map((rx) => (
+              <button
+                key={rx.prescription_number}
+                className="dropdown-item"
+                onClick={() => {
+                  setTransactionForm({
+                    ...transactionForm, 
+                    reference_number: rx.prescription_number,
+                    quantity: ''
+                  });
+                  clearValidationError('reference_number');
+                }}
+              >
+                <div className="prescription-table">
+                  <div className="prescription-row">
+                    <div className="prescription-cell rx-number">Rx #{rx.prescription_number}</div>
+                    <div className="prescription-cell date">{formatDate(rx.fill_date)}</div>
+                    <div className="prescription-cell time">{formatTime(rx.fill_date)}</div>
+                    <div className="prescription-cell user">{rx.filled_by || 'Unknown'}</div>
+                    <div className="prescription-cell quantity">Qty: {rx.available_for_return}</div>
                   </div>
-                </Dropdown.Item>
-              ))
-            )}
-          </Dropdown.Menu>
-        </Dropdown>
+                </div>
+              </button>
+            ))
+          )}
+        </PharmaDropdown>
         {validationErrors.reference_number && (
           <div className="invalid-feedback d-block">
             {validationErrors.reference_number}

@@ -20,8 +20,95 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { ProgressBar } from 'react-bootstrap';
 import '../../css/pharma-components.css';
+
+// Custom progress bar component to eliminate React Bootstrap isChild prop warnings
+const CustomProgressBar = ({ 
+  now, min = 0, max = 100, variant, striped, animated, 
+  ariaLabel, ariaDescribedBy, progressText 
+}) => {
+  const percentage = Math.min(Math.max(((now - min) / (max - min)) * 100, 0), 100);
+  
+  // Variant color mapping
+  const getVariantColor = () => {
+    const variants = {
+      primary: '#0d6efd',
+      secondary: '#6c757d',
+      success: '#198754',
+      danger: '#dc3545',
+      warning: '#ffc107',
+      info: '#0dcaf0',
+      light: '#f8f9fa',
+      dark: '#212529'
+    };
+    return variants[variant] || variants.primary;
+  };
+  
+  const progressStyles = {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#e9ecef',
+    borderRadius: '0.375rem',
+    overflow: 'hidden',
+    position: 'relative'
+  };
+  
+  const barStyles = {
+    width: `${percentage}%`,
+    height: '100%',
+    backgroundColor: getVariantColor(),
+    transition: 'width 0.6s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+    ...(striped && {
+      backgroundImage: 'linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent)',
+      backgroundSize: '1rem 1rem'
+    }),
+    ...(animated && {
+      animation: 'progress-bar-stripes 1s linear infinite'
+    })
+  };
+  
+  return (
+    <div 
+      style={progressStyles}
+      role="progressbar"
+      aria-valuemin={min}
+      aria-valuemax={max}
+      aria-valuenow={now}
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
+    >
+      <div style={barStyles}>
+        {progressText && (
+          <span 
+            className="pharma-progress-text"
+            style={{
+              color: 'white',
+              fontSize: '0.75rem',
+              fontWeight: '600',
+              textShadow: '0 0 2px rgba(0,0,0,0.5)',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {progressText}
+          </span>
+        )}
+      </div>
+      <style>
+        {`
+          @keyframes progress-bar-stripes {
+            0% { background-position: 1rem 0; }
+            100% { background-position: 0 0; }
+          }
+        `}
+      </style>
+    </div>
+  );
+};
 
 const PharmaProgressBar = ({
   // Core progress props
@@ -200,19 +287,8 @@ const PharmaProgressBar = ({
   const progressText = renderProgressText();
   const typeIcon = getTypeIcon();
   
-  // Filter out custom props that shouldn't be passed to DOM
-  const {
-    isChild: _isChild, // Remove isChild prop
-    type: _type, // Remove type since it's used internally
-    threshold: _threshold, // Remove threshold since it's used internally
-    thresholds: _thresholds, // Remove thresholds since it's used internally  
-    smooth: _smooth, // Remove smooth since it's used internally
-    duration: _duration, // Remove duration since it's used internally
-    onComplete: _onComplete, // Remove callback props
-    onThresholdCross: _onThresholdCross, // Remove callback props
-    gradient: _gradient, // Remove custom styling props
-    ...validProgressProps
-  } = otherProps;
+  // All props are handled directly by PharmaProgressBar - no props passed to ProgressBar
+  // This prevents any DOM prop warnings from React Bootstrap ProgressBar
   
   return (
     <div className={progressClasses} style={progressStyle}>
@@ -231,25 +307,18 @@ const PharmaProgressBar = ({
         </div>
       )}
       
-      {/* Progress bar */}
-      <ProgressBar
+      {/* Custom progress bar - completely avoids React Bootstrap */}
+      <CustomProgressBar
         now={displayPercentage}
         min={min}
         max={max}
         variant={effectiveVariant}
         striped={striped}
         animated={animated}
-        aria-label={ariaLabel || `Progress: ${Math.round(displayPercentage)}%`}
-        aria-describedby={ariaDescribedBy}
-        style={{ height: '100%' }}
-        {...validProgressProps}
-      >
-        {progressText && (
-          <span className="pharma-progress-text">
-            {progressText}
-          </span>
-        )}
-      </ProgressBar>
+        ariaLabel={ariaLabel || `Progress: ${Math.round(displayPercentage)}%`}
+        ariaDescribedBy={ariaDescribedBy}
+        progressText={progressText}
+      />
       
       {/* Custom threshold markers */}
       {type && (

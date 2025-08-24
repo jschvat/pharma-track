@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { Dropdown } from 'react-bootstrap';
+import PharmaDropdown from './common/PharmaDropdown';
 import StoreSelector from './StoreSelector';
 import '../css/components.css';
 
@@ -74,31 +74,32 @@ const Header = ({ title, subtitle, onMenuToggle, onSidebarToggle }) => {
         <div className="user-menu">
           {/* Theme Switcher */}
           <div className="d-none d-md-flex align-items-center me-3">
-            <Dropdown>
-              <Dropdown.Toggle 
-                variant="outline-primary" 
-                size="sm" 
-                className="header-theme-toggle"
-                title="Change Application Theme"
-                aria-label="Theme Selector"
-              >
-                <i className="fas fa-palette me-2"></i>
-                <span className="d-none d-lg-inline">Theme</span>
-              </Dropdown.Toggle>
-              
-              <Dropdown.Menu align="end">
-                <Dropdown.Header>Choose Theme</Dropdown.Header>
-                {availableThemes.map((theme) => (
-                  <Dropdown.Item
-                    key={theme.value}
-                    active={currentTheme === theme.value}
-                    onClick={() => changeTheme(theme.value)}
-                  >
-                    {theme.label}
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown>
+            <PharmaDropdown
+              trigger="click"
+              variant="outline-primary"
+              size="sm"
+              className="header-theme-toggle"
+              title="Change Application Theme"
+              label={
+                <>
+                  <i className="fas fa-palette me-2"></i>
+                  <span className="d-none d-lg-inline">Theme</span>
+                </>
+              }
+              align="end"
+              pharmaType="pill"
+            >
+              <div className="dropdown-header">Choose Theme</div>
+              {availableThemes.map((theme) => (
+                <button
+                  key={theme.value}
+                  className={`dropdown-item ${currentTheme === theme.value ? 'active' : ''}`}
+                  onClick={() => changeTheme(theme.value)}
+                >
+                  {theme.label}
+                </button>
+              ))}
+            </PharmaDropdown>
           </div>
 
           {/* Notifications and Quick Actions */}

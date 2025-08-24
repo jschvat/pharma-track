@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavDropdown } from 'react-bootstrap';
+import PharmaDropdown from './common/PharmaDropdown';
 import { useTheme } from '../contexts/ThemeContext';
 
 const ThemeSwitcher = () => {
@@ -12,21 +12,23 @@ const ThemeSwitcher = () => {
   const currentThemeLabel = getCurrentTheme()?.label || 'Default Bootstrap';
 
   return (
-    <NavDropdown 
-      title={`Theme: ${currentThemeLabel}`} 
-      id="theme-switcher-dropdown"
+    <PharmaDropdown
+      label={`Theme: ${currentThemeLabel}`}
+      trigger="click"
+      variant="nav"
       className="me-2"
+      pharmaType="pill"
     >
       {availableThemes.map((theme) => (
-        <NavDropdown.Item
+        <button
           key={theme.value}
-          active={currentTheme === theme.value}
+          className={`dropdown-item ${currentTheme === theme.value ? 'active' : ''}`}
           onClick={() => handleThemeChange(theme.value)}
         >
           {theme.label}
-        </NavDropdown.Item>
+        </button>
       ))}
-    </NavDropdown>
+    </PharmaDropdown>
   );
 };
 

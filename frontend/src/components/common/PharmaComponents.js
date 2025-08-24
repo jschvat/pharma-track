@@ -83,6 +83,73 @@ export {
   useNotification
 } from './PharmaAlert';
 
+// Badge Components (New)
+export { default as PharmaBadge } from './PharmaBadge';
+export {
+  StatusBadge,
+  DrugStatusBadge,
+  StockStatusBadge,
+  PrescriptionStatusBadge,
+  ExpirationBadge
+} from './PharmaBadge';
+
+// Spinner Components (New)
+export { default as PharmaSpinner } from './PharmaSpinner';
+export {
+  PillSpinner,
+  CapsuleSpinner,
+  TabletSpinner,
+  PrescriptionSpinner,
+  PharmaLoadingOverlay,
+  InventoryLoadingSpinner,
+  PrescriptionLoadingSpinner,
+  DrugSearchSpinner,
+  AuditLoadingSpinner
+} from './PharmaSpinner';
+
+// Navigation Components (New)
+export { default as PharmaNavbar } from './PharmaNavbar';
+export {
+  PharmacyNavbar,
+  AdminNavbar
+} from './PharmaNavbar';
+
+// Pagination Components (New)
+export { default as PharmaPagination } from './PharmaPagination';
+export {
+  InventoryPagination,
+  PrescriptionPagination,
+  UserPagination,
+  AuditPagination
+} from './PharmaPagination';
+
+// Accordion Components (New)
+export { default as PharmaAccordion } from './PharmaAccordion';
+export {
+  DrugInfoAccordion,
+  PrescriptionWorkflowAccordion,
+  InventoryDetailsAccordion
+} from './PharmaAccordion';
+
+// Offcanvas Components (New)
+export { default as PharmaOffcanvas } from './PharmaOffcanvas';
+export {
+  PrescriptionDetailsOffcanvas,
+  DrugInfoOffcanvas,
+  InventoryDetailsOffcanvas,
+  QuickActionsOffcanvas
+} from './PharmaOffcanvas';
+
+// Toast Components (New)
+export { default as PharmaToast } from './PharmaToast';
+export {
+  PharmaToastProvider,
+  usePharmaToast,
+  PrescriptionToast,
+  DrugSafetyToast,
+  InventoryToast
+} from './PharmaToast';
+
 // Dropdown Components (existing)
 export { default as PharmaDropdown } from './PharmaDropdown';
 export { default as MultiSelectDropdown } from './MultiSelectDropdown';
@@ -229,6 +296,10 @@ export {
 
 // Performance Optimization Components
 export { default as PharmaPerformanceOptimizer } from './PharmaPerformanceOptimizer';
+
+// Advanced Pharmacy Components
+export { default as PharmaBarcodeScanner } from './PharmaBarcodeScanner';
+export { default as PharmaAuditTrail } from './PharmaAuditTrail';
 export {
   PerformanceMonitor,
   PharmaMemo,
@@ -269,7 +340,7 @@ export { default as DataTable } from './DataTable';
 export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as AlertMessage } from './AlertMessage';
 export { default as EmptyState } from './EmptyState';
-export { default as StatusBadge } from './StatusBadge';
+// StatusBadge is already exported from PharmaBadge above (line 89)
 export { default as TransactionBadge } from './TransactionBadge';
 export { default as CardHeader } from './CardHeader';
 export { default as ActionButtonGroup } from './ActionButtonGroup';

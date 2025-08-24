@@ -5,6 +5,15 @@ import PharmaCard, { MedicationPlannerCard, CountingTrayCard } from '../componen
 import PharmaDropdown from '../components/common/PharmaDropdown';
 import MultiSelectDropdown from '../components/common/MultiSelectDropdown';
 import PharmaDataGrid from '../components/common/PharmaDataGrid';
+import PharmaBadge, { StatusBadge, DrugStatusBadge, StockStatusBadge, ExpirationBadge } from '../components/common/PharmaBadge';
+import PharmaSpinner, { PillSpinner, CapsuleSpinner, TabletSpinner, PrescriptionSpinner } from '../components/common/PharmaSpinner';
+import PharmaNavbar, { PharmacyNavbar, AdminNavbar } from '../components/common/PharmaNavbar';
+import PharmaPagination, { InventoryPagination, PrescriptionPagination } from '../components/common/PharmaPagination';
+import PharmaAccordion, { DrugInfoAccordion, PrescriptionWorkflowAccordion } from '../components/common/PharmaAccordion';
+import PharmaOffcanvas, { PrescriptionDetailsOffcanvas, DrugInfoOffcanvas } from '../components/common/PharmaOffcanvas';
+import PharmaToast, { PharmaToastProvider, usePharmaToast } from '../components/common/PharmaToast';
+import PharmaBarcodeScanner from '../components/common/PharmaBarcodeScanner';
+import PharmaAuditTrail from '../components/common/PharmaAuditTrail';
 
 import './ComponentGallery.css';
 
@@ -1189,6 +1198,947 @@ const ComponentGallerySimple = () => {
                     <strong>Notice:</strong> Columns maintain their exact specified widths (200px, 100px, 80px, etc.) 
                     and don't stretch to fill the container width. This gives you precise control over column sizing.
                   </Alert>
+                </div>
+              )
+            },
+            {
+              title: 'Hardcoded Header Colors',
+              component: (
+                <div className="mb-4">
+                  <Alert variant="info" className="mb-3">
+                    <h6 className="mb-2">
+                      <i className="fas fa-palette me-2"></i>
+                      Consistent Header Styling
+                    </h6>
+                    <p className="mb-0 small">
+                      PharmaDataGrid uses hardcoded colors for consistent appearance: 
+                      dark blue-gray header background (#2c3e50) with white text (#ffffff) for reliable, professional styling.
+                    </p>
+                  </Alert>
+                  
+                  <PharmaDataGrid
+                    data={[
+                      {
+                        id: 1,
+                        drug_name: 'Theme Test Drug',
+                        strength: '100mg',
+                        quantity: 50,
+                        unit_cost: 1.25,
+                        status: 'Active'
+                      },
+                      {
+                        id: 2,
+                        drug_name: 'Color Inheritance Demo',
+                        strength: '200mg',
+                        quantity: 75,
+                        unit_cost: 2.50,
+                        status: 'Active'
+                      }
+                    ]}
+                    columns={[
+                      { 
+                        field: 'drug_name', 
+                        label: 'Drug Name',
+                        width: '200px',
+                        sortable: true,
+                        resizable: true
+                      },
+                      { 
+                        field: 'strength', 
+                        label: 'Strength',
+                        width: '100px',
+                        sortable: true,
+                        resizable: true
+                      },
+                      { 
+                        field: 'quantity', 
+                        label: 'Stock',
+                        type: 'number',
+                        width: '80px',
+                        sortable: true,
+                        resizable: true
+                      },
+                      { 
+                        field: 'unit_cost', 
+                        label: 'Unit Cost',
+                        type: 'currency',
+                        width: '100px',
+                        sortable: true,
+                        resizable: false
+                      }
+                    ]}
+                    resizable={true}
+                    sortable={true}
+                    striped={true}
+                    hover={true}
+                    size="sm"
+                    className="border rounded"
+                  />
+                  
+                  <Alert variant="success" className="mt-3">
+                    <strong>🎨 Theme Integration:</strong> Headers automatically inherit from <code>--bs-primary</code> and related CSS custom properties. 
+                    Perfect for multi-theme applications!
+                  </Alert>
+                </div>
+              )
+            },
+            {
+              title: 'Autofill Columns Toggle',
+              component: (
+                <div className="mb-4">
+                  <Alert variant="info" className="mb-3">
+                    <h6 className="mb-2">
+                      <i className="fas fa-expand-alt me-2"></i>
+                      Column Autofill Toggle
+                    </h6>
+                    <p className="mb-0 small">
+                      Toggle between auto-fitting columns to available space or using explicit pixel widths. 
+                      Look for the <strong>toggle button</strong> in the toolbar next to the Export button.
+                    </p>
+                  </Alert>
+                  
+                  <Alert variant="success" className="mb-3">
+                    <strong>🔧 Interactive Demo:</strong>
+                    <ul className="mb-0 mt-2 small">
+                      <li><strong>📐 Fill Width mode</strong> (blue button): Columns expand to fill container</li>
+                      <li><strong>📏 Fit Columns mode</strong> (gray button): Fixed pixel widths</li>
+                      <li><strong>📱 Responsive</strong>: Button text hidden on small screens</li>
+                      <li><strong>🎯 Try it</strong>: Click the toggle and resize your browser window!</li>
+                    </ul>
+                  </Alert>
+                  
+                  <PharmaDataGrid
+                    data={[
+                      {
+                        id: 1,
+                        drug_name: 'Metformin HCL',
+                        strength: '500mg',
+                        quantity: 500,
+                        unit_cost: 0.12,
+                        status: 'Active'
+                      },
+                      {
+                        id: 2,
+                        drug_name: 'Lisinopril',
+                        strength: '10mg',
+                        quantity: 300,
+                        unit_cost: 0.08,
+                        status: 'Active'
+                      },
+                      {
+                        id: 3,
+                        drug_name: 'Amlodipine Besylate',
+                        strength: '5mg',
+                        quantity: 250,
+                        unit_cost: 0.15,
+                        status: 'Low Stock'
+                      },
+                      {
+                        id: 4,
+                        drug_name: 'Atorvastatin Calcium',
+                        strength: '20mg',
+                        quantity: 400,
+                        unit_cost: 0.25,
+                        status: 'Active'
+                      },
+                      {
+                        id: 5,
+                        drug_name: 'Simvastatin',
+                        strength: '40mg',
+                        quantity: 180,
+                        unit_cost: 0.18,
+                        status: 'Active'
+                      }
+                    ]}
+                    columns={[
+                      {
+                        field: 'drug_name',
+                        label: 'Drug Name',
+                        width: '200px',
+                        minWidth: '150px',
+                        sortable: true,
+                        resizable: true
+                      },
+                      {
+                        field: 'strength',
+                        label: 'Strength',
+                        width: '120px',
+                        minWidth: '100px',
+                        sortable: true
+                      },
+                      {
+                        field: 'quantity',
+                        label: 'Quantity',
+                        width: '100px',
+                        minWidth: '80px',
+                        sortable: true,
+                        type: 'number'
+                      },
+                      {
+                        field: 'unit_cost',
+                        label: 'Unit Cost',
+                        width: '120px',
+                        minWidth: '100px',
+                        sortable: true,
+                        type: 'currency'
+                      },
+                      {
+                        field: 'status',
+                        label: 'Status',
+                        width: '100px',
+                        minWidth: '80px',
+                        sortable: true
+                      }
+                    ]}
+                    showAutofillToggle={true}  // Enable the toggle button
+                    defaultAutofill={true}     // Start in autofill mode
+                    exportable={true}
+                    searchable={true}
+                    paginated={true}
+                    pageSize={10}
+                    striped={true}
+                    hover={true}
+                    resizable={true}
+                    className="border rounded"
+                  />
+                  
+                  <Row className="mt-3">
+                    <Col md={6}>
+                      <Alert variant="primary">
+                        <strong>🔧 Implementation:</strong>
+                        <pre className="mt-2 mb-0 small" style={{ fontSize: '11px' }}>
+{`<PharmaDataGrid
+  showAutofillToggle={true}
+  defaultAutofill={true}
+  columns={[
+    {
+      field: 'name',
+      minWidth: '120px',
+      maxWidth: '1fr'  // For autofill
+    }
+  ]}
+/>`}
+                        </pre>
+                      </Alert>
+                    </Col>
+                    <Col md={6}>
+                      <Alert variant="info">
+                        <strong>💡 Pro Tips:</strong>
+                        <ul className="mb-0 small">
+                          <li>Set <code>minWidth</code> to prevent columns from becoming too narrow</li>
+                          <li>Use <code>maxWidth: '1fr'</code> for flexible sizing in autofill mode</li>
+                          <li>Combine with <code>exportable={true}</code> for full functionality</li>
+                        </ul>
+                      </Alert>
+                    </Col>
+                  </Row>
+                </div>
+              )
+            }
+          ]
+        }
+      ]
+    },
+    badges: {
+      title: 'Pharmacy Badges',
+      icon: 'fas fa-tags',
+      components: [
+        {
+          name: 'Basic Pharmacy Badges',
+          description: 'Pharmacy-themed badges with pill, capsule, and tablet styling',
+          examples: [
+            {
+              title: 'Pharmacy Theme Types',
+              component: (
+                <div className="d-flex flex-wrap gap-2 align-items-center">
+                  <PharmaBadge pharmaType="pill" variant="success">Active</PharmaBadge>
+                  <PharmaBadge pharmaType="capsule" variant="primary">Prescription</PharmaBadge>
+                  <PharmaBadge pharmaType="tablet" variant="secondary">Generic</PharmaBadge>
+                  <PharmaBadge pharmaType="default" variant="info">Standard</PharmaBadge>
+                </div>
+              )
+            },
+            {
+              title: 'Status Badges',
+              component: (
+                <div className="d-flex flex-wrap gap-2 align-items-center">
+                  <StatusBadge status="active">Active Drug</StatusBadge>
+                  <StatusBadge status="expired">Expired</StatusBadge>
+                  <StatusBadge status="low-stock">Low Stock</StatusBadge>
+                  <StatusBadge status="out-of-stock">Out of Stock</StatusBadge>
+                  <StatusBadge status="recalled">Recalled</StatusBadge>
+                </div>
+              )
+            },
+            {
+              title: 'Specialized Pharmacy Badges',
+              component: (
+                <div className="d-flex flex-wrap gap-2 align-items-center">
+                  <DrugStatusBadge active={true} />
+                  <DrugStatusBadge active={false} />
+                  <StockStatusBadge quantity={25} reorderLevel={10} />
+                  <StockStatusBadge quantity={5} reorderLevel={10} />
+                  <StockStatusBadge quantity={0} reorderLevel={10} />
+                  <ExpirationBadge expirationDate="2025-12-31" />
+                  <ExpirationBadge expirationDate="2025-09-15" warningDays={30} />
+                </div>
+              )
+            }
+          ]
+        }
+      ]
+    },
+    spinners: {
+      title: 'Pharmacy Spinners',
+      icon: 'fas fa-spinner',
+      components: [
+        {
+          name: 'Pharmacy Loading Spinners',
+          description: 'Custom loading spinners with pharmacy themes',
+          examples: [
+            {
+              title: 'Basic Pharmacy Spinners',
+              component: (
+                <div className="d-flex justify-content-around align-items-center" style={{ minHeight: '120px' }}>
+                  <div className="text-center">
+                    <PillSpinner size="lg" />
+                    <p className="mt-2 small">Pill Spinner</p>
+                  </div>
+                  <div className="text-center">
+                    <CapsuleSpinner size="lg" />
+                    <p className="mt-2 small">Capsule Spinner</p>
+                  </div>
+                  <div className="text-center">
+                    <TabletSpinner size="lg" />
+                    <p className="mt-2 small">Tablet Spinner</p>
+                  </div>
+                  <div className="text-center">
+                    <PrescriptionSpinner size="lg" />
+                    <p className="mt-2 small">Prescription Spinner</p>
+                  </div>
+                </div>
+              )
+            },
+            {
+              title: 'Sizes and Labels',
+              component: (
+                <div className="d-flex flex-column gap-3">
+                  <div className="d-flex justify-content-around align-items-center">
+                    <PillSpinner size="sm" showLabel={true}>Small</PillSpinner>
+                    <CapsuleSpinner size="md" showLabel={true}>Medium</CapsuleSpinner>
+                    <TabletSpinner size="lg" showLabel={true}>Large</TabletSpinner>
+                    <PrescriptionSpinner size="xl" showLabel={true}>Extra Large</PrescriptionSpinner>
+                  </div>
+                </div>
+              )
+            },
+            {
+              title: 'Context-Specific Spinners',
+              component: (
+                <div className="d-flex flex-wrap gap-3 justify-content-center">
+                  <div className="text-center p-3 border rounded">
+                    <PharmaSpinner animation="pill" showLabel={true}>Loading inventory...</PharmaSpinner>
+                  </div>
+                  <div className="text-center p-3 border rounded">
+                    <PharmaSpinner animation="prescription" showLabel={true}>Processing prescription...</PharmaSpinner>
+                  </div>
+                  <div className="text-center p-3 border rounded">
+                    <PharmaSpinner animation="capsule" showLabel={true}>Searching drugs...</PharmaSpinner>
+                  </div>
+                </div>
+              )
+            }
+          ]
+        }
+      ]
+    },
+    navigation: {
+      title: 'Navigation',
+      icon: 'fas fa-compass',
+      components: [
+        {
+          name: 'Pharmacy Navigation Bars',
+          description: 'Navigation bars with pharmacy theming and specialized features',
+          examples: [
+            {
+              title: 'Basic Pharmacy Navbar',
+              component: (
+                <div style={{ position: 'relative', height: '100px', overflow: 'hidden', border: '1px solid #dee2e6', borderRadius: '8px' }}>
+                  <PharmaNavbar
+                    brand="PharmaTraK"
+                    pharmaTheme="capsule"
+                    user={{ name: "Dr. Smith", email: "smith@example.com" }}
+                    userRole="pharmacist"
+                    navItems={[
+                      { title: 'Dashboard', icon: 'fas fa-tachometer-alt', href: '#dashboard' },
+                      { title: 'Inventory', icon: 'fas fa-boxes', href: '#inventory' },
+                      { title: 'Prescriptions', icon: 'fas fa-prescription', href: '#prescriptions' }
+                    ]}
+                    notifications={[
+                      { title: 'Low Stock Alert', message: 'Aspirin 325mg running low', time: '5 min ago' }
+                    ]}
+                    unreadCount={3}
+                    searchable={true}
+                    style={{ position: 'relative' }}
+                  />
+                </div>
+              )
+            }
+          ]
+        },
+        {
+          name: 'Pagination Controls',
+          description: 'Pharmacy-themed pagination with advanced features',
+          examples: [
+            {
+              title: 'Inventory Pagination',
+              component: (
+                <InventoryPagination
+                  currentPage={3}
+                  totalPages={15}
+                  totalItems={750}
+                  itemsPerPage={50}
+                  onPageChange={(page) => console.log('Page changed to:', page)}
+                  onItemsPerPageChange={(items) => console.log('Items per page:', items)}
+                />
+              )
+            },
+            {
+              title: 'Prescription Pagination',
+              component: (
+                <PrescriptionPagination
+                  currentPage={1}
+                  totalPages={8}
+                  totalItems={150}
+                  itemsPerPage={20}
+                  pharmaTheme="capsule"
+                />
+              )
+            }
+          ]
+        }
+      ]
+    },
+    layout: {
+      title: 'Layout & Containers',
+      icon: 'fas fa-th-large',
+      components: [
+        {
+          name: 'Accordion Components',
+          description: 'Expandable content sections with pharmacy theming',
+          examples: [
+            {
+              title: 'Drug Information Accordion',
+              component: (
+                <DrugInfoAccordion
+                  drug={{
+                    ndc: '12345-678-90',
+                    generic_name: 'Amoxicillin',
+                    brand_name: 'Augmentin',
+                    strength: '500mg',
+                    dosage_form: 'Capsule',
+                    manufacturer_name: 'GSK',
+                    route: 'Oral',
+                    dea_schedule: null,
+                    product_type: 'HUMAN PRESCRIPTION DRUG',
+                    warnings: 'May cause allergic reactions in patients sensitive to penicillin.',
+                    contraindications: 'History of penicillin allergy'
+                  }}
+                />
+              )
+            },
+            {
+              title: 'Basic Pharmacy Accordion',
+              component: (
+                <PharmaAccordion
+                  items={[
+                    {
+                      title: 'Patient Safety',
+                      icon: 'fas fa-shield-alt',
+                      badge: { text: 'Critical', variant: 'danger' },
+                      content: 'Patient safety protocols and medication verification procedures.'
+                    },
+                    {
+                      title: 'Inventory Management',
+                      icon: 'fas fa-boxes',
+                      badge: { text: 'Active', variant: 'success' },
+                      content: 'Stock levels, reorder points, and expiration date monitoring.'
+                    },
+                    {
+                      title: 'Prescription Processing',
+                      icon: 'fas fa-prescription',
+                      status: 'active',
+                      content: 'Workflow for prescription intake, verification, and dispensing.'
+                    }
+                  ]}
+                  pharmaTheme="tablet"
+                  defaultActiveKey="0"
+                />
+              )
+            }
+          ]
+        },
+        {
+          name: 'Offcanvas Panels',
+          description: 'Side panels for detailed information and actions',
+          examples: [
+            {
+              title: 'Offcanvas Demo Controls',
+              component: (
+                <div className="d-flex gap-2">
+                  <Button 
+                    variant="primary" 
+                    onClick={() => {
+                      // In a real app, you'd set state to show the offcanvas
+                      console.log('Show prescription details offcanvas');
+                    }}
+                  >
+                    <i className="fas fa-prescription me-2"></i>
+                    Show Prescription Details
+                  </Button>
+                  <Button 
+                    variant="info" 
+                    onClick={() => {
+                      console.log('Show drug info offcanvas');
+                    }}
+                  >
+                    <i className="fas fa-info-circle me-2"></i>
+                    Show Drug Information
+                  </Button>
+                  <Button 
+                    variant="secondary" 
+                    onClick={() => {
+                      console.log('Show quick actions');
+                    }}
+                  >
+                    <i className="fas fa-bolt me-2"></i>
+                    Quick Actions
+                  </Button>
+                </div>
+              )
+            }
+          ]
+        }
+      ]
+    },
+    feedback: {
+      title: 'Feedback & Notifications',
+      icon: 'fas fa-bell',
+      components: [
+        {
+          name: 'Toast Notifications',
+          description: 'Pharmacy-themed notifications for user feedback',
+          examples: [
+            {
+              title: 'Toast Examples',
+              component: (
+                <div className="d-flex flex-column gap-2">
+                  <Alert variant="info">
+                    <strong>Note:</strong> These buttons demonstrate toast types. In a real application, 
+                    toasts would appear automatically based on user actions.
+                  </Alert>
+                  <div className="d-flex flex-wrap gap-2">
+                    <Button 
+                      variant="success" 
+                      size="sm"
+                      onClick={() => console.log('Show success toast')}
+                    >
+                      <i className="fas fa-check me-1"></i>
+                      Success Toast
+                    </Button>
+                    <Button 
+                      variant="danger" 
+                      size="sm"
+                      onClick={() => console.log('Show error toast')}
+                    >
+                      <i className="fas fa-exclamation-circle me-1"></i>
+                      Error Toast
+                    </Button>
+                    <Button 
+                      variant="warning" 
+                      size="sm"
+                      onClick={() => console.log('Show warning toast')}
+                    >
+                      <i className="fas fa-exclamation-triangle me-1"></i>
+                      Warning Toast
+                    </Button>
+                    <Button 
+                      variant="primary" 
+                      size="sm"
+                      onClick={() => console.log('Show prescription alert')}
+                    >
+                      <i className="fas fa-prescription me-1"></i>
+                      Prescription Alert
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={() => console.log('Show inventory alert')}
+                    >
+                      <i className="fas fa-boxes me-1"></i>
+                      Inventory Alert
+                    </Button>
+                  </div>
+                  
+                  {/* Static toast examples */}
+                  <div className="mt-3">
+                    <h6>Static Toast Examples:</h6>
+                    <div style={{ position: 'relative', minHeight: '200px' }}>
+                      <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 1000 }}>
+                        <PharmaToast
+                          title="Prescription Filled"
+                          message="Amoxicillin 500mg for John Doe has been successfully filled."
+                          variant="success"
+                          pharmaType="capsule"
+                          icon="fas fa-check-circle"
+                          show={true}
+                          autohide={false}
+                          data={{ drugName: 'Amoxicillin 500mg', patientName: 'John Doe' }}
+                          timestamp={new Date()}
+                        />
+                      </div>
+                      <div style={{ position: 'absolute', top: '100px', right: '10px', zIndex: 999 }}>
+                        <PharmaToast
+                          title="Low Stock Warning"
+                          message="Aspirin 325mg is running low (5 units remaining)."
+                          variant="warning"
+                          pharmaType="tablet"
+                          icon="fas fa-exclamation-triangle"
+                          show={true}
+                          autohide={false}
+                          data={{ drugName: 'Aspirin 325mg', quantity: 5 }}
+                          timestamp={new Date()}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+          ]
+        }
+      ]
+    },
+    scanning: {
+      title: 'Barcode & Scanning',
+      icon: 'fas fa-barcode',
+      components: [
+        {
+          name: 'PharmaBarcodeScanner',
+          description: 'Advanced barcode scanning with camera and manual entry for pharmacy operations',
+          examples: [
+            {
+              title: 'NDC Code Scanner',
+              component: (
+                <div className="mb-4">
+                  <Alert variant="info" className="mb-3">
+                    <h6 className="mb-2">
+                      <i className="fas fa-pills me-2"></i>
+                      NDC Code Scanning Demo
+                    </h6>
+                    <p className="mb-0 small">
+                      This scanner validates NDC (National Drug Code) format and provides real-time feedback.
+                      Try entering: <code>12345-678-90</code> in the manual input.
+                    </p>
+                  </Alert>
+                  
+                  <PharmaBarcodeScanner
+                    scanTypes={['ndc']}
+                    defaultScanType="ndc"
+                    camera={true}
+                    manualEntry={true}
+                    validateFormat={true}
+                    showHistory={true}
+                    maxHistory={5}
+                    onScanSuccess={(value, type, source) => {
+                      console.log(`✅ NDC Scan Success: ${value} (${type}, ${source})`);
+                    }}
+                    onScanError={(error, value, type) => {
+                      console.log(`❌ NDC Scan Error: ${error}`);
+                    }}
+                  />
+                </div>
+              )
+            },
+            {
+              title: 'Multi-Type Scanner',
+              component: (
+                <div className="mb-4">
+                  <Alert variant="success" className="mb-3">
+                    <h6 className="mb-2">
+                      <i className="fas fa-barcode me-2"></i>
+                      Multi-Format Scanner Demo
+                    </h6>
+                    <p className="mb-0 small">
+                      Supports multiple barcode types commonly used in pharmacy operations.
+                      Switch between NDC, Lot Numbers, Patient IDs, and Prescription Numbers.
+                    </p>
+                  </Alert>
+                  
+                  <PharmaBarcodeScanner
+                    scanTypes={['ndc', 'lot', 'patient_id', 'rx_number']}
+                    defaultScanType="ndc"
+                    camera={true}
+                    manualEntry={true}
+                    validateFormat={true}
+                    strictValidation={false}
+                    showHistory={true}
+                    maxHistory={10}
+                    pharmaTheme="capsule"
+                    variant="success"
+                    onScanSuccess={(value, type, source) => {
+                      console.log(`✅ Multi-Scan Success: ${value} (${type}, ${source})`);
+                    }}
+                    onScanError={(error, value, type) => {
+                      console.log(`❌ Multi-Scan Error: ${error}`);
+                    }}
+                    onScanTypeChange={(newType) => {
+                      console.log(`🔄 Scan type changed to: ${newType}`);
+                    }}
+                  />
+                </div>
+              )
+            },
+            {
+              title: 'Scanner Features Demo',
+              component: (
+                <Row>
+                  <Col md={6}>
+                    <Card className="h-100">
+                      <Card.Header className="bg-primary text-white">
+                        <h6 className="mb-0">
+                          <i className="fas fa-camera me-2"></i>
+                          Camera Features
+                        </h6>
+                      </Card.Header>
+                      <Card.Body>
+                        <ul className="list-unstyled mb-0">
+                          <li className="mb-2">
+                            <i className="fas fa-check text-success me-2"></i>
+                            <strong>Live Camera Scanning:</strong> Real-time barcode detection
+                          </li>
+                          <li className="mb-2">
+                            <i className="fas fa-check text-success me-2"></i>
+                            <strong>Camera Selection:</strong> Front/back camera support
+                          </li>
+                          <li className="mb-2">
+                            <i className="fas fa-check text-success me-2"></i>
+                            <strong>Auto-Focus:</strong> Automatic focusing on barcodes
+                          </li>
+                          <li className="mb-2">
+                            <i className="fas fa-check text-success me-2"></i>
+                            <strong>Visual Feedback:</strong> Scanning overlay and indicators
+                          </li>
+                        </ul>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                  <Col md={6}>
+                    <Card className="h-100">
+                      <Card.Header className="bg-secondary text-white">
+                        <h6 className="mb-0">
+                          <i className="fas fa-keyboard me-2"></i>
+                          Manual Entry Features
+                        </h6>
+                      </Card.Header>
+                      <Card.Body>
+                        <ul className="list-unstyled mb-0">
+                          <li className="mb-2">
+                            <i className="fas fa-check text-success me-2"></i>
+                            <strong>Format Validation:</strong> Real-time barcode validation
+                          </li>
+                          <li className="mb-2">
+                            <i className="fas fa-check text-success me-2"></i>
+                            <strong>Auto-Formatting:</strong> NDC codes formatted automatically
+                          </li>
+                          <li className="mb-2">
+                            <i className="fas fa-check text-success me-2"></i>
+                            <strong>Type-Specific Input:</strong> Customized for each barcode type
+                          </li>
+                          <li className="mb-2">
+                            <i className="fas fa-check text-success me-2"></i>
+                            <strong>Scan History:</strong> Recent scans with timestamps
+                          </li>
+                        </ul>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+              )
+            }
+          ]
+        }
+      ]
+    },
+    audit: {
+      title: 'Audit & Compliance',
+      icon: 'fas fa-clipboard-list',
+      components: [
+        {
+          name: 'PharmaAuditTrail',
+          description: 'Comprehensive audit trail for regulatory compliance and activity tracking',
+          examples: [
+            {
+              title: 'Prescription Audit Trail',
+              component: (
+                <div className="mb-4">
+                  <Alert variant="info" className="mb-3">
+                    <h6 className="mb-2">
+                      <i className="fas fa-prescription me-2"></i>
+                      Prescription Activity Tracking
+                    </h6>
+                    <p className="mb-0 small">
+                      Timeline view of all prescription-related activities with user tracking,
+                      action categorization, and detailed audit information for regulatory compliance.
+                    </p>
+                  </Alert>
+                  
+                  <PharmaAuditTrail
+                    entity="prescription"
+                    entityId="RX123456"
+                    showTimeline={true}
+                    showUsers={true}
+                    showActions={true}
+                    showDetails={true}
+                    showExport={true}
+                    itemsPerPage={5}
+                    pharmaTheme="capsule"
+                    variant="primary"
+                    onAuditClick={(audit) => console.log('Audit clicked:', audit)}
+                    onUserClick={(user) => console.log('User clicked:', user)}
+                    onExport={(data) => console.log('Export requested:', data)}
+                  />
+                </div>
+              )
+            },
+            {
+              title: 'Inventory Audit Trail',
+              component: (
+                <div className="mb-4">
+                  <Alert variant="success" className="mb-3">
+                    <h6 className="mb-2">
+                      <i className="fas fa-boxes me-2"></i>
+                      Inventory Activity Tracking
+                    </h6>
+                    <p className="mb-0 small">
+                      Track all inventory adjustments, cycle counts, and stock movements
+                      with detailed user attribution and change history.
+                    </p>
+                  </Alert>
+                  
+                  <PharmaAuditTrail
+                    entity="inventory"
+                    entityId="INV-AMX-001"
+                    showTimeline={true}
+                    showUsers={true}
+                    showActions={true}
+                    showDetails={true}
+                    itemsPerPage={5}
+                    pharmaTheme="tablet"
+                    variant="success"
+                    filterByAction="adjust"
+                    onAuditClick={(audit) => console.log('Inventory audit clicked:', audit)}
+                  />
+                </div>
+              )
+            },
+            {
+              title: 'Audit Features Demo',
+              component: (
+                <Row>
+                  <Col md={6}>
+                    <Card className="h-100">
+                      <Card.Header className="bg-warning text-dark">
+                        <h6 className="mb-0">
+                          <i className="fas fa-filter me-2"></i>
+                          Filtering & Search
+                        </h6>
+                      </Card.Header>
+                      <Card.Body>
+                        <ul className="list-unstyled mb-0">
+                          <li className="mb-2">
+                            <i className="fas fa-search text-primary me-2"></i>
+                            <strong>Full-Text Search:</strong> Search across all audit fields
+                          </li>
+                          <li className="mb-2">
+                            <i className="fas fa-user text-info me-2"></i>
+                            <strong>User Filtering:</strong> Filter by specific users
+                          </li>
+                          <li className="mb-2">
+                            <i className="fas fa-calendar text-success me-2"></i>
+                            <strong>Date Range:</strong> Custom date range selection
+                          </li>
+                          <li className="mb-2">
+                            <i className="fas fa-tags text-warning me-2"></i>
+                            <strong>Action Types:</strong> Filter by action categories
+                          </li>
+                        </ul>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                  <Col md={6}>
+                    <Card className="h-100">
+                      <Card.Header className="bg-info text-white">
+                        <h6 className="mb-0">
+                          <i className="fas fa-download me-2"></i>
+                          Export & Compliance
+                        </h6>
+                      </Card.Header>
+                      <Card.Body>
+                        <ul className="list-unstyled mb-0">
+                          <li className="mb-2">
+                            <i className="fas fa-file-csv text-success me-2"></i>
+                            <strong>CSV Export:</strong> Spreadsheet-compatible format
+                          </li>
+                          <li className="mb-2">
+                            <i className="fas fa-file-pdf text-danger me-2"></i>
+                            <strong>PDF Reports:</strong> Formatted audit reports
+                          </li>
+                          <li className="mb-2">
+                            <i className="fas fa-shield-alt text-primary me-2"></i>
+                            <strong>Compliance Ready:</strong> Meets regulatory requirements
+                          </li>
+                          <li className="mb-2">
+                            <i className="fas fa-clock text-secondary me-2"></i>
+                            <strong>Real-Time:</strong> Live updates and notifications
+                          </li>
+                        </ul>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+              )
+            },
+            {
+              title: 'System-Wide Audit View',
+              component: (
+                <div className="mb-4">
+                  <Alert variant="warning" className="mb-3">
+                    <h6 className="mb-2">
+                      <i className="fas fa-server me-2"></i>
+                      System-Wide Activity Monitoring
+                    </h6>
+                    <p className="mb-0 small">
+                      Comprehensive view of all system activities across different entities.
+                      Useful for administrators monitoring overall system usage and security.
+                    </p>
+                  </Alert>
+                  
+                  <PharmaAuditTrail
+                    entity="system"
+                    showTimeline={false}
+                    showUsers={true}
+                    showActions={true}
+                    showDetails={true}
+                    showExport={true}
+                    itemsPerPage={8}
+                    pharmaTheme="pill"
+                    variant="warning"
+                    realTimeUpdates={true}
+                    autoRefresh={true}
+                    refreshInterval={30000}
+                    onAuditClick={(audit) => console.log('System audit clicked:', audit)}
+                  />
                 </div>
               )
             }

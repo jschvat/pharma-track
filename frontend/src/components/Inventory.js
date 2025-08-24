@@ -38,8 +38,8 @@ import {
   Spinner,
   Alert,
   Modal,
-  Dropdown,
 } from "react-bootstrap";
+import PharmaDropdown from "./common/PharmaDropdown";
 import { useAuth } from "../contexts/AuthContext";
 import { inventoryAPI, auditAPI } from "../services/api";
 import { useSearchParams } from "react-router-dom";
@@ -1489,31 +1489,27 @@ const Inventory = () => {
                     </div>
                   </div>
 
-                  {/* Custom Prescription Selector using Bootstrap Dropdown */}
+                  {/* Custom Prescription Selector using PharmaDropdown */}
                   <div className="mb-3">
                     <Form.Label>
                       Select Prescription to Return{" "}
                       <span className="text-danger">*</span>
                     </Form.Label>
-                    <Dropdown>
-                      <Dropdown.Toggle
-                        variant={
-                          validationErrors.reference_number
-                            ? "outline-danger"
-                            : "outline-secondary"
-                        }
-                        id="prescription-dropdown"
-                        className={`w-100 text-start ${
-                          validationErrors.reference_number ? "is-invalid" : ""
-                        }`}
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          minHeight: "38px",
-                        }}
-                      >
-                        {transactionForm.reference_number
+                    <PharmaDropdown
+                      variant={
+                        validationErrors.reference_number
+                          ? "outline-danger"
+                          : "outline-secondary"
+                      }
+                      className={`w-100 ${
+                        validationErrors.reference_number ? "is-invalid" : ""
+                      }`}
+                      trigger="click"
+                      align="start"
+                      pharmaType="tablet"
+                      size="md"
+                      label={
+                        transactionForm.reference_number
                           ? (() => {
                               const selectedRx = availablePrescriptions.find(
                                 (rx) =>
@@ -1534,20 +1530,42 @@ const Inventory = () => {
                                 "Choose a prescription..."
                               );
                             })()
-                          : "Choose a prescription..."}
-                      </Dropdown.Toggle>
-
-                      <Dropdown.Menu
-                        className="w-100"
-                        style={{ maxHeight: "200px", overflowY: "auto" }}
+                          : "Choose a prescription..."
+                      }
+                      menuClassName="w-100"
+                      menuStyle={{ maxHeight: "200px", overflowY: "auto" }}
+                    >
+                      <button
+                        className="dropdown-item text-muted"
+                        onClick={() => {
+                          setTransactionForm({
+                            ...transactionForm,
+                            reference_number: "",
+                            quantity: "",
+                          });
+                          if (validationErrors.reference_number) {
+                            setValidationErrors({
+                              ...validationErrors,
+                              reference_number: undefined,
+                            });
+                          }
+                        }}
                       >
-                        <Dropdown.Item
+                        Choose a prescription...
+                      </button>
+                      {availablePrescriptions.map((rx) => (
+                        <button
+                          key={rx.prescription_number}
+                          className={`dropdown-item ${
+                            transactionForm.reference_number === rx.prescription_number ? 'active' : ''
+                          }`}
                           onClick={() => {
                             setTransactionForm({
                               ...transactionForm,
-                              reference_number: "",
-                              quantity: "",
+                              reference_number: rx.prescription_number,
+                              quantity: rx.available_for_return.toString(),
                             });
+                            // Clear validation error when user makes selection
                             if (validationErrors.reference_number) {
                               setValidationErrors({
                                 ...validationErrors,
@@ -1555,55 +1573,29 @@ const Inventory = () => {
                               });
                             }
                           }}
-                          className="text-muted"
                         >
-                          Choose a prescription...
-                        </Dropdown.Item>
-                        {availablePrescriptions.map((rx) => (
-                          <Dropdown.Item
-                            key={rx.prescription_number}
-                            onClick={() => {
-                              setTransactionForm({
-                                ...transactionForm,
-                                reference_number: rx.prescription_number,
-                                quantity: rx.available_for_return.toString(),
-                              });
-                              // Clear validation error when user makes selection
-                              if (validationErrors.reference_number) {
-                                setValidationErrors({
-                                  ...validationErrors,
-                                  reference_number: undefined,
-                                });
-                              }
-                            }}
-                            active={
-                              transactionForm.reference_number ===
-                              rx.prescription_number
-                            }
-                          >
-                            <div className="prescription-table">
-                              <div className="prescription-row">
-                                <div className="prescription-cell rx-number">
-                                  Rx #{rx.prescription_number}
-                                </div>
-                                <div className="prescription-cell date">
-                                  {formatDate(rx.fill_date)}
-                                </div>
-                                <div className="prescription-cell time">
-                                  {formatTime(rx.fill_date)}
-                                </div>
-                                <div className="prescription-cell user">
-                                  {rx.filled_by || "Unknown"}
-                                </div>
-                                <div className="prescription-cell quantity">
-                                  Qty: {rx.available_for_return}
-                                </div>
+                          <div className="prescription-table">
+                            <div className="prescription-row">
+                              <div className="prescription-cell rx-number">
+                                Rx #{rx.prescription_number}
+                              </div>
+                              <div className="prescription-cell date">
+                                {formatDate(rx.fill_date)}
+                              </div>
+                              <div className="prescription-cell time">
+                                {formatTime(rx.fill_date)}
+                              </div>
+                              <div className="prescription-cell user">
+                                {rx.filled_by || "Unknown"}
+                              </div>
+                              <div className="prescription-cell quantity">
+                                Qty: {rx.available_for_return}
                               </div>
                             </div>
-                          </Dropdown.Item>
-                        ))}
-                      </Dropdown.Menu>
-                    </Dropdown>
+                          </div>
+                        </button>
+                      ))}
+                    </PharmaDropdown>
                     {validationErrors.reference_number && (
                       <div className="invalid-feedback d-block">
                         {validationErrors.reference_number}

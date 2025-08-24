@@ -12,9 +12,9 @@ import {
   Spinner,
   InputGroup,
   Pagination,
-  Dropdown,
   ButtonGroup
 } from 'react-bootstrap';
+import PharmaDropdown from './common/PharmaDropdown';
 import { userAPI, storeAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import DraggableDialog from './DraggableDialog';
@@ -386,6 +386,7 @@ const UserManagement = () => {
     phone: '',
     address: '',
     role: 'user',
+    store_id: '',
     is_active: true
   });
   
@@ -400,6 +401,7 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [activeFilter, setActiveFilter] = useState('');
+  const [storeFilter, setStoreFilter] = useState(''); // Store filter for god_mode users
   
   const usersPerPage = 10;
 
@@ -407,7 +409,7 @@ const UserManagement = () => {
   useEffect(() => {
     loadUsers();
     loadStores();
-  }, [currentPage, searchTerm, roleFilter, activeFilter]);
+  }, [currentPage, searchTerm, roleFilter, activeFilter, storeFilter]);
 
   const loadStores = async () => {
     try {
@@ -435,8 +437,14 @@ const UserManagement = () => {
       if (searchTerm) params.search = searchTerm;
       if (roleFilter) params.role = roleFilter;
       if (activeFilter !== '') params.active = activeFilter === 'true';
+      
+      // Add store filter for god_mode users
+      if (storeFilter && isGodMode()) params.store_id = storeFilter;
 
-      const response = await userAPI.getAll(params);
+      // God mode users should see ALL users across ALL stores (unless filtered)
+      const response = isGodMode() ? 
+        await userAPI.getAllUsers(params) : // Use /all endpoint for god_mode
+        await userAPI.getAll(params);       // Use regular endpoint for admin
       setUsers(response.data.users || []);
       setTotalPages(response.data.pagination?.pages || 1);
     } catch (err) {
@@ -679,11 +687,19 @@ const UserManagement = () => {
       key: 'role',
       label: 'Role',
       sortable: true,
-      render: (value) => (
-        <Badge bg={value === 'admin' ? 'primary' : 'secondary'}>
-          {value === 'admin' ? 'Admin' : 'User'}
-        </Badge>
-      )
+      render: (value) => {
+        const badgeProps = {
+          'admin': { bg: 'primary', text: 'Admin' },
+          'god_mode': { bg: 'danger', text: 'God Mode' },
+          'user': { bg: 'secondary', text: 'User' }
+        };
+        const props = badgeProps[value] || badgeProps['user'];
+        return (
+          <Badge bg={props.bg}>
+            {props.text}
+          </Badge>
+        );
+      }
     },
     {
       key: 'is_active',
@@ -716,6 +732,7 @@ const UserManagement = () => {
       phone: user.phone,
       address: user.address,
       role: user.role,
+      store_id: user.store_id,
       is_active: user.is_active
     });
     setShowEditModal(true);
@@ -805,9 +822,23 @@ const UserManagement = () => {
                     options: [
                       { value: "", label: "All Roles" },
                       { value: "admin", label: "Admin" },
-                      { value: "user", label: "User" }
+                      { value: "user", label: "User" },
+                      ...(isGodMode() ? [{ value: "god_mode", label: "God Mode" }] : [])
                     ]
                   },
+                  // Store filter - only visible to god_mode users
+                  ...(isGodMode() ? [{
+                    label: "Store",
+                    value: storeFilter,
+                    onChange: setStoreFilter,
+                    options: [
+                      { value: "", label: "All Stores" },
+                      ...stores.map(store => ({
+                        value: store.id.toString(),
+                        label: store.name
+                      }))
+                    ]
+                  }] : []),
                   {
                     label: "Status",
                     value: activeFilter,
@@ -905,7 +936,8 @@ const UserManagement = () => {
               onChange={handleCreateFormChange}
               options={[
                 { value: 'user', label: 'User' },
-                { value: 'admin', label: 'Admin' }
+                { value: 'admin', label: 'Admin' },
+                ...(isGodMode() ? [{ value: 'god_mode', label: 'God Mode' }] : [])
               ]}
               required
             />
@@ -919,10 +951,18 @@ const UserManagement = () => {
           onChange={handleCreateFormChange}
           options={[
             { value: '', label: 'Select Store' },
-            ...stores.map(store => ({
-              value: store.id,
-              label: `${store.name} - ${store.state}`
-            }))
+            ...(isGodMode() ? 
+              // God mode users can assign users to any store
+              stores.map(store => ({
+                value: store.id,
+                label: `${store.name} - ${store.state}`
+              })) :
+              // Admin users can only assign users to their own store
+              stores.filter(store => store.id === currentUser.store_id).map(store => ({
+                value: store.id,
+                label: `${store.name} - ${store.state}`
+              }))
+            )
           ]}
           required
         />
@@ -1006,52 +1046,113 @@ const UserManagement = () => {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Role *</Form.Label>
-                  <Dropdown>
-                    <Dropdown.Toggle variant="outline-secondary" className="w-100 d-flex justify-content-between align-items-center">
-                      {editForm.role === 'admin' ? 'Admin' : 'User'}
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu className="w-100">
-                      <Dropdown.Item 
-                        onClick={() => setEditForm({...editForm, role: 'user'})}
-                        active={editForm.role === 'user'}
+                  <PharmaDropdown
+                    variant="outline-secondary"
+                    className="w-100"
+                    trigger="click"
+                    align="start"
+                    pharmaType="pill"
+                    size="md"
+                    label={
+                      editForm.role === 'admin' ? 'Admin' : 
+                      editForm.role === 'god_mode' ? 'God Mode' : 
+                      'User'
+                    }
+                    menuClassName="w-100"
+                  >
+                    <button
+                      className={`dropdown-item ${editForm.role === 'user' ? 'active' : ''}`}
+                      onClick={() => setEditForm({...editForm, role: 'user'})}
+                    >
+                      User
+                    </button>
+                    <button
+                      className={`dropdown-item ${editForm.role === 'admin' ? 'active' : ''}`}
+                      onClick={() => setEditForm({...editForm, role: 'admin'})}
+                    >
+                      Admin
+                    </button>
+                    {isGodMode() && (
+                      <button
+                        className={`dropdown-item ${editForm.role === 'god_mode' ? 'active' : ''}`}
+                        onClick={() => setEditForm({...editForm, role: 'god_mode'})}
                       >
-                        User
-                      </Dropdown.Item>
-                      <Dropdown.Item 
-                        onClick={() => setEditForm({...editForm, role: 'admin'})}
-                        active={editForm.role === 'admin'}
-                      >
-                        Admin
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  </Dropdown>
+                        God Mode
+                      </button>
+                    )}
+                  </PharmaDropdown>
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Status *</Form.Label>
-                  <Dropdown>
-                    <Dropdown.Toggle variant="outline-secondary" className="w-100 d-flex justify-content-between align-items-center">
-                      {editForm.is_active ? 'Active' : 'Inactive'}
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu className="w-100">
-                      <Dropdown.Item 
-                        onClick={() => setEditForm({...editForm, is_active: true})}
-                        active={editForm.is_active === true}
-                      >
-                        Active
-                      </Dropdown.Item>
-                      <Dropdown.Item 
-                        onClick={() => setEditForm({...editForm, is_active: false})}
-                        active={editForm.is_active === false}
-                      >
-                        Inactive
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  </Dropdown>
+                  <PharmaDropdown
+                    variant="outline-secondary"
+                    className="w-100"
+                    trigger="click"
+                    align="start"
+                    pharmaType="pill"
+                    size="md"
+                    label={editForm.is_active ? 'Active' : 'Inactive'}
+                    menuClassName="w-100"
+                  >
+                    <button
+                      className={`dropdown-item ${editForm.is_active === true ? 'active' : ''}`}
+                      onClick={() => setEditForm({...editForm, is_active: true})}
+                    >
+                      Active
+                    </button>
+                    <button
+                      className={`dropdown-item ${editForm.is_active === false ? 'active' : ''}`}
+                      onClick={() => setEditForm({...editForm, is_active: false})}
+                    >
+                      Inactive
+                    </button>
+                  </PharmaDropdown>
                 </Form.Group>
               </Col>
             </Row>
+            
+            {/* Store selection - only visible to god_mode users */}
+            {isGodMode() && (
+              <Row>
+                <Col md={12}>
+                  {/* Show warning if store is being changed */}
+                  {selectedUser && parseInt(editForm.store_id) !== selectedUser.store_id && (
+                    <PharmaAlert
+                      variant="warning"
+                      className="mb-3"
+                      dismissible={false}
+                    >
+                      ⚠️ <strong>Store Transfer:</strong> You are moving this user from "{selectedUser.store_name}" to "{stores.find(s => s.id === parseInt(editForm.store_id))?.name}". This will affect their access permissions and inventory visibility.
+                    </PharmaAlert>
+                  )}
+                  <Form.Group className="mb-3">
+                    <Form.Label>Store Assignment *</Form.Label>
+                    <PharmaDropdown
+                      variant="outline-secondary"
+                      className="w-100"
+                      trigger="click"
+                      align="start"
+                      pharmaType="pill"
+                      size="md"
+                      label={stores.find(s => s.id === parseInt(editForm.store_id))?.name || 'Select Store'}
+                      menuClassName="w-100"
+                    >
+                      {stores.map(store => (
+                        <button
+                          key={store.id}
+                          className={`dropdown-item ${editForm.store_id === store.id.toString() ? 'active' : ''}`}
+                          onClick={() => setEditForm({...editForm, store_id: store.id})}
+                        >
+                          {store.name}
+                        </button>
+                      ))}
+                    </PharmaDropdown>
+                  </Form.Group>
+                </Col>
+              </Row>
+            )}
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowEditModal(false)}>

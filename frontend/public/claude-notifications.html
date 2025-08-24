@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Audio Notifications</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        h1 {
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+        }
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .status {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .instructions {
+            margin-top: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: left;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #ffd700;
+        }
+        .bookmark-link {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 10px 20px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid #ffd700;
+            border-radius: 25px;
+            color: #ffd700;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .bookmark-link:hover {
+            background: rgba(255, 215, 0, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Claude Audio Notifications</h1>
+        
+        <div>
+            <button onclick="playTaskComplete()">🎉 Task Complete</button>
+            <button onclick="playInputNeeded()">🔔 Input Needed</button>
+            <button onclick="playCustom()">🎵 Custom Sound</button>
+        </div>
+        
+        <div class="status" id="status">
+            Click a button to test audio notifications
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 How to Use with Claude:</h3>
+            <ol>
+                <li><strong>Bookmark this page</strong> for quick access during Claude sessions</li>
+                <li><strong>Keep this tab open</strong> while working with Claude</li>
+                <li><strong>Manual trigger:</strong> Click buttons when Claude completes tasks</li>
+                <li><strong>Browser permissions:</strong> Allow audio when prompted</li>
+            </ol>
+            
+            <a href="javascript:void(0)" onclick="bookmarkInstructions()" class="bookmark-link">
+                📌 Bookmark This Page
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Audio context for generating sounds
+        let audioContext;
+        
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioContext;
+        }
+
+        function playTone(frequency, duration, volume = 0.1) {
+            const ctx = initAudio();
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0, ctx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+            
+            oscillator.start(ctx.currentTime);
+            oscillator.stop(ctx.currentTime + duration);
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').innerHTML = message;
+            setTimeout(() => {
+                document.getElementById('status').innerHTML = 'Ready for next notification...';
+            }, 3000);
+        }
+
+        function playTaskComplete() {
+            updateStatus('🎉 Playing task completion sound...');
+            
+            // Three ascending tones
+            setTimeout(() => playTone(523, 0.3), 0);      // C5
+            setTimeout(() => playTone(659, 0.3), 300);    // E5  
+            setTimeout(() => playTone(784, 0.5), 600);    // G5
+            
+            // Optional speech synthesis
+            if ('speechSynthesis' in window) {
+                setTimeout(() => {
+                    const utterance = new SpeechSynthesisUtterance('Task completed');
+                    utterance.rate = 1.2;
+                    utterance.pitch = 1.1;
+                    utterance.volume = 0.7;
+                    speechSynthesis.speak(utterance);
+                }, 1000);
+            }
+        }
+
+        function playInputNeeded() {
+            updateStatus('🔔 Playing input needed sound...');
+            
+            // Two gentle notification tones
+            setTimeout(() => playTone(440, 0.4), 0);      // A4
+            setTimeout(() => playTone(440, 0.4), 500);    // A4
+            
+            // Optional speech synthesis
+            if ('speechSynthesis' in window) {
+                setTimeout(() => {
+                    const utterance = new SpeechSynthesisUtterance('Input needed');
+                    utterance.rate = 1.0;
+                    utterance.pitch = 0.9;
+                    utterance.volume = 0.7;
+                    speechSynthesis.speak(utterance);
+                }, 1000);
+            }
+        }
+
+        function playCustom() {
+            updateStatus('🎵 Playing custom notification...');
+            
+            // Musical sequence
+            const melody = [
+                {freq: 523, duration: 0.2}, // C5
+                {freq: 587, duration: 0.2}, // D5
+                {freq: 659, duration: 0.2}, // E5
+                {freq: 698, duration: 0.4}, // F5
+            ];
+            
+            let delay = 0;
+            melody.forEach(note => {
+                setTimeout(() => playTone(note.freq, note.duration), delay);
+                delay += note.duration * 800;
+            });
+        }
+
+        function bookmarkInstructions() {
+            const url = window.location.href;
+            const title = 'Claude Audio Notifications';
+            
+            if (window.sidebar && window.sidebar.addPanel) {
+                // Firefox
+                window.sidebar.addPanel(title, url, '');
+            } else if (window.external && ('AddFavorite' in window.external)) {
+                // Internet Explorer
+                window.external.AddFavorite(url, title);
+            } else if (window.opera && window.print) {
+                // Opera
+                this.title = title;
+                return true;
+            } else {
+                // Other browsers
+                alert('To bookmark this page:\\n\\n' + 
+                      'Chrome/Edge: Press Ctrl+D (Cmd+D on Mac)\\n' +
+                      'Firefox: Press Ctrl+D (Cmd+D on Mac)\\n' +
+                      'Safari: Press Cmd+D\\n\\n' +
+                      'Or drag this tab to your bookmarks bar!');
+            }
+        }
+
+        // Initialize audio context on first user interaction
+        document.addEventListener('click', function initOnClick() {
+            initAudio();
+            document.removeEventListener('click', initOnClick);
+        }, { once: true });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        playTaskComplete();
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        playInputNeeded();
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        playCustom();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

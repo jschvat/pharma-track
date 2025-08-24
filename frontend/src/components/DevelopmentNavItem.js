@@ -23,7 +23,9 @@ const DevelopmentNavItem = () => {
     {
       path: '/dev/components',
       label: 'Component Gallery',
-      icon: 'fas fa-palette'
+      icon: 'fas fa-palette',
+      badge: { text: 'NEW', variant: 'success' },
+      description: 'PharmaToast, PharmaOffcanvas, PharmaBadge & PharmaSpinner'
     },
     {
       path: '/dev/components/demo',
@@ -74,8 +76,28 @@ const DevelopmentNavItem = () => {
           {developmentItems.map((item, index) => (
             <LinkContainer key={index} to={item.path}>
               <Nav.Link className="py-2 text-muted small">
-                <i className={`${item.icon} me-2`}></i>
-                {item.label}
+                <div className="d-flex align-items-start">
+                  <div className="flex-grow-1">
+                    <div className="d-flex align-items-center">
+                      <i className={`${item.icon} me-2`}></i>
+                      {item.label}
+                      {item.badge && (
+                        <Badge 
+                          bg={item.badge.variant} 
+                          className="ms-2 small"
+                          style={{ fontSize: '0.6em' }}
+                        >
+                          {item.badge.text}
+                        </Badge>
+                      )}
+                    </div>
+                    {item.description && (
+                      <div className="text-muted" style={{ fontSize: '0.75em', lineHeight: '1.2', marginTop: '2px', marginLeft: '1.2em' }}>
+                        {item.description}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </Nav.Link>
             </LinkContainer>
           ))}
@@ -83,6 +105,10 @@ const DevelopmentNavItem = () => {
       </Collapse>
 
       <div className="px-3 mt-2">
+        <div className="alert alert-info py-2 px-2 mb-2" style={{ fontSize: '0.75em' }}>
+          <i className="fas fa-star me-1 text-warning"></i>
+          <strong>NEW:</strong> Updated Component Gallery with PharmaToast, PharmaOffcanvas, PharmaBadge & PharmaSpinner demos!
+        </div>
         <small className="text-muted">
           <i className="fas fa-info-circle me-1"></i>
           Development mode only

@@ -22,8 +22,9 @@
  */
 
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Form, InputGroup, Dropdown, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Form, InputGroup, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { PharmaButton, PharmaCard } from './PharmaComponents';
+import PharmaDropdown from './PharmaDropdown';
 import '../../css/pharma-components.css';
 
 
@@ -77,6 +78,10 @@ const PharmaDataGrid = ({
   resizable = true,
   fillContainer = true, // Make columns expand to fill container width
   
+  // Column autofill
+  showAutofillToggle = false, // Show button to toggle autofill columns
+  defaultAutofill = true, // Default autofill state
+  
   // Loading and empty states
   loading = false,
   loadingRows = 5,
@@ -112,6 +117,7 @@ const PharmaDataGrid = ({
   const [columnWidths, setColumnWidths] = useState({});
   const [isResizing, setIsResizing] = useState(false);
   const [resizingColumn, setResizingColumn] = useState(null);
+  const [autofillColumns, setAutofillColumns] = useState(defaultAutofill);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
   const startMouseXRef = useRef(0);
@@ -487,18 +493,28 @@ const PharmaDataGrid = ({
       gridColumns.push('50px'); // Selection column - always fixed
     }
     
-    // Always use pixel widths - no fr units to avoid redistribution jumping
-    columns.forEach(column => {
-      const width = columnWidths[column.field] || column.width || '150px';
-      gridColumns.push(width);
-    });
+    // Use autofill or explicit widths based on toggle state
+    if (autofillColumns) {
+      // Auto-fit columns to available space
+      columns.forEach(column => {
+        const minWidth = column.minWidth || '100px';
+        const maxWidth = column.maxWidth || '1fr';
+        gridColumns.push(`minmax(${minWidth}, ${maxWidth})`);
+      });
+    } else {
+      // Use explicit pixel widths
+      columns.forEach(column => {
+        const width = columnWidths[column.field] || column.width || '150px';
+        gridColumns.push(width);
+      });
+    }
     
     if (rowActions.length > 0) {
       gridColumns.push('120px'); // Actions column - always fixed
     }
     
     return gridColumns.join(' ');
-  }, [columns, columnWidths, selectable, rowActions]);
+  }, [columns, columnWidths, selectable, rowActions, autofillColumns]);
 
   // Handle column resize move with CSS Grid
   const handleResizeMove = useCallback((e) => {
@@ -611,13 +627,19 @@ const PharmaDataGrid = ({
           }}
         >
           {column.label}
-          {sortInfo && (
+          {isSortable && (
             <span className="pharma-grid-sort-indicator ms-1">
-              {sortInfo.direction === 'asc' ? '↑' : '↓'}
-              {multiSort && sortConfig.length > 1 && (
-                <small className="ms-1 text-muted">
-                  {sortConfig.findIndex(s => s.field === column.field) + 1}
-                </small>
+              {sortInfo ? (
+                <>
+                  {sortInfo.direction === 'asc' ? '↑' : '↓'}
+                  {multiSort && sortConfig.length > 1 && (
+                    <small className="ms-1 text-muted">
+                      {sortConfig.findIndex(s => s.field === column.field) + 1}
+                    </small>
+                  )}
+                </>
+              ) : (
+                '⇅'
               )}
             </span>
           )}
@@ -862,45 +884,66 @@ const PharmaDataGrid = ({
           <div className="col-md-6 text-end">
             {bulkActions.length > 0 && internalSelection.length > 0 && (
               <div className="me-2 d-inline-block">
-                <Dropdown>
-                  <Dropdown.Toggle variant="primary" size="sm">
-                    Bulk Actions ({internalSelection.length})
-                  </Dropdown.Toggle>
-                  <Dropdown.Menu>
-                    {bulkActions.map((action, index) => (
-                      <Dropdown.Item
-                        key={index}
-                        onClick={() => action.onClick(internalSelection)}
-                      >
-                        {action.icon && <span className="me-1">{action.icon}</span>}
-                        {action.label}
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown.Menu>
-                </Dropdown>
+                <PharmaDropdown
+                  variant="primary"
+                  size="sm"
+                  trigger="click"
+                  align="start"
+                  pharmaType="pill"
+                  label={`Bulk Actions (${internalSelection.length})`}
+                >
+                  {bulkActions.map((action, index) => (
+                    <button
+                      key={index}
+                      className="dropdown-item"
+                      onClick={() => action.onClick(internalSelection)}
+                    >
+                      {action.icon && <span className="me-1">{action.icon}</span>}
+                      {action.label}
+                    </button>
+                  ))}
+                </PharmaDropdown>
               </div>
             )}
             
             {exportable && (
-              <Dropdown>
-                <Dropdown.Toggle variant="outline-secondary" size="sm">
-                  Export
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  {exportFormats.map(format => (
-                    <Dropdown.Item
-                      key={format}
-                      onClick={() => {
-                        if (onExport) {
-                          onExport(format, sortedData);
-                        }
-                      }}
-                    >
-                      {format.toUpperCase()}
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown>
+              <PharmaDropdown
+                variant="outline-secondary"
+                size="sm"
+                trigger="click"
+                align="start"
+                pharmaType="capsule"
+                label="Export"
+              >
+                {exportFormats.map(format => (
+                  <button
+                    key={format}
+                    className="dropdown-item"
+                    onClick={() => {
+                      if (onExport) {
+                        onExport(format, sortedData);
+                      }
+                    }}
+                  >
+                    {format.toUpperCase()}
+                  </button>
+                ))}
+              </PharmaDropdown>
+            )}
+            
+            {showAutofillToggle && (
+              <PharmaButton
+                variant={autofillColumns ? "primary" : "outline-secondary"}
+                size="sm"
+                className="ms-2"
+                onClick={() => setAutofillColumns(!autofillColumns)}
+                title={autofillColumns ? "Disable column autofill" : "Enable column autofill"}
+              >
+                <i className={`fas ${autofillColumns ? 'fa-compress-alt' : 'fa-expand-alt'}`}></i>
+                <span className="d-none d-md-inline ms-1">
+                  {autofillColumns ? 'Fit Columns' : 'Fill Width'}
+                </span>
+              </PharmaButton>
             )}
           </div>
         </div>

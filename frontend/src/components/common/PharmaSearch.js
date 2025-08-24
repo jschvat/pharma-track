@@ -21,8 +21,9 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { Form, InputGroup, Dropdown, ListGroup, Badge, Spinner } from 'react-bootstrap';
+import { Form, InputGroup, ListGroup, Badge, Spinner } from 'react-bootstrap';
 import { PharmaButton, PharmaCard, PharmaAlert } from './PharmaComponents';
+import PharmaDropdown from './PharmaDropdown';
 import '../../css/pharma-components.css';
 
 const PharmaSearch = ({
@@ -500,23 +501,26 @@ const PharmaSearch = ({
       <InputGroup size={size}>
         {/* Search scope selector */}
         {scopes.length > 0 && (
-          <Dropdown>
-            <Dropdown.Toggle variant={variant} size={size} className="pharma-search-scope">
-              {scopes.find(s => s.value === activeScope)?.label || 'All'}
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              {scopes.map(scope => (
-                <Dropdown.Item
-                  key={scope.value}
-                  active={scope.value === activeScope}
-                  onClick={() => setActiveScope(scope.value)}
-                >
-                  {scope.icon && <span className="me-2">{scope.icon}</span>}
-                  {scope.label}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
+          <PharmaDropdown
+            variant={variant}
+            size={size}
+            className="pharma-search-scope"
+            trigger="click"
+            align="start"
+            pharmaType="pill"
+            label={scopes.find(s => s.value === activeScope)?.label || 'All'}
+          >
+            {scopes.map(scope => (
+              <button
+                key={scope.value}
+                className={`dropdown-item ${scope.value === activeScope ? 'active' : ''}`}
+                onClick={() => setActiveScope(scope.value)}
+              >
+                {scope.icon && <span className="me-2">{scope.icon}</span>}
+                {scope.label}
+              </button>
+            ))}
+          </PharmaDropdown>
         )}
         
         {/* Search icon */}

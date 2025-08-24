@@ -21,7 +21,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Form, InputGroup, Dropdown, OverlayTrigger, Popover, Alert } from 'react-bootstrap';
+import { Form, InputGroup, OverlayTrigger, Popover, Alert } from 'react-bootstrap';
 import { PharmaButton, PharmaAlert } from './PharmaComponents';
 import '../../css/pharma-components.css';
 

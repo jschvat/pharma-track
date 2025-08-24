@@ -21,7 +21,8 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { Card, Dropdown, Badge, Spinner, OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
+import { Card, Badge, Spinner, OverlayTrigger, Tooltip, Button } from 'react-bootstrap';
+import PharmaDropdown from './PharmaDropdown';
 import { PharmaCard, PharmaButton, PharmaProgressBar, PharmaAlert, PharmaTabs } from './PharmaComponents';
 import '../../css/pharma-components.css';
 
@@ -184,46 +185,53 @@ const BaseWidget = ({
             ))}
             
             {/* Widget menu */}
-            <Dropdown align="end">
-              <Dropdown.Toggle variant="link" size="sm" className="p-0">
-                ⋮
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                {onRefresh && (
-                  <Dropdown.Item onClick={handleManualRefresh} disabled={loading || isRefreshing}>
-                    🔄 Refresh Now
-                  </Dropdown.Item>
-                )}
-                {onEdit && (
-                  <Dropdown.Item onClick={() => onEdit(id)}>
-                    ⚙️ Settings
-                  </Dropdown.Item>
-                )}
-                {onResize && (
-                  <>
-                    <Dropdown.Divider />
-                    <Dropdown.Header>Size</Dropdown.Header>
-                    {Object.keys(WIDGET_SIZES).map(sizeName => (
-                      <Dropdown.Item
-                        key={sizeName}
-                        onClick={() => onResize(id, sizeName)}
-                        className={size === sizeName ? 'active' : ''}
-                      >
-                        {sizeName.charAt(0).toUpperCase() + sizeName.slice(1)}
-                      </Dropdown.Item>
-                    ))}
-                  </>
-                )}
-                {onDelete && (
-                  <>
-                    <Dropdown.Divider />
-                    <Dropdown.Item className="text-danger" onClick={() => onDelete(id)}>
-                      🗑️ Remove
-                    </Dropdown.Item>
-                  </>
-                )}
-              </Dropdown.Menu>
-            </Dropdown>
+            <PharmaDropdown
+              label="⋮"
+              trigger="click"
+              align="end"
+              variant="link"
+              size="sm"
+              className="p-0"
+              pharmaType="pill"
+            >
+              {onRefresh && (
+                <button 
+                  className="dropdown-item" 
+                  onClick={handleManualRefresh} 
+                  disabled={loading || isRefreshing}
+                >
+                  🔄 Refresh Now
+                </button>
+              )}
+              {onEdit && (
+                <button className="dropdown-item" onClick={() => onEdit(id)}>
+                  ⚙️ Settings
+                </button>
+              )}
+              {onResize && (
+                <>
+                  <div className="dropdown-divider"></div>
+                  <div className="dropdown-header">Size</div>
+                  {Object.keys(WIDGET_SIZES).map(sizeName => (
+                    <button
+                      key={sizeName}
+                      className={`dropdown-item ${size === sizeName ? 'active' : ''}`}
+                      onClick={() => onResize(id, sizeName)}
+                    >
+                      {sizeName.charAt(0).toUpperCase() + sizeName.slice(1)}
+                    </button>
+                  ))}
+                </>
+              )}
+              {onDelete && (
+                <>
+                  <div className="dropdown-divider"></div>
+                  <button className="dropdown-item text-danger" onClick={() => onDelete(id)}>
+                    🗑️ Remove
+                  </button>
+                </>
+              )}
+            </PharmaDropdown>
           </div>
         </Card.Header>
         

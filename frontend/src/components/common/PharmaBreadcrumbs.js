@@ -22,8 +22,9 @@
 
 import React, { useState, useRef, useEffect, useCallback, createContext, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Dropdown, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { PharmaButton, PharmaCard } from './PharmaComponents';
+import PharmaDropdown from './PharmaDropdown';
 import '../../css/pharma-components.css';
 
 // Breadcrumb Context for navigation state management
@@ -329,29 +330,31 @@ const PharmaBreadcrumbs = ({
     if (item.isOverflow) {
       return (
         <div key="overflow" className="pharma-breadcrumb-overflow" ref={overflowRef}>
-          <Dropdown show={overflowOpen} onToggle={setOverflowOpen}>
-            <Dropdown.Toggle 
-              variant="link" 
-              className="pharma-breadcrumb-overflow-toggle p-0"
-              onClick={() => setOverflowOpen(!overflowOpen)}
-            >
-              ...
-            </Dropdown.Toggle>
-            <Dropdown.Menu className="pharma-breadcrumb-overflow-menu">
-              {item.items.map((overflowItem, overflowIndex) => (
-                <Dropdown.Item
-                  key={overflowIndex}
-                  onClick={() => handleNavigate(overflowItem.path, overflowItem)}
-                  className="pharma-breadcrumb-overflow-item"
-                >
-                  <span className="pharma-breadcrumb-icon me-2">
-                    {BREADCRUMB_TYPES[overflowItem.type]?.icon}
-                  </span>
-                  {overflowItem.label}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
+          <PharmaDropdown
+            variant="link"
+            className="pharma-breadcrumb-overflow-toggle p-0"
+            trigger="click"
+            align="start"
+            pharmaType="pill"
+            size="sm"
+            label="..."
+            show={overflowOpen}
+            onToggle={setOverflowOpen}
+            menuClassName="pharma-breadcrumb-overflow-menu"
+          >
+            {item.items.map((overflowItem, overflowIndex) => (
+              <button
+                key={overflowIndex}
+                className="dropdown-item pharma-breadcrumb-overflow-item"
+                onClick={() => handleNavigate(overflowItem.path, overflowItem)}
+              >
+                <span className="pharma-breadcrumb-icon me-2">
+                  {BREADCRUMB_TYPES[overflowItem.type]?.icon}
+                </span>
+                {overflowItem.label}
+              </button>
+            ))}
+          </PharmaDropdown>
         </div>
       );
     }
@@ -387,31 +390,29 @@ const PharmaBreadcrumbs = ({
           
           {/* Actions Dropdown */}
           {hasActions && (
-            <Dropdown 
-              show={activeActions === index} 
-              onToggle={(show) => setActiveActions(show ? index : null)}
+            <PharmaDropdown
+              variant="link"
+              size="sm"
               className="pharma-breadcrumb-actions ms-1"
+              trigger="click"
+              align="start"
+              pharmaType="capsule"
+              label={<i className="fas fa-chevron-down"></i>}
+              show={activeActions === index}
+              onToggle={(show) => setActiveActions(show ? index : null)}
+              menuClassName="pharma-breadcrumb-actions-menu"
             >
-              <Dropdown.Toggle 
-                variant="link" 
-                size="sm"
-                className="pharma-breadcrumb-actions-toggle p-0"
-              >
-                <i className="fas fa-chevron-down"></i>
-              </Dropdown.Toggle>
-              <Dropdown.Menu className="pharma-breadcrumb-actions-menu">
-                {actions.map((action, actionIndex) => (
-                  <Dropdown.Item
-                    key={actionIndex}
-                    onClick={action.action}
-                    className="pharma-breadcrumb-action-item"
-                  >
-                    <span className="me-2">{action.icon}</span>
-                    {action.label}
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown>
+              {actions.map((action, actionIndex) => (
+                <button
+                  key={actionIndex}
+                  className="dropdown-item pharma-breadcrumb-action-item"
+                  onClick={action.action}
+                >
+                  <span className="me-2">{action.icon}</span>
+                  {action.label}
+                </button>
+              ))}
+            </PharmaDropdown>
           )}
         </div>
         

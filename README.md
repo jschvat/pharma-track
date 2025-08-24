@@ -67,6 +67,7 @@ pharmatrak/
 ├── 📁 services/                 # Business services (PDF, etc.)
 ├── 📁 tests/                    # Comprehensive test suites
 ├── 📁 documentation/           # 📚 Comprehensive documentation hub
+├── 📁 logs/                     # 📊 Organized logging system
 ├── 📁 scripts/                  # Setup and utility scripts
 └── server.js                    # Main Express server
 ```
@@ -367,6 +368,27 @@ npm test
 - **Slow Loading**: Check network tab and API response times
 - **High Memory**: Monitor component re-renders and memory leaks
 - **Database**: Review query performance and indexing
+
+## 📊 Logging & Monitoring
+
+### Organized Log System
+**[📊 logs/INDEX.md](./logs/INDEX.md)** - **Comprehensive logging hub** with organized categories
+
+### Log Categories
+- **[🖥️ Application Logs](./logs/application/)** - Runtime logs (server, backend, frontend)
+- **[❌ Error Logs](./logs/errors/)** - Error tracking and exceptions  
+- **[🏥 Health Logs](./logs/health/)** - System health monitoring (JSON)
+- **[⚡ Performance Logs](./logs/performance/)** - Response times and metrics
+- **[🔍 Access Logs](./logs/access/)** - HTTP request tracking
+
+### Log Management
+```bash
+# Quick log management
+./logs/manage-logs.sh status        # Show log overview
+./logs/manage-logs.sh errors        # View recent errors
+./logs/manage-logs.sh tail server   # Follow server logs
+./logs/manage-logs.sh search "error" # Search across logs
+```
 
 ## 📄 License
 MIT License - See LICENSE file for details

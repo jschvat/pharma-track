@@ -1,7 +1,8 @@
 import React from 'react';
-import { Navbar, Nav, NavDropdown, Container, Badge } from 'react-bootstrap';
+import { Navbar, Nav, Container, Badge } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
+import PharmaDropdown from './common/PharmaDropdown';
 
 const Navigation = () => {
   const { user, logout, isAdmin } = useAuth();
@@ -36,71 +37,100 @@ const Navigation = () => {
               <Nav.Link>Inventory</Nav.Link>
             </LinkContainer>
             
-            <NavDropdown title="Drugs" id="drugs-dropdown">
-              <LinkContainer to="/drugs">
-                <NavDropdown.Item>Browse Drugs</NavDropdown.Item>
-              </LinkContainer>
-              <LinkContainer to="/drugs/search">
-                <NavDropdown.Item>Search FDA</NavDropdown.Item>
-              </LinkContainer>
-            </NavDropdown>
+            <div className="nav-item dropdown">
+              <PharmaDropdown
+                label="Drugs"
+                trigger="hover"
+                variant="nav"
+                className="nav-link"
+                pharmaType="pill"
+              >
+                <LinkContainer to="/drugs">
+                  <button className="dropdown-item">Browse Drugs</button>
+                </LinkContainer>
+                <LinkContainer to="/drugs/search">
+                  <button className="dropdown-item">Search FDA</button>
+                </LinkContainer>
+              </PharmaDropdown>
+            </div>
             
-            <NavDropdown title="Reports" id="reports-dropdown">
-              <LinkContainer to="/audit/inventory">
-                <NavDropdown.Item>Inventory Audit</NavDropdown.Item>
-              </LinkContainer>
-              <LinkContainer to="/audit/ndc">
-                <NavDropdown.Item>NDC Reports</NavDropdown.Item>
-              </LinkContainer>
-              <LinkContainer to="/audit/transactions">
-                <NavDropdown.Item>Recent Transactions</NavDropdown.Item>
-              </LinkContainer>
-            </NavDropdown>
+            <div className="nav-item dropdown">
+              <PharmaDropdown
+                label="Reports"
+                trigger="hover"
+                variant="nav"
+                className="nav-link"
+                pharmaType="pill"
+              >
+                <LinkContainer to="/audit/inventory">
+                  <button className="dropdown-item">Inventory Audit</button>
+                </LinkContainer>
+                <LinkContainer to="/audit/ndc">
+                  <button className="dropdown-item">NDC Reports</button>
+                </LinkContainer>
+                <LinkContainer to="/audit/transactions">
+                  <button className="dropdown-item">Recent Transactions</button>
+                </LinkContainer>
+              </PharmaDropdown>
+            </div>
 
             {isAdmin() && (
-              <NavDropdown title="Admin" id="admin-dropdown">
-                <LinkContainer to="/admin/stores">
-                  <NavDropdown.Item>Stores</NavDropdown.Item>
-                </LinkContainer>
-                <LinkContainer to="/admin/users">
-                  <NavDropdown.Item>Users</NavDropdown.Item>
-                </LinkContainer>
-                <NavDropdown.Divider />
-                <LinkContainer to="/admin/analytics">
-                  <NavDropdown.Item>Analytics</NavDropdown.Item>
-                </LinkContainer>
-              </NavDropdown>
+              <div className="nav-item dropdown">
+                <PharmaDropdown
+                  label="Admin"
+                  trigger="hover"
+                  variant="nav"
+                  className="nav-link"
+                  pharmaType="pill"
+                >
+                  <LinkContainer to="/admin/stores">
+                    <button className="dropdown-item">Stores</button>
+                  </LinkContainer>
+                  <LinkContainer to="/admin/users">
+                    <button className="dropdown-item">Users</button>
+                  </LinkContainer>
+                  <div className="dropdown-divider"></div>
+                  <LinkContainer to="/admin/analytics">
+                    <button className="dropdown-item">Analytics</button>
+                  </LinkContainer>
+                </PharmaDropdown>
+              </div>
             )}
           </Nav>
           
           <Nav>
-            <NavDropdown
-              title={
-                <span>
-                  <i className="fas fa-user me-1"></i>
-                  {user.name}
-                  {user.role === 'admin' && (
-                    <Badge bg="success" className="ms-1">Admin</Badge>
-                  )}
-                </span>
-              }
-              id="user-dropdown"
-              align="end"
-            >
-              <NavDropdown.Item>
-                <strong>{user.name}</strong><br />
-                <small className="text-muted">{user.email}</small>
-              </NavDropdown.Item>
-              <NavDropdown.Divider />
-              <LinkContainer to="/profile">
-                <NavDropdown.Item>Profile</NavDropdown.Item>
-              </LinkContainer>
-              <NavDropdown.Divider />
-              <NavDropdown.Item onClick={handleLogout}>
-                <i className="fas fa-sign-out-alt me-1"></i>
-                Logout
-              </NavDropdown.Item>
-            </NavDropdown>
+            <div className="nav-item dropdown">
+              <PharmaDropdown
+                label={
+                  <span>
+                    <i className="fas fa-user me-1"></i>
+                    {user.name}
+                    {user.role === 'admin' && (
+                      <Badge bg="success" className="ms-1">Admin</Badge>
+                    )}
+                  </span>
+                }
+                trigger="click"
+                variant="nav"
+                className="nav-link"
+                align="end"
+                pharmaType="pill"
+              >
+                <div className="dropdown-item-text">
+                  <strong>{user.name}</strong><br />
+                  <small className="text-muted">{user.email}</small>
+                </div>
+                <div className="dropdown-divider"></div>
+                <LinkContainer to="/profile">
+                  <button className="dropdown-item">Profile</button>
+                </LinkContainer>
+                <div className="dropdown-divider"></div>
+                <button className="dropdown-item" onClick={handleLogout}>
+                  <i className="fas fa-sign-out-alt me-1"></i>
+                  Logout
+                </button>
+              </PharmaDropdown>
+            </div>
           </Nav>
         </Navbar.Collapse>
       </Container>

@@ -79,9 +79,10 @@ const DevelopmentDashboard = () => {
       title: 'Component Gallery',
       path: '/dev/components',
       icon: 'fas fa-palette',
-      description: 'Interactive showcase of all PharmaTraK components with live examples',
+      description: 'Interactive showcase of all PharmaTraK components with live examples. NOW WITH: PharmaToast, PharmaOffcanvas, PharmaBadge & PharmaSpinner!',
       status: 'stable',
-      color: 'primary'
+      color: 'success',
+      featured: true
     },
     {
       title: 'Workflow Demos',
@@ -142,23 +143,41 @@ const DevelopmentDashboard = () => {
       <div className="row">
         {devTools.map((tool, index) => (
           <div key={index} className="col-md-6 col-lg-4 mb-4">
-            <div className={`card h-100 border-${tool.color}`}>
-              <div className="card-header bg-light">
+            <div className={`card h-100 border-${tool.color} ${tool.featured ? 'shadow-lg' : ''}`}>
+              {tool.featured && (
+                <div className="position-absolute top-0 end-0 m-2">
+                  <Badge bg="warning" className="animate__animated animate__pulse animate__infinite">
+                    <i className="fas fa-star me-1"></i>NEW
+                  </Badge>
+                </div>
+              )}
+              <div className={`card-header ${tool.featured ? `bg-${tool.color} text-white` : 'bg-light'}`}>
                 <div className="d-flex justify-content-between align-items-center">
                   <h5 className="mb-0">
-                    <i className={`${tool.icon} text-${tool.color} me-2`}></i>
+                    <i className={`${tool.icon} ${tool.featured ? 'text-white' : `text-${tool.color}`} me-2`}></i>
                     {tool.title}
                   </h5>
-                  {getStatusBadge(tool.status)}
+                  {!tool.featured && getStatusBadge(tool.status)}
+                  {tool.featured && <Badge bg="light" text="dark">{tool.status}</Badge>}
                 </div>
               </div>
               <div className="card-body">
                 <p className="card-text">{tool.description}</p>
               </div>
               <div className="card-footer bg-transparent">
-                <a href={tool.path} className={`btn btn-${tool.color} w-100`}>
-                  Launch Tool
-                  <i className="fas fa-external-link-alt ms-2"></i>
+                <a href={tool.path} className={`btn btn-${tool.color} w-100 ${tool.featured ? 'btn-lg' : ''}`}>
+                  {tool.featured ? (
+                    <>
+                      <i className="fas fa-rocket me-2"></i>
+                      Launch Gallery
+                      <i className="fas fa-external-link-alt ms-2"></i>
+                    </>
+                  ) : (
+                    <>
+                      Launch Tool
+                      <i className="fas fa-external-link-alt ms-2"></i>
+                    </>
+                  )}
                 </a>
               </div>
             </div>

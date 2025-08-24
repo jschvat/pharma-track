@@ -20,6 +20,8 @@ import FormField from './common/FormField';
 import FormModal from './common/FormModal';
 import ActionButtonGroup from './common/ActionButtonGroup';
 import CardHeader from './common/CardHeader';
+import DraggableDialog from './DraggableDialog';
+import PharmaDropdown from './common/PharmaDropdown';
 
 // Custom CSS for professional solid buttons
 const buttonStyles = `
@@ -96,7 +98,7 @@ if (typeof document !== 'undefined') {
 }
 
 const AdminStores = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isGodMode } = useAuth();
   
   const [stores, setStores] = useState([]);
   const [users, setUsers] = useState([]);
@@ -154,9 +156,14 @@ const AdminStores = () => {
       setLoading(true);
       const params = {
         page: currentPage,
-        limit: storesPerPage,
-        admin_only: true  // Only show stores this admin manages
+        limit: storesPerPage
       };
+      
+      // Only filter to admin-managed stores for regular admin users
+      // God mode users should see ALL stores
+      if (!isGodMode()) {
+        params.admin_only = true;  // Only show stores this admin manages
+      }
 
       const response = await storeAPI.getAll(params);
       setStores(response.data.stores || []);
@@ -179,7 +186,11 @@ const AdminStores = () => {
 
   const loadUsers = async () => {
     try {
-      const response = await userAPI.getAll({ limit: 100 });
+      // God mode users should see ALL users system-wide for admin assignment
+      // Regular admins see only users from their store
+      const response = isGodMode() ? 
+        await userAPI.getAllUsers({ limit: 100 }) : // Use /all endpoint for god_mode
+        await userAPI.getAll({ limit: 100 });       // Use regular endpoint for admin
       setUsers(response.data.users || []);
     } catch (err) {
       console.error('Failed to load users:', err);
@@ -353,8 +364,8 @@ const AdminStores = () => {
         <Col>
           <Card>
             <CardHeader
-              title="My Store Management"
-              subtitle="Manage stores you administer"
+              title={isGodMode() ? "System-Wide Store Management" : "My Store Management"}
+              subtitle={isGodMode() ? "Manage all stores in the system" : "Manage stores you administer"}
               action={{
                 label: "Add Store",
                 icon: "fas fa-plus",
@@ -585,134 +596,226 @@ const AdminStores = () => {
         </Form>
       </Modal>
 
-      {/* Edit Store Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Store: {selectedStore?.name}</Modal.Title>
-        </Modal.Header>
+      {/* Edit Store Dialog */}
+      <DraggableDialog
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        title={`Edit Store: ${selectedStore?.name || ''}`}
+        size="xl"
+        maxWidth="1100px"
+        width="95vw"
+      >
         <Form onSubmit={handleEditStore}>
-          <Modal.Body>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Store Name *</Form.Label>
+          <div className="p-4">
+            <Row className="mb-4 g-4">
+              <Col lg={6}>
+                <Form.Group className="mb-4">
+                  <Form.Label className="fw-bold mb-2">Store Name *</Form.Label>
                   <Form.Control
                     type="text"
                     value={editForm.name}
                     onChange={(e) => setEditForm({...editForm, name: e.target.value})}
                     required
+                    className="form-control-lg"
                   />
                 </Form.Group>
               </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>State *</Form.Label>
-                  <Form.Select
-                    value={editForm.state}
-                    onChange={(e) => setEditForm({...editForm, state: e.target.value})}
-                    required
+              <Col lg={6}>
+                <Form.Group className="mb-4">
+                  <Form.Label className="fw-bold mb-2">State *</Form.Label>
+                  <PharmaDropdown
+                    variant="outline-secondary"
+                    className="w-100"
+                    trigger="click"
+                    align="start"
+                    pharmaType="pill"
+                    size="md"
+                    label={editForm.state || 'Select State'}
+                    menuClassName="w-100"
                   >
-                    <option value="">Select State</option>
                     {states.map(state => (
-                      <option key={state} value={state}>{state}</option>
+                      <button
+                        key={state}
+                        className={`dropdown-item ${editForm.state === state ? 'active' : ''}`}
+                        onClick={() => setEditForm({...editForm, state: state})}
+                      >
+                        {state}
+                      </button>
                     ))}
-                  </Form.Select>
+                  </PharmaDropdown>
                 </Form.Group>
               </Col>
             </Row>
-            <Form.Group className="mb-3">
-              <Form.Label>Address *</Form.Label>
+            
+            <hr className="my-5" />
+            <h5 className="text-muted mb-4 d-flex align-items-center">
+              <span className="me-2">📍</span> Location Information
+            </h5>
+            
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-bold mb-2">Address *</Form.Label>
               <Form.Control
                 as="textarea"
-                rows={2}
+                rows={3}
                 value={editForm.address}
                 onChange={(e) => setEditForm({...editForm, address: e.target.value})}
                 required
+                className="form-control-lg"
               />
             </Form.Group>
-            <Row>
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Zip Code *</Form.Label>
+            <Row className="mb-4 g-4">
+              <Col lg={4}>
+                <Form.Group className="mb-4">
+                  <Form.Label className="fw-bold mb-2">Zip Code *</Form.Label>
                   <Form.Control
                     type="text"
                     value={editForm.zipcode}
                     onChange={(e) => setEditForm({...editForm, zipcode: e.target.value})}
                     required
+                    className="form-control-lg"
+                    placeholder="90210"
                   />
                 </Form.Group>
               </Col>
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Phone *</Form.Label>
+              <Col lg={4}>
+                <Form.Group className="mb-4">
+                  <Form.Label className="fw-bold mb-2">Phone *</Form.Label>
                   <Form.Control
                     type="tel"
                     value={editForm.phone}
                     onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
                     required
+                    className="form-control-lg"
+                    placeholder="(555) 123-4567"
                   />
                 </Form.Group>
               </Col>
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Fax</Form.Label>
+              <Col lg={4}>
+                <Form.Group className="mb-4">
+                  <Form.Label className="fw-bold mb-2">Fax</Form.Label>
                   <Form.Control
                     type="tel"
                     value={editForm.fax}
                     onChange={(e) => setEditForm({...editForm, fax: e.target.value})}
+                    className="form-control-lg"
+                    placeholder="(555) 123-4568"
                   />
                 </Form.Group>
               </Col>
             </Row>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>DEA Registration Number *</Form.Label>
+            
+            <hr className="my-5" />
+            <h5 className="text-muted mb-4 d-flex align-items-center">
+              <span className="me-2">🏥</span> Registration Information
+            </h5>
+            
+            <Row className="mb-4 g-4">
+              <Col lg={6}>
+                <Form.Group className="mb-4">
+                  <Form.Label className="fw-bold mb-2">DEA Registration Number *</Form.Label>
                   <Form.Control
                     type="text"
                     value={editForm.dea_registration_number}
                     onChange={(e) => setEditForm({...editForm, dea_registration_number: e.target.value})}
                     required
+                    className="form-control-lg"
+                    placeholder="AB1234567"
                   />
                 </Form.Group>
               </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>NPI Number *</Form.Label>
+              <Col lg={6}>
+                <Form.Group className="mb-4">
+                  <Form.Label className="fw-bold mb-2">NPI Number *</Form.Label>
                   <Form.Control
                     type="text"
                     value={editForm.npi}
                     onChange={(e) => setEditForm({...editForm, npi: e.target.value})}
                     required
+                    className="form-control-lg"
+                    placeholder="1234567890"
                   />
                 </Form.Group>
               </Col>
             </Row>
-            <Form.Group className="mb-3">
-              <Form.Label>Store Admin</Form.Label>
-              <Form.Select
-                value={editForm.admin_user_id}
-                onChange={(e) => setEditForm({...editForm, admin_user_id: e.target.value})}
+            
+            <hr className="my-5" />
+            <h5 className="text-muted mb-4 d-flex align-items-center">
+              <span className="me-2">👤</span> Administrative Settings
+            </h5>
+            
+            <Row className="mb-4">
+              <Col lg={8}>
+                <Form.Group className="mb-4">
+                  <Form.Label className="fw-bold mb-2">Store Admin</Form.Label>
+              <PharmaDropdown
+                variant="outline-secondary"
+                className="w-100"
+                trigger="click"
+                align="start"
+                pharmaType="pill"
+                size="md"
+                label={
+                  editForm.admin_user_id 
+                    ? (() => {
+                        const selectedAdmin = users.find(user => user.id.toString() === editForm.admin_user_id.toString());
+                        return selectedAdmin ? selectedAdmin.name + (selectedAdmin.role === 'god_mode' ? ' (God Mode)' : '') : 'Select Store Admin';
+                      })()
+                    : 'Select Store Admin'
+                }
+                menuClassName="w-100"
               >
-                <option value="">Select Store Admin</option>
-                {users.filter(user => user.role === 'admin').map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.name} ({user.email})
-                  </option>
+                <button
+                  className={`dropdown-item ${!editForm.admin_user_id ? 'active' : ''}`}
+                  onClick={() => setEditForm({...editForm, admin_user_id: ''})}
+                >
+                  No Admin Assigned
+                </button>
+                {users.filter(user => user.role === 'admin' || user.role === 'god_mode').map(user => (
+                  <button
+                    key={user.id}
+                    className={`dropdown-item ${editForm.admin_user_id === user.id.toString() ? 'active' : ''}`}
+                    onClick={() => setEditForm({...editForm, admin_user_id: user.id})}
+                  >
+                    <div>
+                      <strong>{user.name}</strong>
+                      {user.role === 'god_mode' && <span className="badge bg-danger ms-2">God Mode</span>}
+                      <div className="small text-muted">
+                        {user.email}
+                        {isGodMode() && user.store_name && (
+                          <span> • {user.store_name}</span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
                 ))}
-              </Form.Select>
-            </Form.Group>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+              </PharmaDropdown>
+                </Form.Group>
+              </Col>
+            </Row>
+          </div>
+          
+          <div className="d-flex justify-content-end gap-3 mt-5 pt-4 border-top">
+            <Button 
+              variant="outline-secondary" 
+              onClick={() => setShowEditModal(false)}
+              size="lg"
+              className="px-4"
+            >
               Cancel
             </Button>
-            <Button variant="primary" type="submit" disabled={loading}>
-              {loading ? <Spinner animation="border" size="sm" /> : 'Update Store'}
+            <Button 
+              variant="primary" 
+              type="submit" 
+              disabled={loading}
+              size="lg"
+              className="px-4"
+            >
+              {loading ? <Spinner animation="border" size="sm" className="me-2" /> : null}
+              {loading ? 'Updating...' : 'Update Store'}
             </Button>
-          </Modal.Footer>
+          </div>
         </Form>
-      </Modal>
+      </DraggableDialog>
 
       {/* Delete Confirmation Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
