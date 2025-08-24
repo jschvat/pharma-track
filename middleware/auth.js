@@ -11,15 +11,19 @@ const authenticateToken = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('🔐 DEBUG AUTH: Decoded JWT userId:', decoded.userId);
     const user = await User.findById(decoded.userId);
+    console.log('🔐 DEBUG AUTH: Found user:', user ? `${user.name} (${user.role})` : 'null');
     
     if (!user || !user.is_active) {
+      console.log('❌ DEBUG AUTH: User invalid or inactive');
       return res.status(401).json({ error: 'Invalid or inactive user' });
     }
 
     req.user = user;
     next();
   } catch (error) {
+    console.log('❌ DEBUG AUTH: Token verification failed:', error.message);
     return res.status(403).json({ error: 'Invalid or expired token' });
   }
 };

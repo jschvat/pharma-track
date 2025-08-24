@@ -141,6 +141,22 @@ const verifyAddress = () => {
     .withMessage('Address contains invalid characters');
 };
 
+const verifyCity = () => {
+  return body('city')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('City must be between 2 and 100 characters')
+    .matches(/^[a-zA-Z\s\-'\.]+$/)
+    .withMessage('City can only contain letters, spaces, hyphens, apostrophes, and periods')
+    .custom((value) => {
+      if (value && value.includes('  ')) {
+        throw new Error('City cannot contain multiple consecutive spaces');
+      }
+      return true;
+    });
+};
+
 const verifyPassword = () => {
   return body('password')
     .isLength({ min: 8, max: 128 })
@@ -390,6 +406,7 @@ module.exports = {
   verifyState,
   verifyName,
   verifyAddress,
+  verifyCity,
   verifyPassword,
   verifyRole,
   verifyBoolean,

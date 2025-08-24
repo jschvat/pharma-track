@@ -114,6 +114,7 @@ const AdminStores = () => {
   const [createForm, setCreateForm] = useState({
     name: '',
     address: '',
+    city: '',
     state: '',
     zipcode: '',
     phone: '',
@@ -126,6 +127,7 @@ const AdminStores = () => {
   const [editForm, setEditForm] = useState({
     name: '',
     address: '',
+    city: '',
     state: '',
     zipcode: '',
     phone: '',
@@ -186,14 +188,24 @@ const AdminStores = () => {
 
   const loadUsers = async () => {
     try {
+      console.log('🔄 DEBUG: Starting to load users...', new Date().toISOString());
       // God mode users should see ALL users system-wide for admin assignment
       // Regular admins see only users from their store
+      console.log('🔍 DEBUG: Loading users, isGodMode:', isGodMode());
       const response = isGodMode() ? 
         await userAPI.getAllUsers({ limit: 100 }) : // Use /all endpoint for god_mode
         await userAPI.getAll({ limit: 100 });       // Use regular endpoint for admin
-      setUsers(response.data.users || []);
+      console.log('🔍 DEBUG: Raw response:', response);
+      console.log('🔍 DEBUG: Response data:', response.data);
+      // Handle both possible response structures
+      const usersData = response.data.users || response.data || [];
+      console.log('🔍 DEBUG: Final users data:', usersData);
+      console.log('🔍 DEBUG: Admin/god_mode users in final data:', usersData.filter(u => u.role === 'admin' || u.role === 'god_mode').length);
+      setUsers(usersData);
+      console.log('✅ DEBUG: Users state updated with', usersData.length, 'users at', new Date().toISOString());
     } catch (err) {
-      console.error('Failed to load users:', err);
+      console.error('❌ Failed to load users:', err);
+      console.error('❌ Error details:', err.response?.data || err.message);
     }
   };
 
@@ -272,11 +284,29 @@ const AdminStores = () => {
     setError('');
   };
 
+  // Debug function to test users state
+  const forceTestUsers = () => {
+    console.log('🧪 DEBUG: Forcing test user data');
+    const testUsers = [
+      { id: 1, name: 'Demo Admin', email: 'admin@pharmatrak.com', role: 'god_mode', store_id: 1, store_name: 'Demo Store' },
+      { id: 13, name: 'Store 2 Admin', email: 'admin2@pharmatrak.com', role: 'admin', store_id: 2, store_name: 'Store 2' },
+      { id: 15, name: 'Store 3 Admin', email: 'admin3@pharmatrak.com', role: 'admin', store_id: 3, store_name: 'Store 3' }
+    ];
+    setUsers(testUsers);
+    console.log('✅ DEBUG: Test users set:', testUsers);
+  };
+
   const openEditModal = (store) => {
+    console.log('🚀 DEBUG: Opening edit modal for store:', store);
+    console.log('🚀 DEBUG: Current users array length:', users.length);
+    console.log('🚀 DEBUG: Current users array:', users);
+    console.log('🚀 DEBUG: Admin/god_mode users available:', users.filter(u => u.role === 'admin' || u.role === 'god_mode').length);
+    
     setSelectedStore(store);
     setEditForm({
       name: store.name,
       address: store.address,
+      city: store.city || '',
       state: store.state,
       zipcode: store.zipcode,
       phone: store.phone,
@@ -378,6 +408,13 @@ const AdminStores = () => {
               {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
               {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
               
+              {/* Debug button - remove after testing */}
+              <div className="mb-3">
+                <Button variant="warning" size="sm" onClick={forceTestUsers}>
+                  🧪 DEBUG: Force Test Users ({users.length} current)
+                </Button>
+              </div>
+              
 
               {loading ? (
                 <div className="text-center py-4">
@@ -405,7 +442,7 @@ const AdminStores = () => {
                           <td>
                             <strong>{store.name}</strong>
                           </td>
-                          <td>{store.address}, {store.zipcode}</td>
+                          <td>{store.address}{store.city && `, ${store.city}`}, {store.zipcode}</td>
                           <td>
                             <Badge bg="secondary">{store.state}</Badge>
                           </td>
@@ -512,6 +549,15 @@ const AdminStores = () => {
                 required
               />
             </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>City</Form.Label>
+              <Form.Control
+                type="text"
+                value={createForm.city}
+                onChange={(e) => setCreateForm({...createForm, city: e.target.value})}
+                placeholder="Enter city"
+              />
+            </Form.Group>
             <Row>
               <Col md={4}>
                 <Form.Group className="mb-3">
@@ -577,7 +623,7 @@ const AdminStores = () => {
                 onChange={(e) => setCreateForm({...createForm, admin_user_id: e.target.value})}
               >
                 <option value="">Select Store Admin</option>
-                {users.filter(user => user.role === 'admin').map(user => (
+                {users.filter(user => user.role === 'admin' || user.role === 'god_mode').map(user => (
                   <option key={user.id} value={user.id}>
                     {user.name} ({user.email})
                   </option>
@@ -661,6 +707,16 @@ const AdminStores = () => {
                 onChange={(e) => setEditForm({...editForm, address: e.target.value})}
                 required
                 className="form-control-lg"
+              />
+            </Form.Group>
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-bold mb-2">City</Form.Label>
+              <Form.Control
+                type="text"
+                value={editForm.city}
+                onChange={(e) => setEditForm({...editForm, city: e.target.value})}
+                className="form-control-lg"
+                placeholder="Enter city"
               />
             </Form.Group>
             <Row className="mb-4 g-4">
@@ -747,48 +803,43 @@ const AdminStores = () => {
               <Col lg={8}>
                 <Form.Group className="mb-4">
                   <Form.Label className="fw-bold mb-2">Store Admin</Form.Label>
-              <PharmaDropdown
-                variant="outline-secondary"
-                className="w-100"
-                trigger="click"
-                align="start"
-                pharmaType="pill"
-                size="md"
-                label={
-                  editForm.admin_user_id 
-                    ? (() => {
-                        const selectedAdmin = users.find(user => user.id.toString() === editForm.admin_user_id.toString());
-                        return selectedAdmin ? selectedAdmin.name + (selectedAdmin.role === 'god_mode' ? ' (God Mode)' : '') : 'Select Store Admin';
-                      })()
-                    : 'Select Store Admin'
-                }
-                menuClassName="w-100"
-              >
-                <button
-                  className={`dropdown-item ${!editForm.admin_user_id ? 'active' : ''}`}
-                  onClick={() => setEditForm({...editForm, admin_user_id: ''})}
-                >
-                  No Admin Assigned
-                </button>
-                {users.filter(user => user.role === 'admin' || user.role === 'god_mode').map(user => (
-                  <button
-                    key={user.id}
-                    className={`dropdown-item ${editForm.admin_user_id === user.id.toString() ? 'active' : ''}`}
-                    onClick={() => setEditForm({...editForm, admin_user_id: user.id})}
-                  >
-                    <div>
-                      <strong>{user.name}</strong>
-                      {user.role === 'god_mode' && <span className="badge bg-danger ms-2">God Mode</span>}
-                      <div className="small text-muted">
-                        {user.email}
-                        {isGodMode() && user.store_name && (
-                          <span> • {user.store_name}</span>
+                  {(() => {
+                    console.log('🎯 DEBUG: Rendering edit form dropdown');
+                    console.log('🎯 DEBUG: Total users:', users.length);
+                    console.log('🎯 DEBUG: Users array:', users);
+                    const filtered = users.filter(user => user.role === 'admin' || user.role === 'god_mode');
+                    console.log('🎯 DEBUG: Filtered admin/god_mode users:', filtered);
+                    
+                    // Create options for PharmaDropdown
+                    const adminOptions = [
+                      { value: '', label: 'No Admin Assigned' },
+                      ...filtered.map(user => ({
+                        value: user.id.toString(),
+                        label: `${user.name}${user.role === 'god_mode' ? ' (God Mode)' : ''}`,
+                        subtitle: isGodMode() && user.store_name ? `${user.email} • ${user.store_name}` : user.email
+                      }))
+                    ];
+                    
+                    console.log('🎯 DEBUG: Created dropdown options:', adminOptions);
+                    
+                    return (
+                      <PharmaDropdown
+                        options={adminOptions}
+                        selectedValue={editForm.admin_user_id || ''}
+                        onSelectionChange={(value) => setEditForm({...editForm, admin_user_id: value})}
+                        placeholder="Select Store Admin"
+                        variant="outline-secondary"
+                        className="w-100"
+                        size="md"
+                        customOptionRenderer={(option, isSelected) => (
+                          <div>
+                            <strong>{option.label}</strong>
+                            {option.subtitle && <div className="small text-muted">{option.subtitle}</div>}
+                          </div>
                         )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </PharmaDropdown>
+                      />
+                    );
+                  })()}
                 </Form.Group>
               </Col>
             </Row>

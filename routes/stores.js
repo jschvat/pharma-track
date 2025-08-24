@@ -6,6 +6,7 @@ const { authenticateToken, requireRole, requireAdminRole } = require('../middlew
 const { 
   verifyName, 
   verifyAddress, 
+  verifyCity,
   verifyState, 
   verifyZipcode, 
   verifyPhoneNumber, 
@@ -20,6 +21,7 @@ const router = express.Router();
 router.post('/', authenticateToken, requireAdminRole, [
   verifyName(),
   verifyAddress(),
+  verifyCity(),
   verifyState(),
   verifyZipcode(),
   verifyPhoneNumber(),
@@ -34,7 +36,7 @@ router.post('/', authenticateToken, requireAdminRole, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, address, state, zipcode, phone, fax, dea_registration_number, npi, admin_user_id } = req.body;
+    const { name, address, city, state, zipcode, phone, fax, dea_registration_number, npi, admin_user_id } = req.body;
 
     const existingDeaStore = await Store.findByDeaNumber(dea_registration_number);
     if (existingDeaStore) {
@@ -56,6 +58,7 @@ router.post('/', authenticateToken, requireAdminRole, [
     const storeId = await Store.create({
       name,
       address,
+      city,
       state,
       zipcode,
       phone,
@@ -155,6 +158,7 @@ router.put('/:id', authenticateToken, requireAdminRole, [
   verifyId(),
   verifyName().optional(),
   verifyAddress().optional(),
+  verifyCity().optional(),
   verifyState().optional(),
   verifyZipcode().optional(),
   verifyPhoneNumber().optional(),
@@ -170,7 +174,7 @@ router.put('/:id', authenticateToken, requireAdminRole, [
     }
 
     const { id } = req.params;
-    const { name, address, state, zipcode, phone, fax, dea_registration_number, npi, admin_user_id } = req.body;
+    const { name, address, city, state, zipcode, phone, fax, dea_registration_number, npi, admin_user_id } = req.body;
 
     const store = await Store.findById(id);
     if (!store) {
@@ -201,6 +205,7 @@ router.put('/:id', authenticateToken, requireAdminRole, [
     const updateData = {};
     if (name) updateData.name = name;
     if (address) updateData.address = address;
+    if (city !== undefined) updateData.city = city;
     if (state) updateData.state = state;
     if (zipcode) updateData.zipcode = zipcode;
     if (phone) updateData.phone = phone;

@@ -4,17 +4,18 @@ const { handleDatabaseError } = require('./ValidationError');
 class Store {
   static async create(storeData) {
     try {
-      const { name, address, state, zipcode, phone, fax, dea_registration_number, npi, admin_user_id } = storeData;
+      const { name, address, city, state, zipcode, phone, fax, dea_registration_number, npi, admin_user_id } = storeData;
       
       // Clean and format data
       const cleanPhone = phone.replace(/[^\d]/g, '');
       const cleanFax = fax ? fax.replace(/[^\d]/g, '') : null;
+      const cleanCity = city ? city.trim() : null;
       const upperState = state.toUpperCase();
       const upperDea = dea_registration_number.toUpperCase();
       
       const [result] = await db.execute(
-        'INSERT INTO stores (name, address, state, zipcode, phone, fax, dea_registration_number, npi, admin_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [name.trim(), address.trim(), upperState, zipcode, cleanPhone, cleanFax, upperDea, npi, admin_user_id]
+        'INSERT INTO stores (name, address, city, state, zipcode, phone, fax, dea_registration_number, npi, admin_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [name.trim(), address.trim(), cleanCity, upperState, zipcode, cleanPhone, cleanFax, upperDea, npi, admin_user_id]
       );
       
       return result.insertId;
@@ -59,7 +60,7 @@ class Store {
 
       if (filters.search) {
         const searchTerm = filters.search.replace(/'/g, "''");
-        whereConditions.push(`(s.name LIKE '%${searchTerm}%' OR s.address LIKE '%${searchTerm}%' OR s.dea_registration_number LIKE '%${searchTerm}%' OR s.npi LIKE '%${searchTerm}%')`);
+        whereConditions.push(`(s.name LIKE '%${searchTerm}%' OR s.address LIKE '%${searchTerm}%' OR s.city LIKE '%${searchTerm}%' OR s.dea_registration_number LIKE '%${searchTerm}%' OR s.npi LIKE '%${searchTerm}%')`);
       }
 
       if (filters.admin_user_id) {
@@ -94,8 +95,8 @@ class Store {
       }
 
       if (filters.search) {
-        query += ' AND (s.name LIKE ? OR s.address LIKE ? OR s.dea_registration_number LIKE ? OR s.npi LIKE ?)';
-        params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+        query += ' AND (s.name LIKE ? OR s.address LIKE ? OR s.city LIKE ? OR s.dea_registration_number LIKE ? OR s.npi LIKE ?)';
+        params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
       }
 
       if (filters.admin_user_id) {
@@ -170,7 +171,7 @@ class Store {
             value = value.toUpperCase();
           } else if (key === 'dea_registration_number' && value) {
             value = value.toUpperCase();
-          } else if ((key === 'name' || key === 'address') && value) {
+          } else if ((key === 'name' || key === 'address' || key === 'city') && value) {
             value = value.trim();
           }
           

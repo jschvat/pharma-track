@@ -21,6 +21,33 @@ router.get('/debug', (req, res) => {
   res.json({ message: 'Users route is working', timestamp: new Date().toISOString() });
 });
 
+// Debug endpoint to show admin users for dropdown testing
+router.get('/admin-users-debug', authenticateToken, requireAdminRole, async (req, res) => {
+  try {
+    const users = await User.findWithFilters({}, 100, 0);
+    const adminUsers = users.filter(u => u.role === 'admin' || u.role === 'god_mode');
+    
+    res.json({
+      message: 'Admin users for dropdown debugging',
+      totalUsers: users.length,
+      adminUsers: adminUsers.map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        store_id: u.store_id,
+        store_name: u.store_name,
+        is_active: u.is_active
+      })),
+      adminCount: adminUsers.length,
+      userRole: req.user.role,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get stores available to admin for user assignment
 router.get('/available-stores', authenticateToken, requireStoreAdmin, async (req, res) => {
   try {
@@ -181,10 +208,14 @@ router.get('/all', authenticateToken, requireAdminRole, [
     if (active !== undefined) filters.is_active = active;
     if (search) filters.search = search;
 
+    console.log('🔍 DEBUG /users/all: User role:', req.user.role);
+    console.log('🔍 DEBUG /users/all: Filters:', filters);
     const users = await User.findWithFilters(filters, limit, offset);
     const total = await User.countWithFilters(filters);
-
-    res.json({ 
+    console.log('🔍 DEBUG /users/all: Found users count:', users.length);
+    console.log('🔍 DEBUG /users/all: Admin/god_mode users:', users.filter(u => u.role === 'admin' || u.role === 'god_mode').length);
+    
+    const responseData = { 
       users,
       pagination: {
         page,
@@ -192,7 +223,15 @@ router.get('/all', authenticateToken, requireAdminRole, [
         total,
         pages: Math.ceil(total / limit)
       }
+    };
+    
+    console.log('📤 DEBUG /users/all: Sending response with admin users:');
+    const adminUsers = users.filter(u => u.role === 'admin' || u.role === 'god_mode');
+    adminUsers.forEach(user => {
+      console.log(`   - ${user.name} (${user.role}) - ID: ${user.id}`);
     });
+    
+    res.json(responseData);
   } catch (error) {
     console.error('Get all users error:', error);
     res.status(500).json({ error: 'Failed to fetch users' });
