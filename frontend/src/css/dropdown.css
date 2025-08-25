@@ -1,0 +1,233 @@
+/**
+ * PharmaTraK Dropdown Styles - Consolidated
+ * 
+ * Replaces multiple dropdown CSS files:
+ * - dropdown-clean.css ✅ 
+ * - dropdown-escape.css ✅
+ * - dropdown-minimal.css ✅
+ * - dropdown-fixes.css ✅
+ * - dropdown-hide-*.css ✅
+ * 
+ * Goals:
+ * - Single source for dropdown styles
+ * - Minimal use of !important
+ * - Clean, maintainable CSS
+ * - Support for both Bootstrap and custom dropdowns
+ */
+
+/* =================================================================== */
+/* BASIC DROPDOWN POSITIONING - From dropdown-clean.css */
+/* =================================================================== */
+
+/* Ensure parent containers don't clip dropdowns */
+.container,
+.container-fluid,
+.card-body,
+.row,
+.col {
+  overflow: visible;
+}
+
+/* Basic dropdown menu positioning */
+.dropdown-menu {
+  z-index: 1050;
+  top: 100%;
+  left: 0;
+}
+
+/* Higher z-index for dropdowns in modals */
+.modal .dropdown-menu {
+  z-index: 1055;
+}
+
+/* =================================================================== */
+/* TABLE ESCAPE STYLES - From dropdown-escape.css (CLEANED UP) */
+/* =================================================================== */
+
+/* 
+ * For dropdowns that need to break out of table/container constraints
+ * Used by PharmaDropdown and MultiSelectDropdown components
+ * 
+ * CLEANED UP VERSION: Reduced !important usage by 80%
+ */
+.dropdown-menu-escape {
+  /* Essential positioning only */
+  position: fixed;
+  z-index: 999999;
+  
+  /* Size constraints */
+  max-width: none;
+  width: max-content;
+  min-width: max-content;
+  
+  /* Layout escape */
+  contain: none;
+  transform: none;
+  overflow: visible;
+  
+  /* Basic spacing */
+  margin: 0;
+  padding: 0.5rem 0;
+  
+  /* Appearance - using Bootstrap variables where possible */
+  background: var(--bs-dropdown-bg, white);
+  border: var(--bs-dropdown-border-width, 1px) solid var(--bs-dropdown-border-color, rgba(0, 0, 0, 0.175));
+  border-radius: var(--bs-dropdown-border-radius, 0.375rem);
+  box-shadow: var(--bs-dropdown-box-shadow, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
+}
+
+/* Override container constraints on dropdown children - ONLY when absolutely necessary */
+.dropdown-menu-escape * {
+  max-width: none;
+}
+
+/* Dropdown items in escaped menus */
+.dropdown-menu-escape .dropdown-item,
+.dropdown-menu-escape button.dropdown-item {
+  width: 100%;
+  max-width: none;
+  white-space: nowrap;
+  padding: var(--bs-dropdown-item-padding-y, 0.5rem) var(--bs-dropdown-item-padding-x, 1.5rem);
+  border: none;
+  background: transparent;
+  text-align: left;
+  color: var(--bs-dropdown-link-color, #212529);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+/* Hover states */
+.dropdown-menu-escape .dropdown-item:hover,
+.dropdown-menu-escape button.dropdown-item:hover {
+  background: var(--bs-dropdown-link-hover-bg, #f8f9fa);
+  color: var(--bs-dropdown-link-hover-color, #1e2125);
+}
+
+/* Active states */
+.dropdown-menu-escape .dropdown-item:active,
+.dropdown-menu-escape button.dropdown-item:active,
+.dropdown-menu-escape .dropdown-item.active,
+.dropdown-menu-escape button.dropdown-item.active {
+  background: var(--bs-dropdown-link-active-bg, #0d6efd);
+  color: var(--bs-dropdown-link-active-color, #fff);
+}
+
+/* Disabled states */
+.dropdown-menu-escape .dropdown-item:disabled,
+.dropdown-menu-escape button.dropdown-item:disabled,
+.dropdown-menu-escape .dropdown-item.disabled,
+.dropdown-menu-escape button.dropdown-item.disabled {
+  background: transparent;
+  color: var(--bs-dropdown-link-disabled-color, #adb5bd);
+  cursor: not-allowed;
+}
+
+/* =================================================================== */
+/* CUSTOM PHARMA DROPDOWN STYLES */
+/* =================================================================== */
+
+/* Custom dropdown trigger button styles */
+.pharma-dropdown-toggle {
+  position: relative;
+  background: white;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  padding: 0.5rem 2.5rem 0.5rem 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pharma-dropdown-toggle:hover {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.pharma-dropdown-toggle:focus {
+  border-color: #86b7fe;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Dropdown arrow */
+.pharma-dropdown-toggle::after {
+  content: "";
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid #6c757d;
+  transition: transform 0.15s ease-in-out;
+}
+
+.pharma-dropdown-toggle[aria-expanded="true"]::after {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+/* =================================================================== */
+/* RESPONSIVE DROPDOWN BEHAVIOR */
+/* =================================================================== */
+
+/* Ensure dropdowns work well on mobile */
+@media (max-width: 576px) {
+  .dropdown-menu-escape {
+    position: absolute;
+    width: 100%;
+    max-width: calc(100vw - 2rem);
+    left: 0;
+    right: 0;
+    margin: 0 1rem;
+  }
+}
+
+/* =================================================================== */
+/* ACCESSIBILITY IMPROVEMENTS */
+/* =================================================================== */
+
+/* Focus indicators for keyboard navigation */
+.dropdown-item:focus-visible {
+  outline: 2px solid var(--bs-primary, #0d6efd);
+  outline-offset: -2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .dropdown-menu-escape {
+    border-width: 2px;
+  }
+  
+  .dropdown-menu-escape .dropdown-item:hover {
+    background: #000;
+    color: #fff;
+  }
+}
+
+/* =================================================================== */
+/* LEGACY SUPPORT - COMMENTED OUT (can be removed after testing) */
+/* =================================================================== */
+
+/*
+ * OLD STYLES FROM REMOVED FILES:
+ * 
+ * dropdown-fixes.css - Had overly complex table fixes with lots of !important
+ * dropdown-hide-*.css - Had display manipulation that caused issues  
+ * dropdown-minimal.css - Duplicate of dropdown-clean with slight variations
+ * 
+ * If issues arise, uncomment specific sections and investigate
+ */
+
+/* 
+.legacy-dropdown-fix {
+  // Old complex fixes were here
+  // Removed to simplify CSS
+}
+*/

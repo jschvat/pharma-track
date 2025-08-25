@@ -29,7 +29,8 @@ import './utils/safeDebugLogger';
 
 import './App.css';
 import './theme.css';
-import './css/dropdown-clean.css';
+// UPDATED: Consolidated all dropdown styles into single file
+import './css/dropdown.css';
 
 function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);

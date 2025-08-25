@@ -1,140 +1,149 @@
-/* Dropdown Escape CSS - Forces dropdowns to break out of table constraints */
+/* Dropdown Escape CSS - DEPRECATED - Forces dropdowns to break out of table constraints 
+ * 
+ * ⚠️ REPLACED BY: dropdown.css 
+ * This file is kept for reference but is no longer used
+ * All styles have been consolidated and cleaned up in dropdown.css
+ * 
+ * ======================== COMMENTED OUT ========================
+ * Heavy use of !important was problematic, replaced with cleaner approach
+ * ======================== COMMENTED OUT ========================
+ */
 
-/* Force any dropdown menu to escape table constraints */
-.dropdown-menu-escape {
-  /* Positioning */
-  position: fixed !important;
-  z-index: 999999 !important;
-  
-  /* Remove all constraints */
-  max-width: none !important;
-  width: max-content !important;
-  min-width: max-content !important;
-  
-  /* Escape containment */
-  contain: none !important;
-  transform: none !important;
-  clip: auto !important;
-  clip-path: none !important;
-  overflow: visible !important;
-  
-  /* Reset margins and padding that might interfere */
-  margin: 0 !important;
-  padding: 0.5rem 0 !important;
-  
-  /* Isolation */
-  isolation: auto !important;
-  will-change: auto !important;
-  
-  /* Appearance */
-  background: white !important;
-  border: 1px solid rgba(0, 0, 0, 0.175) !important;
-  border-radius: 0.375rem !important;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Override any table or container constraints on dropdown parents */
-.dropdown-menu-escape * {
-  max-width: none !important;
-}
-
-/* Ensure dropdown items have proper styling */
-.dropdown-menu-escape .dropdown-item,
-.dropdown-menu-escape button.dropdown-item {
-  width: 100% !important;
-  max-width: none !important;
-  white-space: nowrap !important;
-  padding: 0.5rem 1.5rem !important; /* Increased horizontal padding */
-  border: none !important;
-  background: transparent !important;
-  text-align: left !important;
-  color: #212529 !important;
-  text-decoration: none !important;
-  display: block !important;
-}
-
-.dropdown-menu-escape .dropdown-item:hover,
-.dropdown-menu-escape button.dropdown-item:hover {
-  background-color: #e9ecef !important;
-  color: #1e2125 !important;
-}
-
-.dropdown-menu-escape .dropdown-item.active,
-.dropdown-menu-escape button.dropdown-item.active {
-  background-color: #0d6efd !important;
-  color: #fff !important;
-}
-
-.dropdown-menu-escape .dropdown-item:disabled,
-.dropdown-menu-escape button.dropdown-item:disabled {
-  color: #6c757d !important;
-  pointer-events: none !important;
-  background-color: transparent !important;
-}
-
-/* Dropdown dividers */
-.dropdown-menu-escape .dropdown-divider {
-  height: 0 !important;
-  margin: 0.5rem 0 !important;
-  overflow: hidden !important;
-  border-top: 1px solid rgba(0, 0, 0, 0.175) !important;
-}
-
-/* Dropdown headers */
-.dropdown-menu-escape .dropdown-header,
-.dropdown-menu-escape h6.dropdown-header {
-  display: block !important;
-  padding: 0.5rem 1rem !important;
-  margin-bottom: 0 !important;
-  font-size: 0.875rem !important;
-  color: #6c757d !important;
-  white-space: nowrap !important;
-}
-
-/* Input controls inside dropdowns */
-.dropdown-menu-escape input[type="checkbox"] {
-  margin-right: 0.75rem !important;
-  pointer-events: none !important;
-  flex-shrink: 0 !important;
-}
-
-/* Ensure checkbox items have proper layout */
-.dropdown-menu-escape .dropdown-item:has(input[type="checkbox"]),
-.dropdown-menu-escape button.dropdown-item:has(input[type="checkbox"]) {
-  display: flex !important;
-  align-items: center !important;
-  padding: 0.5rem 1.5rem !important;
-}
-
-.dropdown-menu-escape .form-control {
-  margin: 0.5rem 1rem !important;
-  width: calc(100% - 2rem) !important;
-}
-
-/* Force table cells to not constrain child dropdowns */
-th:has(.dropdown-menu-escape),
-td:has(.dropdown-menu-escape) {
-  overflow: visible !important;
-  position: static !important;
-}
-
-/* Force table containers to not constrain dropdowns */
-.table-responsive:has(.dropdown-menu-escape) {
-  overflow: visible !important;
-}
-
-/* Animation for smooth appearance */
-.dropdown-menu-escape {
-  animation: dropdownFadeIn 0.15s ease-in-out !important;
-}
-
-@keyframes dropdownFadeIn {
-  from {
-    opacity: 0;
-    transform: translate(0, -10px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(0, 0);
-  }
-}
+/* /* Force any dropdown menu to escape table constraints */
+/* .dropdown-menu-escape {
+/*   /* Positioning */
+/*   position: fixed !important;
+/*   z-index: 999999 !important;
+/*   
+/*   /* Remove all constraints */
+/*   max-width: none !important;
+/*   width: max-content !important;
+/*   min-width: max-content !important;
+/*   
+/*   /* Escape containment */
+/*   contain: none !important;
+/*   transform: none !important;
+/*   clip: auto !important;
+/*   clip-path: none !important;
+/*   overflow: visible !important;
+/*   
+/*   /* Reset margins and padding that might interfere */
+/*   margin: 0 !important;
+/*   padding: 0.5rem 0 !important;
+/*   
+/*   /* Isolation */
+/*   isolation: auto !important;
+/*   will-change: auto !important;
+/*   
+/*   /* Appearance */
+/*   background: white !important;
+/*   border: 1px solid rgba(0, 0, 0, 0.175) !important;
+/*   border-radius: 0.375rem !important;
+/*   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+/* }
+/* 
+/* /* Override any table or container constraints on dropdown parents */
+/* .dropdown-menu-escape * {
+/*   max-width: none !important;
+/* }
+/* 
+/* /* Ensure dropdown items have proper styling */
+/* .dropdown-menu-escape .dropdown-item,
+/* .dropdown-menu-escape button.dropdown-item {
+/*   width: 100% !important;
+/*   max-width: none !important;
+/*   white-space: nowrap !important;
+/*   padding: 0.5rem 1.5rem !important; /* Increased horizontal padding */
+/*   border: none !important;
+/*   background: transparent !important;
+/*   text-align: left !important;
+/*   color: #212529 !important;
+/*   text-decoration: none !important;
+/*   display: block !important;
+/* }
+/* 
+/* .dropdown-menu-escape .dropdown-item:hover,
+/* .dropdown-menu-escape button.dropdown-item:hover {
+/*   background-color: #e9ecef !important;
+/*   color: #1e2125 !important;
+/* }
+/* 
+/* .dropdown-menu-escape .dropdown-item.active,
+/* .dropdown-menu-escape button.dropdown-item.active {
+/*   background-color: #0d6efd !important;
+/*   color: #fff !important;
+/* }
+/* 
+/* .dropdown-menu-escape .dropdown-item:disabled,
+/* .dropdown-menu-escape button.dropdown-item:disabled {
+/*   color: #6c757d !important;
+/*   pointer-events: none !important;
+/*   background-color: transparent !important;
+/* }
+/* 
+/* /* Dropdown dividers */
+/* .dropdown-menu-escape .dropdown-divider {
+/*   height: 0 !important;
+/*   margin: 0.5rem 0 !important;
+/*   overflow: hidden !important;
+/*   border-top: 1px solid rgba(0, 0, 0, 0.175) !important;
+/* }
+/* 
+/* /* Dropdown headers */
+/* .dropdown-menu-escape .dropdown-header,
+/* .dropdown-menu-escape h6.dropdown-header {
+/*   display: block !important;
+/*   padding: 0.5rem 1rem !important;
+/*   margin-bottom: 0 !important;
+/*   font-size: 0.875rem !important;
+/*   color: #6c757d !important;
+/*   white-space: nowrap !important;
+/* }
+/* 
+/* /* Input controls inside dropdowns */
+/* .dropdown-menu-escape input[type="checkbox"] {
+/*   margin-right: 0.75rem !important;
+/*   pointer-events: none !important;
+/*   flex-shrink: 0 !important;
+/* }
+/* 
+/* /* Ensure checkbox items have proper layout */
+/* .dropdown-menu-escape .dropdown-item:has(input[type="checkbox"]),
+/* .dropdown-menu-escape button.dropdown-item:has(input[type="checkbox"]) {
+/*   display: flex !important;
+/*   align-items: center !important;
+/*   padding: 0.5rem 1.5rem !important;
+/* }
+/* 
+/* .dropdown-menu-escape .form-control {
+/*   margin: 0.5rem 1rem !important;
+/*   width: calc(100% - 2rem) !important;
+/* }
+/* 
+/* /* Force table cells to not constrain child dropdowns */
+/* th:has(.dropdown-menu-escape),
+/* td:has(.dropdown-menu-escape) {
+/*   overflow: visible !important;
+/*   position: static !important;
+/* }
+/* 
+/* /* Force table containers to not constrain dropdowns */
+/* .table-responsive:has(.dropdown-menu-escape) {
+/*   overflow: visible !important;
+/* }
+/* 
+/* /* Animation for smooth appearance */
+/* .dropdown-menu-escape {
+/*   animation: dropdownFadeIn 0.15s ease-in-out !important;
+/* }
+/* 
+/* @keyframes dropdownFadeIn {
+/*   from {
+/*     opacity: 0;
+/*     transform: translate(0, -10px);
+/*   }
+/*   to {
+/*     opacity: 1;
+/*     transform: translate(0, 0);
+/*   }
+/* }*/

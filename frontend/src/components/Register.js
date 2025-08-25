@@ -304,7 +304,7 @@ const Register = () => {
 
   return (
     <div className="login-container">
-      <div className="login-card" style={{ maxWidth: '600px' }}>
+      <div className="login-card register-card-wide">
         {/* Header with Logo */}
         <div className="login-header">
           <div className="login-logo">
@@ -313,17 +313,17 @@ const Register = () => {
               viewBox="0 0 400 200" 
               xmlns="http://www.w3.org/2000/svg"
               alt="PharmaTraK - Professional Pharmacy Management System"
-              style={{ height: '120px' }}
+              className="register-logo"
             >
               <defs>
                 <linearGradient id="trayGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{stopColor:"#e3f2fd",stopOpacity:1}} />
-                  <stop offset="50%" style={{stopColor:"#ffffff",stopOpacity:1}} />
-                  <stop offset="100%" style={{stopColor:"#bbdefb",stopOpacity:1}} />
+                  <stop offset="0%" className="svg-tray-gradient-start" />
+                  <stop offset="50%" className="svg-tray-gradient-mid" />
+                  <stop offset="100%" className="svg-tray-gradient-end" />
                 </linearGradient>
                 <linearGradient id="rimGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{stopColor:"#1976d2",stopOpacity:1}} />
-                  <stop offset="100%" style={{stopColor:"#2196f3",stopOpacity:1}} />
+                  <stop offset="0%" className="svg-rim-gradient-start" />
+                  <stop offset="100%" className="svg-rim-gradient-end" />
                 </linearGradient>
               </defs>
               <rect width="400" height="200" fill="#f8f9fa"/>
@@ -331,7 +331,7 @@ const Register = () => {
                     fill="url(#trayGradient)" stroke="#1976d2" strokeWidth="2"/>
               <text x="200" y="50" textAnchor="middle" 
                     fontFamily="serif" fontSize="38" fontWeight="bold" 
-                    fill="#1565c0" style={{letterSpacing: "2px"}}>
+                    fill="#1565c0" className="svg-logo-text">
                 PharmaTraK
               </text>
               <text x="200" y="185" textAnchor="middle" 
@@ -439,7 +439,7 @@ const Register = () => {
 
             {/* Store Information Section */}
             <div className="mb-4">
-              <h5 className="mb-3" style={{ color: '#1976d2', borderBottom: '2px solid #e3f2fd', paddingBottom: '8px' }}>
+              <h5 className="mb-3 register-section-header">
                 <i className="fas fa-store me-2"></i>
                 Store Information
               </h5>
@@ -594,7 +594,7 @@ const Register = () => {
                     required
                     placeholder="AB1234567"
                     maxLength="9"
-                    style={{ textTransform: 'uppercase' }}
+                    className="register-dea-input"
                   />
                   <small className="form-text text-muted">
                     2 letters + 7 digits (e.g., AB1234567)
@@ -685,7 +685,7 @@ const Register = () => {
               type="submit"
               className="btn btn-success w-100 login-submit-btn mb-3"
               disabled={loading}
-              style={{ padding: '12px' }}
+              className="register-submit-button"
             >
               {loading ? (
                 <>

@@ -18,7 +18,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import '../../css/dropdown-escape.css';
+// UPDATED: Using consolidated dropdown styles
+import '../../css/dropdown.css';
 
 const MultiSelectDropdown = ({
   // Required props

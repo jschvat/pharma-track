@@ -6,6 +6,61 @@
  * scattered across individual component CSS files.
  */
 
+/* ===== CSS CLEANUP: EXTRACTED INLINE STYLES ===== */
+
+/* Register Component - Extracted from inline styles */
+.register-card-wide {
+  max-width: 600px;
+}
+
+.register-logo {
+  height: 120px;
+}
+
+.register-section-header {
+  color: #1976d2;
+  border-bottom: 2px solid #e3f2fd;
+  padding-bottom: 8px;
+}
+
+.register-dea-input {
+  text-transform: uppercase;
+}
+
+.register-submit-button {
+  padding: 12px;
+}
+
+/* SVG Gradient Stops - Extracted from Register.js */
+.svg-tray-gradient-start {
+  stop-color: #e3f2fd;
+  stop-opacity: 1;
+}
+
+.svg-tray-gradient-mid {
+  stop-color: #ffffff;
+  stop-opacity: 1;
+}
+
+.svg-tray-gradient-end {
+  stop-color: #bbdefb;
+  stop-opacity: 1;
+}
+
+.svg-rim-gradient-start {
+  stop-color: #1976d2;
+  stop-opacity: 1;
+}
+
+.svg-rim-gradient-end {
+  stop-color: #2196f3;
+  stop-opacity: 1;
+}
+
+.svg-logo-text {
+  letter-spacing: 2px;
+}
+
 /* ===== DASHBOARD COMPONENT ===== */
 
 .dashboard-loading {
