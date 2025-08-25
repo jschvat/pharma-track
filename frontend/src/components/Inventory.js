@@ -1496,106 +1496,50 @@ const Inventory = () => {
                       <span className="text-danger">*</span>
                     </Form.Label>
                     <PharmaDropdown
-                      variant={
-                        validationErrors.reference_number
-                          ? "outline-danger"
-                          : "outline-secondary"
-                      }
-                      className={`w-100 ${
-                        validationErrors.reference_number ? "is-invalid" : ""
-                      }`}
-                      trigger="click"
-                      align="start"
-                      pharmaType="tablet"
-                      size="md"
-                      label={
-                        transactionForm.reference_number
-                          ? (() => {
-                              const selectedRx = availablePrescriptions.find(
-                                (rx) =>
-                                  rx.prescription_number ===
-                                  transactionForm.reference_number
-                              );
-                              return selectedRx ? (
-                                <span className="prescription-info">
-                                  <span className="rx-bold">
-                                    Rx #{selectedRx.prescription_number}
-                                  </span>
-                                  , {formatDate(selectedRx.fill_date)},{" "}
-                                  {formatTime(selectedRx.fill_date)},{" "}
-                                  {selectedRx.filled_by || "Unknown"}, qty:{" "}
-                                  {selectedRx.available_for_return}
-                                </span>
-                              ) : (
-                                "Choose a prescription..."
-                              );
-                            })()
-                          : "Choose a prescription..."
-                      }
-                      menuClassName="w-100"
-                      menuStyle={{ maxHeight: "200px", overflowY: "auto" }}
-                    >
-                      <button
-                        className="dropdown-item text-muted"
-                        onClick={() => {
-                          setTransactionForm({
-                            ...transactionForm,
-                            reference_number: "",
-                            quantity: "",
+                      options={availablePrescriptions.map(rx => ({
+                        value: rx.prescription_number,
+                        label: `Rx# ${rx.prescription_number} - ${formatDate(rx.fill_date)} - Qty: ${rx.available_for_return}`,
+                        data: rx
+                      }))}
+                      selectedValue={transactionForm.reference_number}
+                      onSelectionChange={(value) => {
+                        setTransactionForm({
+                          ...transactionForm,
+                          reference_number: value,
+                          quantity: value ? availablePrescriptions.find(rx => rx.prescription_number === value)?.available_for_return.toString() : ""
+                        });
+                        if (validationErrors.reference_number) {
+                          setValidationErrors({
+                            ...validationErrors,
+                            reference_number: undefined,
                           });
-                          if (validationErrors.reference_number) {
-                            setValidationErrors({
-                              ...validationErrors,
-                              reference_number: undefined,
-                            });
-                          }
-                        }}
-                      >
-                        Choose a prescription...
-                      </button>
-                      {availablePrescriptions.map((rx) => (
-                        <button
-                          key={rx.prescription_number}
-                          className={`dropdown-item ${
-                            transactionForm.reference_number === rx.prescription_number ? 'active' : ''
-                          }`}
-                          onClick={() => {
-                            setTransactionForm({
-                              ...transactionForm,
-                              reference_number: rx.prescription_number,
-                              quantity: rx.available_for_return.toString(),
-                            });
-                            // Clear validation error when user makes selection
-                            if (validationErrors.reference_number) {
-                              setValidationErrors({
-                                ...validationErrors,
-                                reference_number: undefined,
-                              });
-                            }
-                          }}
-                        >
-                          <div className="prescription-table">
-                            <div className="prescription-row">
-                              <div className="prescription-cell rx-number">
-                                Rx #{rx.prescription_number}
-                              </div>
-                              <div className="prescription-cell date">
-                                {formatDate(rx.fill_date)}
-                              </div>
-                              <div className="prescription-cell time">
-                                {formatTime(rx.fill_date)}
-                              </div>
-                              <div className="prescription-cell user">
-                                {rx.filled_by || "Unknown"}
-                              </div>
-                              <div className="prescription-cell quantity">
-                                Qty: {rx.available_for_return}
-                              </div>
-                            </div>
+                        }
+                      }}
+                      placeholder={availablePrescriptions.length === 0 ? "No prescriptions available for return" : "Choose a prescription..."}
+                      variant={validationErrors.reference_number ? "outline-danger" : "outline-secondary"}
+                      size="md"
+                      minWidth="100%"
+                      maxMenuHeight="300px"
+                      autoSize={true}
+                      searchable={true}
+                      clearable={true}
+                      disabled={availablePrescriptions.length === 0}
+                      customOptionRenderer={(option, isSelected) => (
+                        <div className={`p-2 ${isSelected ? 'text-white' : ''}`}>
+                          <div className="fw-bold">Rx #{option.data.prescription_number}</div>
+                          <div className="small">
+                            <span className="me-3">Date: {formatDate(option.data.fill_date)}</span>
+                            <span className="me-3">Time: {formatTime(option.data.fill_date)}</span>
+                            <span>Available: {option.data.available_for_return} units</span>
                           </div>
-                        </button>
-                      ))}
-                    </PharmaDropdown>
+                          {option.data.filled_by && (
+                            <div className="small text-muted">Filled by: {option.data.filled_by}</div>
+                          )}
+                        </div>
+                      )}
+                      className={`w-100 ${validationErrors.reference_number ? "is-invalid" : ""}`}
+                      aria-label="Select prescription to return"
+                    />
                     {validationErrors.reference_number && (
                       <div className="invalid-feedback d-block">
                         {validationErrors.reference_number}

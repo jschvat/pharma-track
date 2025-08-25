@@ -214,17 +214,49 @@ const PharmaDropdown = ({
   };
   
   /**
-   * Simple position calculation
+   * Viewport-aware position and size calculation
    */
   const updateMenuPosition = () => {
     if (!toggleRef.current) return;
     
     const rect = toggleRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
     
-    // Simple positioning - just below the button
+    // Calculate available space below and above
+    const spaceBelow = viewportHeight - rect.bottom - 10; // 10px margin from bottom
+    const spaceAbove = rect.top - 10; // 10px margin from top
+    
+    // Determine if dropdown should open above or below
+    const shouldOpenAbove = spaceBelow < 150 && spaceAbove > spaceBelow;
+    
+    // Calculate optimal height based on available space
+    const availableHeight = shouldOpenAbove ? spaceAbove : spaceBelow;
+    const maxPossibleHeight = Math.min(availableHeight, parseInt(maxMenuHeight) || 300);
+    
+    // Update calculated menu height if autoSize is enabled
+    if (autoSize) {
+      // Get filtered options for calculation
+      const currentFilteredOptions = getFilteredOptions();
+      
+      // For states dropdown, we want to show as many as possible
+      const itemHeight = 32; // Approximate height per option
+      const optimalItems = Math.floor(maxPossibleHeight / itemHeight);
+      const optimalHeight = Math.min(optimalItems * itemHeight, currentFilteredOptions.length * itemHeight);
+      
+      setCalculatedMenuHeight(`${Math.max(100, optimalHeight)}px`); // Minimum 100px
+    }
+    
+    // Set position
+    const top = shouldOpenAbove 
+      ? rect.top - (autoSize && calculatedMenuHeight ? parseInt(calculatedMenuHeight) : maxPossibleHeight) - 4
+      : rect.bottom + 4;
+    
+    const left = Math.min(rect.left, viewportWidth - 300); // Ensure dropdown doesn't go off-screen horizontally
+    
     setMenuPosition({
-      top: rect.bottom + 4,
-      left: rect.left
+      top: Math.max(10, top), // Don't go above viewport
+      left: Math.max(10, left) // Don't go outside left edge
     });
   };
 
@@ -335,6 +367,7 @@ const PharmaDropdown = ({
     (calculatedMenuHeight && calculatedMenuHeight !== 'auto' && parseInt(calculatedMenuHeight) >= parseInt(maxMenuHeight)) :
     false;
   
+  
   // Custom menu component that renders outside table constraints
   const CustomMenu = () => {
     if (!isOpen) return null;
@@ -342,91 +375,146 @@ const PharmaDropdown = ({
     // Calculate effective dimensions
     const menuWidth = autoSize && calculatedMenuWidth ? calculatedMenuWidth : 
                      (autoSize ? 'max-content' : effectiveMenuWidth);
-    const menuHeight = autoSize && calculatedMenuHeight ? calculatedMenuHeight : 
-                      (autoSize ? 'auto' : effectiveMenuHeight);
+    
+    // ENHANCED REAL-TIME height and position calculation
+    let dynamicMaxHeight = parseInt(maxMenuHeight) || 300;
+    let adjustedTop = menuPosition.top;
+    
+    if (autoSize && toggleRef.current) {
+      const rect = toggleRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      
+      // Calculate available space in all directions
+      const spaceBelow = viewportHeight - rect.bottom - 10; // Reduced margin for more space
+      const spaceAbove = rect.top - 10;
+      const totalAvailableHeight = viewportHeight - 20; // Total usable viewport height
+      
+      // Determine optimal positioning and height
+      const preferredHeight = Math.min(
+        filteredOptions.length * 36 + 16, // 36px per item + 16px padding
+        parseInt(maxMenuHeight) || 400
+      );
+      
+      let finalHeight;
+      let shouldOpenAbove = false;
+      
+      if (spaceBelow >= preferredHeight) {
+        // Plenty of space below - use preferred height
+        finalHeight = preferredHeight;
+      } else if (spaceAbove >= preferredHeight && spaceAbove > spaceBelow) {
+        // Better space above - open upward
+        finalHeight = preferredHeight;
+        shouldOpenAbove = true;
+      } else if (spaceBelow >= 200) {
+        // Decent space below - use what's available
+        finalHeight = Math.max(200, spaceBelow - 5);
+      } else if (spaceAbove >= 200) {
+        // Better to open above
+        finalHeight = Math.max(200, spaceAbove - 5);
+        shouldOpenAbove = true;
+      } else {
+        // Limited space - use the larger of the two areas
+        if (spaceAbove > spaceBelow) {
+          finalHeight = Math.max(150, spaceAbove - 5);
+          shouldOpenAbove = true;
+        } else {
+          finalHeight = Math.max(150, spaceBelow - 5);
+        }
+      }
+      
+      dynamicMaxHeight = Math.min(finalHeight, totalAvailableHeight * 0.8); // Never exceed 80% of viewport
+      
+      // Adjust position if opening above
+      if (shouldOpenAbove) {
+        adjustedTop = rect.top - dynamicMaxHeight - 4;
+        // Ensure we don't go above viewport
+        adjustedTop = Math.max(10, adjustedTop);
+        // Recalculate height if we had to adjust position
+        if (adjustedTop === 10) {
+          dynamicMaxHeight = rect.top - 14; // 10px margin + 4px gap
+        }
+      }
+      
+      // Ensure horizontal positioning stays on screen
+      const menuWidth = autoSize && calculatedMenuWidth ? parseInt(calculatedMenuWidth) : 200;
+      if (menuPosition.left + menuWidth > viewportWidth - 10) {
+        // Would go off screen - adjust left position
+        // This will be handled in the style object below
+      }
+    }
     
     return createPortal(
       <div
-        className={`dropdown-menu show dropdown-menu-escape ${menuClassName}`}
+        id="pharma-dropdown-menu"
         style={{
-          position: 'fixed', // Use fixed instead of absolute
-          top: `${menuPosition.top}px`,
-          left: `${menuPosition.left}px`,
-          minWidth: autoSize ? `${parseInt(minWidth) || 120}px` : effectiveMenuWidth,
+          position: 'fixed',
+          top: `${adjustedTop}px`,
+          left: `${Math.min(menuPosition.left, window.innerWidth - (autoSize && calculatedMenuWidth ? parseInt(calculatedMenuWidth) : 200) - 10)}px`,
+          minWidth: menuWidth,
           width: menuWidth,
-          maxWidth: 'none', // Remove max-width constraint entirely
-          height: menuHeight,
-          maxHeight: needsScroll || !autoSize ? `${parseInt(maxMenuHeight) || 300}px` : 'none',
-          overflowY: needsScroll || !autoSize ? "auto" : "visible",
-          overflowX: "hidden",
-          zIndex: 999999, // Very high z-index
-          visibility: 'visible',
-          transform: 'none',
-          contain: 'none',
-          isolation: 'auto',
-          willChange: 'auto',
-          boxShadow: '0 0.5rem 1rem rgba(0, 0, 0, 0.15)',
-          border: '1px solid rgba(0, 0, 0, 0.175)',
+          maxHeight: `${dynamicMaxHeight}px`,
+          height: filteredOptions.length * 36 + 16 <= dynamicMaxHeight ? 'auto' : `${dynamicMaxHeight}px`,
+          zIndex: 2147483647,
+          backgroundColor: '#ffffff',
+          border: '1px solid #dee2e6',
           borderRadius: '0.375rem',
-          backgroundColor: '#fff',
-          // Force escape from any parent constraints
-          margin: 0,
+          boxShadow: '0 0.5rem 1rem rgba(0, 0, 0, 0.15)',
+          overflowY: filteredOptions.length * 36 + 16 > dynamicMaxHeight ? "auto" : "hidden",
+          overflowX: "hidden",
           padding: 0,
-          clip: 'auto',
-          clipPath: 'none'
+          margin: 0,
+          display: 'block',
+          visibility: 'visible',
+          opacity: 1,
+          // Enhanced scrollbar styling
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#6c757d #e9ecef',
+          // Improved visual feedback
+          transition: 'all 0.15s ease-out'
         }}
         onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onScroll={(e) => e.stopPropagation()}
       >
-        {searchable && (
-          <>
-            <div className="px-3 py-2">
-              <input
-                className="form-control form-control-sm"
-                type="text"
-                placeholder="Search options..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                autoFocus
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-            <div className="dropdown-divider"></div>
-          </>
-        )}
-        
-        {clearable && selectedValue !== null && selectedValue !== undefined && (
-          <>
-            <button className="dropdown-item" type="button" onClick={handleClear}>
-              <em>Clear selection</em>
+        {filteredOptions.map((option) => {
+          const isSelected = selectedValue === option.value;
+          
+          return (
+            <button
+              key={option.value}
+              className={`dropdown-item ${isSelected ? 'active' : ''}`}
+              type="button"
+              onClick={() => handleOptionSelect(option.value)}
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '0.375rem 1rem',
+                clear: 'both',
+                fontWeight: 400,
+                color: isSelected ? '#fff' : '#212529',
+                textAlign: 'left',
+                textDecoration: 'none',
+                backgroundColor: isSelected ? '#0d6efd' : '#ffffff',
+                border: 0,
+                borderRadius: 0,
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                if (!isSelected) {
+                  e.target.style.backgroundColor = '#e9ecef';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSelected) {
+                  e.target.style.backgroundColor = '#ffffff';
+                }
+              }}
+            >
+              {option.label}
             </button>
-            <div className="dropdown-divider"></div>
-          </>
-        )}
-        
-        {filteredOptions.length === 0 ? (
-          <span className="dropdown-item-text">
-            {searchTerm ? 'No matching options' : 'No options available'}
-          </span>
-        ) : (
-          filteredOptions.map((option) => {
-            const isSelected = selectedValue === option.value;
-            
-            if (customOptionRenderer) {
-              return customOptionRenderer(option, isSelected);
-            }
-            
-            return (
-              <button
-                key={option.value}
-                className={`dropdown-item ${isSelected ? 'active' : ''}`}
-                type="button"
-                onClick={() => handleOptionSelect(option.value)}
-              >
-                {option.label}
-              </button>
-            );
-          })
-        )}
+          );
+        })}
       </div>,
       document.body
     );
@@ -438,7 +526,8 @@ const PharmaDropdown = ({
       const handleClickOutside = (event) => {
         // Check if click is outside both the toggle button and the dropdown menu
         const isOutsideToggle = toggleRef.current && !toggleRef.current.contains(event.target);
-        const isOutsideMenu = !event.target.closest('.dropdown-menu-escape');
+        const isOutsideMenu = !event.target.closest('#pharma-dropdown-menu') && 
+                              !event.target.closest('.dropdown-menu-escape');
         
         if (isOutsideToggle && isOutsideMenu) {
           setIsOpen(false);
@@ -451,6 +540,7 @@ const PharmaDropdown = ({
       };
     }
   }, [isOpen]);
+
 
   return (
     <>
@@ -469,7 +559,24 @@ const PharmaDropdown = ({
           textAlign: "left",
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap'
+          whiteSpace: 'nowrap',
+          // Override for compact state dropdown - SIMPLE HEIGHT FIX
+          ...(className && className.includes('pharma-dropdown-states-compact') && {
+            height: '38px',
+            minHeight: '38px', 
+            maxHeight: '38px',
+            fontSize: '1rem',
+            lineHeight: '1.5',
+            padding: '6px 12px',
+            border: '1px solid #ced4da',
+            borderRadius: '0.375rem',
+            backgroundColor: '#fff',
+            color: '#495057',
+            boxSizing: 'border-box',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          })
         }}
       >
         {getDisplayText()}

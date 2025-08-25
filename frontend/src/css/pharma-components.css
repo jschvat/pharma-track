@@ -5471,3 +5471,224 @@
     font-size: 14px;
   }
 }
+
+/* ========================================
+ * GLOBAL PHARMADROPDOWN OVERFLOW SOLUTION
+ * ========================================
+ * Applies scrollbar to any PharmaDropdown with more content than container height
+ * Automatically triggered when dropdown content exceeds viewport or container
+ */
+
+/* Global dropdown menu max height and scrolling - includes PharmaDropdown's dropdown-menu-escape class */
+.pharma-dropdown .dropdown-menu,
+.pharma-dropdown .dropdown-menu-escape,
+.pharma-dropdown-container .dropdown-menu,
+.pharma-dropdown-container .dropdown-menu-escape,
+[class*="pharma-dropdown"] .dropdown-menu,
+[class*="pharma-dropdown"] .dropdown-menu-escape {
+  max-height: 250px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin !important; /* Firefox */
+}
+
+/* Custom scrollbar styling for WebKit browsers (Chrome, Safari, Edge) */
+.pharma-dropdown .dropdown-menu::-webkit-scrollbar,
+.pharma-dropdown .dropdown-menu-escape::-webkit-scrollbar,
+.pharma-dropdown-container .dropdown-menu::-webkit-scrollbar,
+.pharma-dropdown-container .dropdown-menu-escape::-webkit-scrollbar,
+[class*="pharma-dropdown"] .dropdown-menu::-webkit-scrollbar,
+[class*="pharma-dropdown"] .dropdown-menu-escape::-webkit-scrollbar,
+.dropdown-menu.pharma-dropdown-states::-webkit-scrollbar,
+.dropdown-menu-escape.pharma-dropdown-states::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.pharma-dropdown .dropdown-menu::-webkit-scrollbar-track,
+.pharma-dropdown .dropdown-menu-escape::-webkit-scrollbar-track,
+.pharma-dropdown-container .dropdown-menu::-webkit-scrollbar-track,
+.pharma-dropdown-container .dropdown-menu-escape::-webkit-scrollbar-track,
+[class*="pharma-dropdown"] .dropdown-menu::-webkit-scrollbar-track,
+[class*="pharma-dropdown"] .dropdown-menu-escape::-webkit-scrollbar-track,
+.dropdown-menu.pharma-dropdown-states::-webkit-scrollbar-track,
+.dropdown-menu-escape.pharma-dropdown-states::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 3px;
+}
+
+.pharma-dropdown .dropdown-menu::-webkit-scrollbar-thumb,
+.pharma-dropdown .dropdown-menu-escape::-webkit-scrollbar-thumb,
+.pharma-dropdown-container .dropdown-menu::-webkit-scrollbar-thumb,
+.pharma-dropdown-container .dropdown-menu-escape::-webkit-scrollbar-thumb,
+[class*="pharma-dropdown"] .dropdown-menu::-webkit-scrollbar-thumb,
+[class*="pharma-dropdown"] .dropdown-menu-escape::-webkit-scrollbar-thumb,
+.dropdown-menu.pharma-dropdown-states::-webkit-scrollbar-thumb,
+.dropdown-menu-escape.pharma-dropdown-states::-webkit-scrollbar-thumb {
+  background: #6c757d;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.pharma-dropdown .dropdown-menu::-webkit-scrollbar-thumb:hover,
+.pharma-dropdown .dropdown-menu-escape::-webkit-scrollbar-thumb:hover,
+.pharma-dropdown-container .dropdown-menu::-webkit-scrollbar-thumb:hover,
+.pharma-dropdown-container .dropdown-menu-escape::-webkit-scrollbar-thumb:hover,
+[class*="pharma-dropdown"] .dropdown-menu::-webkit-scrollbar-thumb:hover,
+[class*="pharma-dropdown"] .dropdown-menu-escape::-webkit-scrollbar-thumb:hover,
+.dropdown-menu.pharma-dropdown-states::-webkit-scrollbar-thumb:hover,
+.dropdown-menu-escape.pharma-dropdown-states::-webkit-scrollbar-thumb:hover {
+  background: #495057;
+}
+
+/* Special handling for modals and dialogs */
+.modal .pharma-dropdown .dropdown-menu,
+.modal .pharma-dropdown .dropdown-menu-escape,
+.draggable-dialog .pharma-dropdown .dropdown-menu,
+.draggable-dialog .pharma-dropdown .dropdown-menu-escape,
+.modal-dialog .pharma-dropdown .dropdown-menu,
+.modal-dialog .pharma-dropdown .dropdown-menu-escape {
+  max-height: 200px !important;
+  z-index: 1060 !important; /* Above modal backdrop */
+}
+
+/* Smart auto-sizing dropdown containers - fit content then scroll when needed */
+.pharma-dropdown-compact .dropdown-menu,
+.pharma-dropdown-compact .dropdown-menu-escape,
+.pharma-dropdown-states .dropdown-menu,
+.pharma-dropdown-states .dropdown-menu-escape,
+.dropdown-menu.pharma-dropdown-compact,
+.dropdown-menu-escape.pharma-dropdown-compact,
+.dropdown-menu.pharma-dropdown-states,
+.dropdown-menu-escape.pharma-dropdown-states {
+  /* Allow content to determine initial height, but cap at container limits */
+  height: auto !important;
+  max-height: min(400px, 70vh, calc(100vh - 200px)) !important; /* Fit within viewport minus header/footer space */
+  max-width: min(500px, 95vw) !important;
+  min-height: auto !important;
+  min-width: fit-content !important;
+  /* Only show scrollbars when content overflows the max constraints */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  /* Ensure smooth transitions */
+  transition: height 0.2s ease, max-height 0.2s ease !important;
+}
+
+/* Compact state dropdown button styling - match Bootstrap Form.Control exactly */
+.pharma-dropdown-states-compact .dropdown-toggle {
+  height: calc(1.5em + 0.75rem + 2px) !important; /* Same as Bootstrap .form-control */
+  min-height: calc(1.5em + 0.75rem + 2px) !important;
+  max-height: calc(1.5em + 0.75rem + 2px) !important;
+  padding: 0.375rem 0.75rem !important; /* Same as .form-control */
+  font-size: 1rem !important; /* Same as .form-control */
+  line-height: 1.5 !important; /* Same as .form-control */
+  border: 1px solid #ced4da !important; /* Same as .form-control */
+  border-radius: 0.375rem !important; /* Same as .form-control */
+  background-color: #fff !important;
+  color: #495057 !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+/* Focus state to match form-control exactly */
+.pharma-dropdown-states-compact .dropdown-toggle:focus {
+  border-color: #86b7fe !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+  color: #212529 !important;
+  background-color: #fff !important;
+}
+
+/* Hover state similar to form-control */
+.pharma-dropdown-states-compact .dropdown-toggle:hover:not(:disabled):not(:focus) {
+  border-color: #86b7fe !important;
+}
+
+/* Disabled state to match form-control */
+.pharma-dropdown-states-compact .dropdown-toggle:disabled {
+  background-color: #e9ecef !important;
+  opacity: 1 !important;
+  color: #6c757d !important;
+  border-color: #ced4da !important;
+}
+
+/* Compact state dropdown container positioning */
+.pharma-dropdown-states-compact {
+  width: 100% !important;
+  position: relative !important;
+}
+
+/* Compact state dropdown menu positioning */
+.dropdown-menu.pharma-dropdown-states-compact,
+.dropdown-menu-escape.pharma-dropdown-states-compact {
+  max-width: 200px !important;
+  min-width: 120px !important;
+}
+
+/* Large version for complex content */
+.pharma-dropdown-large .dropdown-menu,
+.pharma-dropdown-large .dropdown-menu-escape {
+  max-height: 350px !important;
+}
+
+/* Extra small for tight spaces */
+.pharma-dropdown-xs .dropdown-menu,
+.pharma-dropdown-xs .dropdown-menu-escape {
+  max-height: 150px !important;
+}
+
+/* Enhanced responsive behavior - content-first approach */
+@media (max-height: 600px) {
+  .pharma-dropdown .dropdown-menu,
+  .pharma-dropdown .dropdown-menu-escape,
+  .pharma-dropdown-container .dropdown-menu,
+  .pharma-dropdown-container .dropdown-menu-escape,
+  [class*="pharma-dropdown"] .dropdown-menu,
+  [class*="pharma-dropdown"] .dropdown-menu-escape {
+    max-height: min(250px, 60vh, calc(100vh - 150px)) !important;
+  }
+  
+  /* State dropdowns adjust to smaller screens but maintain content-first approach */
+  .dropdown-menu.pharma-dropdown-states,
+  .dropdown-menu-escape.pharma-dropdown-states {
+    max-height: min(300px, 60vh, calc(100vh - 150px)) !important;
+    max-width: min(450px, 90vw) !important;
+  }
+}
+
+@media (max-height: 400px) {
+  .pharma-dropdown .dropdown-menu,
+  .pharma-dropdown .dropdown-menu-escape,
+  .pharma-dropdown-container .dropdown-menu,
+  .pharma-dropdown-container .dropdown-menu-escape,
+  [class*="pharma-dropdown"] .dropdown-menu,
+  [class*="pharma-dropdown"] .dropdown-menu-escape {
+    max-height: min(180px, 50vh, calc(100vh - 100px)) !important;
+  }
+  
+  /* State dropdowns for very small screens */
+  .dropdown-menu.pharma-dropdown-states,
+  .dropdown-menu-escape.pharma-dropdown-states {
+    max-height: min(200px, 50vh, calc(100vh - 100px)) !important;
+    max-width: min(400px, 85vw) !important;
+  }
+}
+
+/* Width-based responsive behavior */
+@media (max-width: 768px) {
+  .dropdown-menu.pharma-dropdown-states,
+  .dropdown-menu-escape.pharma-dropdown-states {
+    max-width: min(400px, 92vw) !important;
+    min-width: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .dropdown-menu.pharma-dropdown-states,
+  .dropdown-menu-escape.pharma-dropdown-states {
+    max-width: 95vw !important;
+    min-width: auto !important;
+  }
+}

@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Login from './components/Login';
+import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Inventory from './components/Inventory';
 import StateCount from './components/StateCount';
@@ -69,6 +70,7 @@ function App() {
               <div className="app-container">
                 <Routes>
                   <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route 
                     path="/*" 

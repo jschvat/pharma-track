@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaTraK Logo Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #2c3e50, #4a5568, #718096);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .logo-container {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #2c3e50, #4a5568);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .logo {
+            max-width: 400px;
+            width: 100%;
+            height: auto;
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .responsive-test {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .size-demo {
+            text-align: center;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+        }
+        .size-demo img {
+            background: rgba(255,255,255,0.1);
+            padding: 5px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PharmaTraK Logo Display Test</h1>
+        
+        <div class="logo-container">
+            <img src="/icons/pharmatrak-logo.svg" alt="PharmaTraK Logo" class="logo">
+        </div>
+
+        <div class="info">
+            <h2>Logo Features:</h2>
+            <ul>
+                <li>✅ Doctor-style serif lettering for "PharmaTraK"</li>
+                <li>✅ White and blue counting tray with raised rim</li>
+                <li>✅ Colorful scattered tablets and capsules</li>
+                <li>✅ Pharmacy spatula positioned naturally</li>
+                <li>✅ Medical symbols (Rx, pills) as decorative elements</li>
+                <li>✅ Professional tagline</li>
+                <li>✅ SVG format for crisp scaling</li>
+                <li>✅ Responsive design ready</li>
+            </ul>
+        </div>
+
+        <div class="responsive-test">
+            <div class="size-demo">
+                <h3>Small (150px)</h3>
+                <img src="/icons/pharmatrak-logo.svg" alt="Logo Small" style="width: 150px;">
+            </div>
+            <div class="size-demo">
+                <h3>Medium (250px)</h3>
+                <img src="/icons/pharmatrak-logo.svg" alt="Logo Medium" style="width: 250px;">
+            </div>
+            <div class="size-demo">
+                <h3>Large (350px)</h3>
+                <img src="/icons/pharmatrak-logo.svg" alt="Logo Large" style="width: 350px;">
+            </div>
+        </div>
+
+        <div class="info" style="text-align: center;">
+            <p><strong>Test URL:</strong> <a href="http://localhost:3000" target="_blank">http://localhost:3000</a></p>
+            <p>The logo should now appear on the login screen!</p>
+        </div>
+    </div>
+</body>
+</html>

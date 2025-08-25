@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import '../css/components.css';
@@ -11,9 +11,18 @@ const Login = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isTransitioningToRegister, setIsTransitioningToRegister] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Cleanup classes on component unmount
+  useEffect(() => {
+    return () => {
+      document.documentElement.classList.remove('login-fullscreen-transition');
+      document.body.classList.remove('login-fullscreen-transition');
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -51,18 +60,26 @@ const Login = () => {
   // Check if we're in development mode
   const isDevelopment = process.env.NODE_ENV === 'development' || process.env.REACT_APP_ENV === 'development';
 
+  // Handle registration link click with fullscreen transition
+  const handleRegisterClick = (e) => {
+    e.preventDefault();
+    setIsTransitioningToRegister(true);
+    
+    // Add classes to html and body to prevent interference
+    document.documentElement.classList.add('login-fullscreen-transition');
+    document.body.classList.add('login-fullscreen-transition');
+    
+    // Delay navigation to allow animation to start
+    setTimeout(() => {
+      navigate('/register');
+    }, 800); // Extended to match animation duration
+  };
+
   return (
-    <div className="login-container">
-      <div className="login-card">
+    <div className={`login-container ${isTransitioningToRegister ? 'fullscreen-transition' : ''}`}>
+        <div className={`login-card ${isTransitioningToRegister ? 'expanding' : ''}`}>
         {/* Header */}
         <div className="login-header">
-          <div className="login-icon">
-            <i className="fas fa-pills"></i>
-          </div>
-          <h2 className="login-title">PharmaTraK</h2>
-          <p className="login-subtitle">
-            Professional Pharmacy Management
-          </p>
         </div>
 
         {/* Body */}
@@ -175,6 +192,36 @@ const Login = () => {
               )}
             </button>
           </form>
+
+          {/* Create New Profile Button */}
+          <div className="text-center mb-3">
+            <div className="d-flex align-items-center my-3">
+              <div className="border-top flex-grow-1"></div>
+              <span className="px-3 text-muted small">or</span>
+              <div className="border-top flex-grow-1"></div>
+            </div>
+            
+            <button
+              onClick={handleRegisterClick}
+              className="btn btn-outline-success w-100"
+              disabled={isTransitioningToRegister}
+              style={{
+                borderColor: '#28a745',
+                color: '#28a745',
+                fontWeight: '500',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <i className="fas fa-user-plus me-2"></i>
+              {isTransitioningToRegister ? 'Loading...' : 'Create New Profile'}
+            </button>
+            
+            <small className="d-block text-muted mt-2">
+              New to PharmaTraK? Create your account here
+            </small>
+          </div>
 
           <div className="login-footer">
             <small className="text-muted">

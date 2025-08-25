@@ -202,6 +202,17 @@ class Store {
       handleDatabaseError(error);
     }
   }
+
+  static async getPublicStoreList() {
+    try {
+      const [rows] = await db.execute(
+        'SELECT id, name, city, state FROM stores ORDER BY name'
+      );
+      return rows;
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
 }
 
 module.exports = Store;

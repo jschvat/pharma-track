@@ -23,7 +23,7 @@ import CardHeader from './common/CardHeader';
 import DraggableDialog from './DraggableDialog';
 import PharmaDropdown from './common/PharmaDropdown';
 
-// Custom CSS for professional solid buttons
+// Custom CSS for professional solid buttons and dropdown styling
 const buttonStyles = `
   .btn-gradient-edit {
     background: #2563eb !important;
@@ -81,6 +81,32 @@ const buttonStyles = `
     transform: translateY(0) !important;
     background: #991b1b !important;
     border-bottom: 2px solid #7f1d1d !important;
+  }
+
+  /* Custom dropdown menu styling for state selection */
+  .pharma-dropdown-states .dropdown-menu {
+    max-height: 200px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* Custom scrollbar for dropdown */
+  .pharma-dropdown-states .dropdown-menu::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .pharma-dropdown-states .dropdown-menu::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  .pharma-dropdown-states .dropdown-menu::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+  }
+  
+  .pharma-dropdown-states .dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: #555;
   }
 `;
 
@@ -511,34 +537,15 @@ const AdminStores = () => {
         </Modal.Header>
         <Form onSubmit={handleCreateStore}>
           <Modal.Body>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Store Name *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={createForm.name}
-                    onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>State *</Form.Label>
-                  <Form.Select
-                    value={createForm.state}
-                    onChange={(e) => setCreateForm({...createForm, state: e.target.value})}
-                    required
-                  >
-                    <option value="">Select State</option>
-                    {states.map(state => (
-                      <option key={state} value={state}>{state}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-            </Row>
+            <Form.Group className="mb-3">
+              <Form.Label>Store Name *</Form.Label>
+              <Form.Control
+                type="text"
+                value={createForm.name}
+                onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
+                required
+              />
+            </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Address *</Form.Label>
               <Form.Control
@@ -549,15 +556,38 @@ const AdminStores = () => {
                 required
               />
             </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>City</Form.Label>
-              <Form.Control
-                type="text"
-                value={createForm.city}
-                onChange={(e) => setCreateForm({...createForm, city: e.target.value})}
-                placeholder="Enter city"
-              />
-            </Form.Group>
+            <Row>
+              <Col md={9}>
+                <Form.Group className="mb-3">
+                  <Form.Label>City</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={createForm.city}
+                    onChange={(e) => setCreateForm({...createForm, city: e.target.value})}
+                    placeholder="Enter city"
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={3}>
+                <Form.Group className="mb-3">
+                  <Form.Label>State *</Form.Label>
+                  <PharmaDropdown
+                    options={[
+                      { value: '', label: 'Select State' },
+                      ...states.map(state => ({ value: state, label: state }))
+                    ]}
+                    selectedValue={createForm.state || ''}
+                    onSelectionChange={(value) => setCreateForm({...createForm, state: value})}
+                    placeholder="Select State"
+                    variant="outline-secondary"
+                    className="pharma-dropdown-states-compact"
+                    size="md"
+                    autoSize={true}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
             <Row>
               <Col md={4}>
                 <Form.Group className="mb-3">
@@ -647,161 +677,147 @@ const AdminStores = () => {
         show={showEditModal}
         onHide={() => setShowEditModal(false)}
         title={`Edit Store: ${selectedStore?.name || ''}`}
-        size="xl"
-        maxWidth="1100px"
-        width="95vw"
+        size="lg"
+        maxWidth="900px"
+        width="90vw"
       >
         <Form onSubmit={handleEditStore}>
-          <div className="p-4">
-            <Row className="mb-4 g-4">
-              <Col lg={6}>
-                <Form.Group className="mb-4">
-                  <Form.Label className="fw-bold mb-2">Store Name *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                    required
-                    className="form-control-lg"
-                  />
-                </Form.Group>
-              </Col>
-              <Col lg={6}>
-                <Form.Group className="mb-4">
-                  <Form.Label className="fw-bold mb-2">State *</Form.Label>
-                  <PharmaDropdown
-                    variant="outline-secondary"
-                    className="w-100"
-                    trigger="click"
-                    align="start"
-                    pharmaType="pill"
-                    size="md"
-                    label={editForm.state || 'Select State'}
-                    menuClassName="w-100"
-                  >
-                    {states.map(state => (
-                      <button
-                        key={state}
-                        className={`dropdown-item ${editForm.state === state ? 'active' : ''}`}
-                        onClick={() => setEditForm({...editForm, state: state})}
-                      >
-                        {state}
-                      </button>
-                    ))}
-                  </PharmaDropdown>
-                </Form.Group>
-              </Col>
-            </Row>
+          <div className="p-3">
+            <Form.Group className="mb-3">
+              <Form.Label className="fw-bold mb-2">Store Name *</Form.Label>
+              <Form.Control
+                type="text"
+                value={editForm.name}
+                onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                required
+              />
+            </Form.Group>
             
-            <hr className="my-5" />
-            <h5 className="text-muted mb-4 d-flex align-items-center">
+            <hr className="my-3" />
+            <h6 className="text-muted mb-3 d-flex align-items-center">
               <span className="me-2">📍</span> Location Information
-            </h5>
+            </h6>
             
-            <Form.Group className="mb-4">
+            <Form.Group className="mb-3">
               <Form.Label className="fw-bold mb-2">Address *</Form.Label>
               <Form.Control
                 as="textarea"
-                rows={3}
+                rows={2}
                 value={editForm.address}
                 onChange={(e) => setEditForm({...editForm, address: e.target.value})}
                 required
-                className="form-control-lg"
               />
             </Form.Group>
-            <Form.Group className="mb-4">
-              <Form.Label className="fw-bold mb-2">City</Form.Label>
-              <Form.Control
-                type="text"
-                value={editForm.city}
-                onChange={(e) => setEditForm({...editForm, city: e.target.value})}
-                className="form-control-lg"
-                placeholder="Enter city"
-              />
-            </Form.Group>
-            <Row className="mb-4 g-4">
+            <Row className="mb-3 g-3">
+              <Col lg={9}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-bold mb-2">City</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={editForm.city}
+                    onChange={(e) => setEditForm({...editForm, city: e.target.value})}
+                    placeholder="Enter city"
+                  />
+                </Form.Group>
+              </Col>
+              <Col lg={3}>
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-bold mb-2">State *</Form.Label>
+                  <PharmaDropdown
+                    options={[
+                      { value: '', label: 'Select State' },
+                      ...states.map(state => ({ value: state, label: state }))
+                    ]}
+                    selectedValue={editForm.state || ''}
+                    onSelectionChange={(value) => setEditForm({...editForm, state: value})}
+                    placeholder="Select State"
+                    variant="outline-secondary"
+                    className="pharma-dropdown-states-compact"
+                    size="md"
+                    autoSize={true}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row className="mb-3 g-3">
               <Col lg={4}>
-                <Form.Group className="mb-4">
+                <Form.Group className="mb-3">
                   <Form.Label className="fw-bold mb-2">Zip Code *</Form.Label>
                   <Form.Control
                     type="text"
                     value={editForm.zipcode}
                     onChange={(e) => setEditForm({...editForm, zipcode: e.target.value})}
                     required
-                    className="form-control-lg"
                     placeholder="90210"
                   />
                 </Form.Group>
               </Col>
               <Col lg={4}>
-                <Form.Group className="mb-4">
+                <Form.Group className="mb-3">
                   <Form.Label className="fw-bold mb-2">Phone *</Form.Label>
                   <Form.Control
                     type="tel"
                     value={editForm.phone}
                     onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
                     required
-                    className="form-control-lg"
                     placeholder="(555) 123-4567"
                   />
                 </Form.Group>
               </Col>
               <Col lg={4}>
-                <Form.Group className="mb-4">
+                <Form.Group className="mb-3">
                   <Form.Label className="fw-bold mb-2">Fax</Form.Label>
                   <Form.Control
                     type="tel"
                     value={editForm.fax}
                     onChange={(e) => setEditForm({...editForm, fax: e.target.value})}
-                    className="form-control-lg"
                     placeholder="(555) 123-4568"
                   />
                 </Form.Group>
               </Col>
             </Row>
             
-            <hr className="my-5" />
-            <h5 className="text-muted mb-4 d-flex align-items-center">
+            <hr className="my-3" />
+            <h6 className="text-muted mb-3 d-flex align-items-center">
               <span className="me-2">🏥</span> Registration Information
-            </h5>
+            </h6>
             
-            <Row className="mb-4 g-4">
+            <Row className="mb-3 g-3">
               <Col lg={6}>
-                <Form.Group className="mb-4">
+                <Form.Group className="mb-3">
                   <Form.Label className="fw-bold mb-2">DEA Registration Number *</Form.Label>
                   <Form.Control
                     type="text"
                     value={editForm.dea_registration_number}
                     onChange={(e) => setEditForm({...editForm, dea_registration_number: e.target.value})}
                     required
-                    className="form-control-lg"
                     placeholder="AB1234567"
                   />
                 </Form.Group>
               </Col>
               <Col lg={6}>
-                <Form.Group className="mb-4">
+                <Form.Group className="mb-3">
                   <Form.Label className="fw-bold mb-2">NPI Number *</Form.Label>
                   <Form.Control
                     type="text"
                     value={editForm.npi}
                     onChange={(e) => setEditForm({...editForm, npi: e.target.value})}
                     required
-                    className="form-control-lg"
                     placeholder="1234567890"
                   />
                 </Form.Group>
               </Col>
             </Row>
             
-            <hr className="my-5" />
-            <h5 className="text-muted mb-4 d-flex align-items-center">
+            <hr className="my-3" />
+            <h6 className="text-muted mb-3 d-flex align-items-center">
               <span className="me-2">👤</span> Administrative Settings
-            </h5>
+            </h6>
             
-            <Row className="mb-4">
+            <Row className="mb-3">
               <Col lg={8}>
-                <Form.Group className="mb-4">
+                <Form.Group className="mb-3">
                   <Form.Label className="fw-bold mb-2">Store Admin</Form.Label>
                   {(() => {
                     console.log('🎯 DEBUG: Rendering edit form dropdown');
@@ -845,11 +861,10 @@ const AdminStores = () => {
             </Row>
           </div>
           
-          <div className="d-flex justify-content-end gap-3 mt-5 pt-4 border-top">
+          <div className="d-flex justify-content-end gap-3 mt-3 pt-3 border-top">
             <Button 
               variant="outline-secondary" 
               onClick={() => setShowEditModal(false)}
-              size="lg"
               className="px-4"
             >
               Cancel
@@ -858,7 +873,6 @@ const AdminStores = () => {
               variant="primary" 
               type="submit" 
               disabled={loading}
-              size="lg"
               className="px-4"
             >
               {loading ? <Spinner animation="border" size="sm" className="me-2" /> : null}

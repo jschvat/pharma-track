@@ -51,7 +51,9 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  transition: all 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
+
 
 .login-card {
   width: 100%;
@@ -63,14 +65,7 @@
 }
 
 .login-header {
-  background: linear-gradient(
-    135deg,
-    var(--granite-dark) 0%,
-    var(--granite-medium) 100%
-  );
-  color: var(--text-white);
-  padding: 2rem;
-  text-align: center;
+  display: none;
 }
 
 .login-icon {
@@ -105,6 +100,121 @@
   margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border-light);
+}
+
+/* Full width transition */
+.login-container.fullscreen-transition {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 10000 !important;
+  background: linear-gradient(
+    135deg,
+    var(--granite-dark) 0%,
+    var(--granite-medium) 50%,
+    var(--granite-light) 100%
+  ) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  align-items: unset !important;
+  justify-content: unset !important;
+}
+
+/* Override body and parent container styles during fullscreen transition */
+html.login-fullscreen-transition,
+body.login-fullscreen-transition {
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Override root container */
+body.login-fullscreen-transition #root {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.login-fullscreen-transition .app-container {
+  visibility: hidden !important;
+  overflow: hidden !important;
+}
+
+/* Ensure login container is always visible during transition */
+body.login-fullscreen-transition .login-container.fullscreen-transition {
+  visibility: visible !important;
+}
+
+/* Force override any parent positioning */
+body.login-fullscreen-transition * {
+  box-sizing: border-box;
+}
+
+body.login-fullscreen-transition .login-container.fullscreen-transition * {
+  box-sizing: border-box;
+}
+
+
+.login-card {
+  transition: all 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.login-card.expanding {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+}
+
+.login-card.expanding .login-body {
+  padding: 2rem !important;
+  background: var(--bg-secondary) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--shadow-lg) !important;
+  max-width: 500px !important;
+  width: 90% !important;
+  margin: 0 auto !important;
+}
+
+/* Responsive login adjustments */
+@media (max-width: 768px) {
+  .login-container:not(.fullscreen-transition) {
+    padding: 1rem;
+  }
+  
+  .login-card.expanding .login-body {
+    padding: 1.5rem !important;
+    max-width: none !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container:not(.fullscreen-transition) {
+    padding: 0.75rem;
+  }
+  
+  .login-card.expanding .login-body {
+    padding: 1rem !important;
+    max-width: none !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
 }
 
 /* ===== BOOTSTRAP MODAL DROPDOWN FIX ===== */

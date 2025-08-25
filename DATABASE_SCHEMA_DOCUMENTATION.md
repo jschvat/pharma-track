@@ -1054,21 +1054,295 @@ store_settings (1) ──── (many) store_settings_history
 - **Historical Snapshots**: Point-in-time inventory states for reconciliation
 - **Post-It Notes**: Store-specific messaging and communication system
 
-## Constraint Explanations
+## Database Constraint Details
 
-### Foreign Key Actions
+This section provides detailed explanations of all database constraints, including the actual SQL constraint definitions and their business purposes.
+
+### CHECK Constraints
+
+CHECK constraints enforce business rules and data validation at the database level. They ensure data integrity by validating field values against specific patterns or conditions.
+
+#### Table: `stores`
+
+The stores table has comprehensive CHECK constraints that validate critical pharmacy registration and contact information:
+
+**stores_chk_1: Store Name Validation**
+```sql
+CONSTRAINT `stores_chk_1` CHECK (
+    (CHAR_LENGTH(TRIM(`name`)) >= 2) 
+    AND 
+    REGEXP_LIKE(`name`, '^[a-zA-Z0-9\\s\\-\'\\.,&]+$')
+)
+```
+- **Purpose**: Ensures store names are at least 2 characters and contain only valid characters
+- **Business Rule**: Store names must be meaningful and professional
+- **Allowed Characters**: Letters, numbers, spaces, hyphens, apostrophes, periods, commas, ampersands
+
+**stores_chk_2: Address Validation**
+```sql
+CONSTRAINT `stores_chk_2` CHECK (
+    (CHAR_LENGTH(TRIM(`address`)) >= 5) 
+    AND 
+    REGEXP_LIKE(`address`, '^[a-zA-Z0-9\\s\\-\'\\.,#]+$')
+)
+```
+- **Purpose**: Validates physical store addresses for completeness and format
+- **Business Rule**: Addresses must be complete and properly formatted for mail delivery
+- **Allowed Characters**: Letters, numbers, spaces, hyphens, apostrophes, periods, commas, hash symbols
+
+**stores_chk_3: State Code Validation**
+```sql
+CONSTRAINT `stores_chk_3` CHECK (
+    REGEXP_LIKE(`state`, '^[A-Z]{2}$') 
+    AND 
+    (`state` IN ('AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA',
+                'HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
+                'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+                'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
+                'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
+                'DC','PR','VI','GU','AS','MP'))
+)
+```
+- **Purpose**: Ensures only valid US state and territory codes are used
+- **Business Rule**: Pharmacy operations must be in valid US jurisdictions
+- **Format**: Exactly 2 uppercase letters matching official state/territory abbreviations
+
+**stores_chk_4: ZIP Code Validation**
+```sql
+CONSTRAINT `stores_chk_4` CHECK (
+    REGEXP_LIKE(`zipcode`, '^[0-9]{5}(-[0-9]{4})?$')
+)
+```
+- **Purpose**: Validates ZIP codes in standard US postal format
+- **Business Rule**: Accurate postal codes required for shipping and regulatory compliance
+- **Formats Allowed**: 12345 or 12345-6789
+
+**stores_chk_5: Phone Number Validation**
+```sql
+CONSTRAINT `stores_chk_5` CHECK (
+    REGEXP_LIKE(`phone`, '^[0-9]{10,11}$')
+)
+```
+- **Purpose**: Ensures phone numbers contain only digits and proper length
+- **Business Rule**: Valid contact numbers required for customer and vendor communication
+- **Format**: 10 digits (US) or 11 digits (with country code)
+
+**stores_chk_6: Fax Number Validation**
+```sql
+CONSTRAINT `stores_chk_6` CHECK (
+    (`fax` IS NULL) 
+    OR 
+    REGEXP_LIKE(`fax`, '^[0-9]{10,11}$')
+)
+```
+- **Purpose**: Optional fax validation - must be NULL or valid format
+- **Business Rule**: Fax numbers are optional but if provided must be valid
+- **Format**: NULL or 10-11 digits only
+
+**stores_chk_7: DEA Registration Number Validation**
+```sql
+CONSTRAINT `stores_chk_7` CHECK (
+    REGEXP_LIKE(`dea_registration_number`, '^[A-Z]{2}[0-9]{7}$')
+)
+```
+- **Purpose**: Validates DEA registration format required for controlled substances
+- **Business Rule**: All pharmacies must have valid DEA registrations
+- **Format**: 2 uppercase letters followed by exactly 7 digits (e.g., AB1234567)
+- **Regulatory Compliance**: Required by DEA for Schedule II-V controlled substances
+
+**stores_chk_8: NPI Number Validation**
+```sql
+CONSTRAINT `stores_chk_8` CHECK (
+    REGEXP_LIKE(`npi`, '^[0-9]{10}$')
+)
+```
+- **Purpose**: Validates National Provider Identifier format
+- **Business Rule**: NPI required for healthcare provider identification and billing
+- **Format**: Exactly 10 digits
+- **Regulatory Compliance**: Required by CMS for healthcare transactions
+
+#### Table: `users`
+
+The users table has CHECK constraints that ensure user data integrity and security:
+
+**users_chk_1: User Name Validation**
+```sql
+CONSTRAINT `users_chk_1` CHECK (
+    CHAR_LENGTH(TRIM(`name`)) >= 2
+)
+```
+- **Purpose**: Ensures user names are meaningful (at least 2 characters)
+- **Business Rule**: User identification requires proper names
+
+**users_chk_2: Email Format Validation**
+```sql
+CONSTRAINT `users_chk_2` CHECK (
+    REGEXP_LIKE(`email`, '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$')
+)
+```
+- **Purpose**: Validates email addresses conform to standard format
+- **Business Rule**: Valid email required for communication and password resets
+- **Format**: Standard email format with proper domain structure
+
+**users_chk_3: Phone Number Validation**
+```sql
+CONSTRAINT `users_chk_3` CHECK (
+    REGEXP_LIKE(`phone`, '^[0-9]{10,11}$')
+)
+```
+- **Purpose**: Ensures user phone numbers are valid for contact
+- **Business Rule**: Contact numbers required for emergency and verification
+- **Format**: 10-11 digits only
+
+**users_chk_4: Password Hash Length Validation**
+```sql
+CONSTRAINT `users_chk_4` CHECK (
+    CHAR_LENGTH(`password`) >= 60
+)
+```
+- **Purpose**: Ensures passwords are properly hashed (bcrypt produces 60+ char hashes)
+- **Business Rule**: Security requirement - no plain text passwords allowed
+- **Technical Detail**: bcrypt with salt rounds produces hashes ~60-72 characters
+
+**users_chk_5: Address Validation**
+```sql
+CONSTRAINT `users_chk_5` CHECK (
+    CHAR_LENGTH(TRIM(`address`)) >= 5
+)
+```
+- **Purpose**: Ensures user addresses are complete enough for identification
+- **Business Rule**: Employee addresses required for HR and security purposes
+
+### UNIQUE Constraints
+
+UNIQUE constraints prevent duplicate data that could cause business logic errors or security issues.
+
+#### Critical Business Identifiers
+
+**Store DEA Numbers**
+```sql
+UNIQUE KEY `dea_registration_number` (`dea_registration_number`)
+```
+- **Purpose**: Each DEA registration can only be used by one store
+- **Business Rule**: Federal law requires unique DEA registrations
+- **Impact**: Prevents regulatory violations and prescription fraud
+
+**Store NPI Numbers**
+```sql
+UNIQUE KEY `npi` (`npi`)
+```
+- **Purpose**: Each NPI can only belong to one provider entity
+- **Business Rule**: CMS requires unique provider identifiers
+- **Impact**: Ensures proper healthcare billing and identification
+
+**Drug NDC Numbers**
+```sql
+UNIQUE KEY `ndc` (`ndc`)
+```
+- **Purpose**: Each NDC uniquely identifies a specific drug product
+- **Business Rule**: FDA assigns unique NDC codes to prevent confusion
+- **Impact**: Ensures accurate drug identification and patient safety
+
+**User Email Addresses**
+```sql
+UNIQUE KEY `email` (`email`)
+```
+- **Purpose**: Prevents duplicate user accounts and login conflicts
+- **Business Rule**: One email per user account for security
+- **Impact**: Enables reliable authentication and password recovery
+
+#### Composite UNIQUE Constraints
+
+**Store-Drug-Lot Combination**
+```sql
+UNIQUE KEY `unique_store_drug_lot` (`store_id`, `drug_id`, `lot_number`)
+```
+- **Purpose**: Prevents duplicate lot tracking within same store
+- **Business Rule**: Each lot number is unique per drug per store
+- **Impact**: Ensures accurate inventory tracking and expiration management
+
+**User-Store Access Control**
+```sql
+UNIQUE KEY `unique_user_store_access` (`user_id`, `store_id`)
+```
+- **Purpose**: Prevents duplicate access permissions
+- **Business Rule**: One access level per user per store
+- **Impact**: Maintains clear permission structure
+
+### FOREIGN KEY Constraints
+
+Foreign key constraints maintain referential integrity and enforce business relationships.
+
+#### Cascade Delete Rules
+
+**ON DELETE CASCADE**
+```sql
+FOREIGN KEY (`store_id`) REFERENCES `stores`(`id`) ON DELETE CASCADE
+```
+- **Used By**: store_inventory, inventory_audit_log, post_it_notes
+- **Purpose**: When store is deleted, all related data is automatically removed
+- **Business Rule**: Store closure requires complete data cleanup
+- **Impact**: Maintains database consistency, prevents orphaned records
+
+**ON DELETE SET NULL**
+```sql
+FOREIGN KEY (`admin_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+```
+- **Used By**: stores.admin_user_id
+- **Purpose**: Store can exist without assigned admin user
+- **Business Rule**: Admin user departure doesn't invalidate store
+- **Impact**: Store operations can continue during admin transitions
+
+**ON DELETE RESTRICT**
+```sql
+FOREIGN KEY (`performed_by`) REFERENCES `users`(`id`) ON DELETE RESTRICT
+```
+- **Used By**: inventory_audit_log.performed_by
+- **Purpose**: Prevents deletion of users who have audit trail entries
+- **Business Rule**: Audit integrity requires permanent user records
+- **Impact**: Ensures accountability and regulatory compliance
+
+### Constraint Explanations
+
+#### Foreign Key Actions
 
 - **CASCADE**: When parent record is updated/deleted, child records are automatically updated/deleted
 - **RESTRICT**: Prevents parent record from being updated/deleted if child records exist
 - **SET NULL**: When parent record is deleted, foreign key in child records is set to NULL
 - **NO ACTION**: Similar to RESTRICT, but check is deferred until end of statement
 
-### Index Types
+#### Index Types
 
 - **PRIMARY**: Primary key constraint (unique, non-null)
 - **UNIQUE**: Unique constraint (allows one NULL)
 - **INDEX**: Regular index for performance
 - **FULLTEXT**: Full-text search index
+
+### Constraint Impact on Application Logic
+
+#### Validation Layer Integration
+The application's validation layer in `middleware/dataVerification.js` mirrors these database constraints:
+
+- **Frontend Validation**: Immediate user feedback
+- **Application Validation**: Business logic enforcement  
+- **Database Constraints**: Final data integrity guarantee
+
+#### Error Handling
+When constraints are violated, the application catches specific error codes:
+
+```javascript
+// Example constraint error handling
+if (error.code === 'ER_DUP_ENTRY') {
+    if (error.sqlMessage.includes('dea_registration_number')) {
+        return res.status(400).json({ error: 'DEA registration number already exists' });
+    }
+}
+```
+
+#### Performance Considerations
+- **CHECK constraints** add minimal overhead but provide maximum data integrity
+- **UNIQUE constraints** use indexes for fast duplicate detection
+- **FOREIGN KEY constraints** may impact bulk operations but ensure consistency
 
 ## Data Integrity Rules
 

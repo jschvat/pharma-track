@@ -16,7 +16,13 @@ const {
   verifyPhoneNumber, 
   verifyName, 
   verifyAddress, 
-  verifyPassword 
+  verifyPassword,
+  verifyCity,
+  verifyState,
+  verifyZipcode,
+  verifyFaxNumber,
+  verifyDeaNumber,
+  verifyNpiNumber
 } = require('../middleware/dataVerification');
 
 const router = express.Router();
@@ -54,12 +60,22 @@ const passwordResetLimiter = rateLimit({
 });
 
 router.post('/register', registerLimiter, [
+  // User validation
   verifyName(),
   verifyEmail(),
   verifyPhoneNumber(),
   verifyPassword(),
   verifyAddress(),
-  body('store_id').isInt({ min: 1 }).withMessage('Valid store ID required')
+  // Store validation
+  body('store.name').trim().isLength({ min: 2, max: 100 }).withMessage('Store name must be between 2 and 100 characters'),
+  body('store.address').trim().isLength({ min: 5, max: 500 }).withMessage('Store address must be between 5 and 500 characters'),
+  body('store.city').trim().isLength({ min: 2, max: 100 }).withMessage('Store city must be between 2 and 100 characters'),
+  body('store.state').isLength({ min: 2, max: 2 }).withMessage('Store state must be 2 characters'),
+  body('store.zipcode').matches(/^[0-9]{5}(-[0-9]{4})?$/).withMessage('Store zipcode must be 5 digits or 5+4 format'),
+  body('store.phone').matches(/^[0-9]{10}$/).withMessage('Store phone must be 10 digits'),
+  body('store.fax').optional({ checkFalsy: true }).matches(/^[0-9]{10}$/).withMessage('Store fax must be 10 digits if provided'),
+  body('store.dea_registration_number').matches(/^[A-Z]{2}[0-9]{7}$/).withMessage('DEA number must be in format: 2 letters followed by 7 digits'),
+  body('store.npi').matches(/^[0-9]{10}$/).withMessage('NPI must be exactly 10 digits')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -67,27 +83,51 @@ router.post('/register', registerLimiter, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, phone, password, address, store_id } = req.body;
+    const { name, email, phone, password, address, store } = req.body;
 
     const existingUser = await User.findByEmail(email);
     if (existingUser) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
-    const store = await Store.findById(store_id);
-    if (!store) {
-      return res.status(400).json({ error: 'Invalid store ID' });
+    // Check for existing DEA and NPI numbers
+    const existingDeaStore = await Store.findByDeaNumber(store.dea_registration_number);
+    if (existingDeaStore) {
+      return res.status(400).json({ error: 'DEA registration number already exists' });
     }
 
+    const existingNpiStore = await Store.findByNpi(store.npi);
+    if (existingNpiStore) {
+      return res.status(400).json({ error: 'NPI number already exists' });
+    }
+
+    // Create store first
+    const storeId = await Store.create({
+      name: store.name,
+      address: store.address,
+      city: store.city || null,
+      state: store.state,
+      zipcode: store.zipcode,
+      phone: store.phone,
+      fax: store.fax || null,
+      dea_registration_number: store.dea_registration_number,
+      npi: store.npi,
+      admin_user_id: null // Will be set after user creation
+    });
+
+    // Create admin user for the store
     const userId = await User.create({
       name,
       email,
       phone,
       password,
       address,
-      store_id,
-      role: 'user'
+      store_id: storeId,
+      role: 'admin' // Store creator becomes admin
     });
+
+    // Update store with admin_user_id
+    await Store.update(storeId, { admin_user_id: userId });
 
     const token = generateToken(userId);
     const user = await User.findById(userId);

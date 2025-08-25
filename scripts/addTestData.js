@@ -121,7 +121,7 @@ const transactionTypes = [
   'return_to_stock', 
   'expire',
   'audit',
-  'adjustment',
+  'shipment_received',
   'initial_inventory'
 ];
 
@@ -250,9 +250,9 @@ const addTestData = async () => {
           quantity = Math.floor(Math.random() * 200) - 100; // -100 to 100
           notes = `Physical inventory count adjustment - Cycle count performed`;
           break;
-        case 'adjustment':
-          quantity = Math.floor(Math.random() * 20) - 10; // -10 to 10
-          notes = 'Inventory adjustment - damaged/lost items';
+        case 'shipment_received':
+          quantity = Math.floor(Math.random() * 200) + 50; // 50 to 250
+          notes = 'New shipment received from supplier';
           break;
         case 'initial_inventory':
           quantity = Math.floor(Math.random() * 300) + 100; // 100 to 400

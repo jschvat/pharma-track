@@ -32,7 +32,7 @@ const verifyPhoneNumber = (fieldName = 'phone') => {
     .matches(/^[\+]?[1]?[\s\-\(\)]?[0-9]{3}[\s\-\(\)]?[0-9]{3}[\s\-]?[0-9]{4}$/)
     .withMessage('Phone number must be a valid US format (e.g., 555-123-4567)')
     .customSanitizer((value) => {
-      return value.replace(/[^\d]/g, '');
+      return value ? value.replace(/[^\d]/g, '') : value;
     })
     .isLength({ min: 10, max: 11 })
     .withMessage('Phone number must be 10-11 digits');
@@ -40,9 +40,20 @@ const verifyPhoneNumber = (fieldName = 'phone') => {
 
 const verifyFaxNumber = () => {
   return body('fax')
-    .optional()
-    .matches(/^[\+]?[1]?[\s\-\(\)]?[0-9]{3}[\s\-\(\)]?[0-9]{3}[\s\-]?[0-9]{4}$/)
-    .withMessage('Fax number must be a valid US format (e.g., 555-123-4567)')
+    .optional({ checkFalsy: true })
+    .custom((value) => {
+      // Skip validation if value is empty after checkFalsy
+      if (!value || value.trim() === '') {
+        return true;
+      }
+      
+      // Validate format if value is present
+      if (!/^[\+]?[1]?[\s\-\(\)]?[0-9]{3}[\s\-\(\)]?[0-9]{3}[\s\-]?[0-9]{4}$/.test(value)) {
+        throw new Error('Fax number must be a valid US format (e.g., 555-123-4567)');
+      }
+      
+      return true;
+    })
     .customSanitizer((value) => {
       return value ? value.replace(/[^\d]/g, '') : value;
     });
@@ -143,16 +154,30 @@ const verifyAddress = () => {
 
 const verifyCity = () => {
   return body('city')
-    .optional()
-    .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('City must be between 2 and 100 characters')
-    .matches(/^[a-zA-Z\s\-'\.]+$/)
-    .withMessage('City can only contain letters, spaces, hyphens, apostrophes, and periods')
+    .optional({ checkFalsy: true })
     .custom((value) => {
-      if (value && value.includes('  ')) {
+      // Skip validation if value is empty after checkFalsy
+      if (!value || value.trim() === '') {
+        return true;
+      }
+      
+      const trimmed = value.trim();
+      
+      // Length check
+      if (trimmed.length < 2 || trimmed.length > 100) {
+        throw new Error('City must be between 2 and 100 characters');
+      }
+      
+      // Character validation
+      if (!/^[a-zA-Z\s\-'\.]+$/.test(trimmed)) {
+        throw new Error('City can only contain letters, spaces, hyphens, apostrophes, and periods');
+      }
+      
+      // Double space check
+      if (trimmed.includes('  ')) {
         throw new Error('City cannot contain multiple consecutive spaces');
       }
+      
       return true;
     });
 };

@@ -123,12 +123,15 @@ async function createAdminUser(connection) {
       const hashedPassword = await bcrypt.hash('Admin123!', 12);
       
       await connection.execute(`
-        INSERT INTO users (name, email, password, role, is_active, created_at)
-        VALUES (?, ?, ?, ?, ?, NOW())
+        INSERT INTO users (name, email, phone, password, address, store_id, role, is_active, date_created)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
       `, [
         'System Administrator',
-        'admin@pharmatrak.com', 
+        'admin@pharmatrak.com',
+        '5551234567',
         hashedPassword,
+        '123 Admin Street, Admin City, CA 90210',
+        1,
         'god_mode',
         true
       ]);
@@ -162,24 +165,28 @@ async function createSampleStores(connection) {
           address: '123 Main Street',
           city: 'Springfield',
           state: 'IL',
-          zip: '62701',
-          phone: '(555) 123-4567'
+          zipcode: '62701',
+          phone: '5551234567',
+          dea_registration_number: 'AB1234567',
+          npi: '1234567890'
         },
         {
           name: 'Downtown Pharmacy',
           address: '456 Oak Avenue',
           city: 'Springfield',
           state: 'IL', 
-          zip: '62702',
-          phone: '(555) 987-6543'
+          zipcode: '62702',
+          phone: '5559876543',
+          dea_registration_number: 'CD2345678',
+          npi: '0987654321'
         }
       ];
       
       for (const store of stores) {
         await connection.execute(`
-          INSERT INTO stores (name, address, city, state, zip, phone, is_active)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `, [store.name, store.address, store.city, store.state, store.zip, store.phone, true]);
+          INSERT INTO stores (name, address, city, state, zipcode, phone, dea_registration_number, npi)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [store.name, store.address, store.city, store.state, store.zipcode, store.phone, store.dea_registration_number, store.npi]);
       }
       
       console.log(`   ✅ Created ${stores.length} sample stores`);

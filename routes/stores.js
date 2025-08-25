@@ -18,6 +18,17 @@ const {
 
 const router = express.Router();
 
+// Public endpoint for registration - get basic store info without authentication
+router.get('/public', async (req, res) => {
+  try {
+    const stores = await Store.getPublicStoreList();
+    res.json({ stores });
+  } catch (error) {
+    console.error('Get public stores error:', error);
+    res.status(500).json({ error: 'Failed to fetch store list' });
+  }
+});
+
 router.post('/', authenticateToken, requireAdminRole, [
   verifyName(),
   verifyAddress(),
@@ -28,7 +39,7 @@ router.post('/', authenticateToken, requireAdminRole, [
   verifyFaxNumber(),
   verifyDeaNumber(),
   verifyNpiNumber(),
-  body('admin_user_id').optional().isInt({ min: 1 }).withMessage('Valid admin user ID required')
+  body('admin_user_id').optional({ checkFalsy: true }).isInt({ min: 1 }).withMessage('Valid admin user ID required')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -48,8 +59,14 @@ router.post('/', authenticateToken, requireAdminRole, [
       return res.status(400).json({ error: 'NPI number already exists' });
     }
 
-    if (admin_user_id) {
-      const adminUser = await User.findById(admin_user_id);
+    // Handle admin_user_id - convert empty string to null
+    let adminUserId = admin_user_id;
+    if (admin_user_id === '' || admin_user_id === 'null' || admin_user_id === 'undefined') {
+      adminUserId = null;
+    }
+
+    if (adminUserId) {
+      const adminUser = await User.findById(adminUserId);
       if (!adminUser) {
         return res.status(400).json({ error: 'Admin user not found' });
       }
@@ -58,14 +75,14 @@ router.post('/', authenticateToken, requireAdminRole, [
     const storeId = await Store.create({
       name,
       address,
-      city,
+      city: city === '' ? null : city,
       state,
       zipcode,
       phone,
-      fax,
+      fax: fax === '' ? null : fax,
       dea_registration_number,
       npi,
-      admin_user_id
+      admin_user_id: adminUserId
     });
 
     const store = await Store.findById(storeId);
@@ -165,11 +182,14 @@ router.put('/:id', authenticateToken, requireAdminRole, [
   verifyFaxNumber().optional(),
   verifyDeaNumber().optional(),
   verifyNpiNumber().optional(),
-  body('admin_user_id').optional().isInt({ min: 1 }).withMessage('Valid admin user ID required')
+  body('admin_user_id').optional({ checkFalsy: true }).isInt({ min: 1 }).withMessage('Valid admin user ID required')
 ], async (req, res) => {
   try {
+    console.log('🔍 Store update request body:', JSON.stringify(req.body, null, 2));
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Validation errors:', JSON.stringify(errors.array(), null, 2));
       return res.status(400).json({ errors: errors.array() });
     }
 
@@ -195,8 +215,14 @@ router.put('/:id', authenticateToken, requireAdminRole, [
       }
     }
 
-    if (admin_user_id) {
-      const adminUser = await User.findById(admin_user_id);
+    // Handle admin_user_id - convert empty string to null
+    let adminUserId = admin_user_id;
+    if (admin_user_id === '' || admin_user_id === 'null' || admin_user_id === 'undefined') {
+      adminUserId = null;
+    }
+
+    if (adminUserId) {
+      const adminUser = await User.findById(adminUserId);
       if (!adminUser) {
         return res.status(400).json({ error: 'Admin user not found' });
       }
@@ -205,14 +231,14 @@ router.put('/:id', authenticateToken, requireAdminRole, [
     const updateData = {};
     if (name) updateData.name = name;
     if (address) updateData.address = address;
-    if (city !== undefined) updateData.city = city;
+    if (city !== undefined) updateData.city = city === '' ? null : city;
     if (state) updateData.state = state;
     if (zipcode) updateData.zipcode = zipcode;
     if (phone) updateData.phone = phone;
-    if (fax !== undefined) updateData.fax = fax;
+    if (fax !== undefined) updateData.fax = fax === '' ? null : fax;
     if (dea_registration_number) updateData.dea_registration_number = dea_registration_number;
     if (npi) updateData.npi = npi;
-    if (admin_user_id !== undefined) updateData.admin_user_id = admin_user_id;
+    if (admin_user_id !== undefined) updateData.admin_user_id = adminUserId;
 
     const updated = await Store.update(id, updateData);
     if (!updated) {

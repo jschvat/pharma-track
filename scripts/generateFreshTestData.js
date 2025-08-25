@@ -147,7 +147,7 @@ const transactionTypes = [
   'return_to_stock', 
   'expire',
   'audit',
-  'adjustment'
+  'shipment_received'
 ];
 
 // Helper function to generate random date in the past
@@ -327,7 +327,7 @@ async function generateFreshTestData() {
           reason = 'Physical inventory count adjustment';
           break;
           
-        case 'adjustment':
+        case 'shipment_received':
           // Stock adjustments: typically restocking
           const packages = Math.floor(Math.random() * 5) + 1;
           quantityChange = packages * drugData.packageSize;

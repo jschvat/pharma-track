@@ -264,51 +264,50 @@ const TransactionModal = ({
   // Return form content
   const ReturnForm = () => (
     <div>
-      <ItemInfo />
-      
-      <div className="mb-3">
-        <label className="form-label">Select Prescription to Return <span className="text-danger">*</span></label>
+        <ItemInfo />
+        
+        <div className="mb-3">
+          <label className="form-label">Select Prescription to Return <span className="text-danger">*</span></label>
         <PharmaDropdown
+          options={availablePrescriptions.map(rx => ({
+            value: rx.prescription_number,
+            label: `Rx# ${rx.prescription_number} - ${formatDate(rx.fill_date)} - Qty: ${rx.available_for_return}`,
+            data: rx
+          }))}
+          selectedValue={transactionForm.reference_number}
+          onSelectionChange={(value) => {
+            setTransactionForm({
+              ...transactionForm, 
+              reference_number: value,
+              quantity: ''
+            });
+            clearValidationError('reference_number');
+          }}
+          placeholder={availablePrescriptions.length === 0 ? "No prescriptions available for return" : "Choose a prescription..."}
           variant="outline-secondary"
-          className="w-100"
-          trigger="click"
-          pharmaType="capsule"
-          label={
-            transactionForm.reference_number ? 
-              `Rx# ${transactionForm.reference_number}` : 
-              'Choose a prescription...'
-          }
-          fullWidth={true}
-        >
-          {availablePrescriptions.length === 0 ? (
-            <div className="dropdown-item disabled">No prescriptions available for return</div>
-          ) : (
-            availablePrescriptions.map((rx) => (
-              <button
-                key={rx.prescription_number}
-                className="dropdown-item"
-                onClick={() => {
-                  setTransactionForm({
-                    ...transactionForm, 
-                    reference_number: rx.prescription_number,
-                    quantity: ''
-                  });
-                  clearValidationError('reference_number');
-                }}
-              >
-                <div className="prescription-table">
-                  <div className="prescription-row">
-                    <div className="prescription-cell rx-number">Rx #{rx.prescription_number}</div>
-                    <div className="prescription-cell date">{formatDate(rx.fill_date)}</div>
-                    <div className="prescription-cell time">{formatTime(rx.fill_date)}</div>
-                    <div className="prescription-cell user">{rx.filled_by || 'Unknown'}</div>
-                    <div className="prescription-cell quantity">Qty: {rx.available_for_return}</div>
-                  </div>
-                </div>
-              </button>
-            ))
+          size="md"
+          minWidth="100%"
+          maxMenuHeight="300px"
+          autoSize={true}
+          searchable={true}
+          clearable={false}
+          disabled={availablePrescriptions.length === 0}
+          customOptionRenderer={(option, isSelected) => (
+            <div className={`p-2 ${isSelected ? 'text-white' : ''}`}>
+              <div className="fw-bold">Rx #{option.data.prescription_number}</div>
+              <div className="small">
+                <span className="me-3">Date: {formatDate(option.data.fill_date)}</span>
+                <span className="me-3">Time: {formatTime(option.data.fill_date)}</span>
+                <span>Available: {option.data.available_for_return} units</span>
+              </div>
+              {option.data.filled_by && (
+                <div className="small text-muted">Filled by: {option.data.filled_by}</div>
+              )}
+            </div>
           )}
-        </PharmaDropdown>
+          className="w-100"
+          aria-label="Select prescription to return"
+        />
         {validationErrors.reference_number && (
           <div className="invalid-feedback d-block">
             {validationErrors.reference_number}
