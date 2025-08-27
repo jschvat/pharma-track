@@ -12,12 +12,32 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isTransitioningToRegister, setIsTransitioningToRegister] = useState(false);
+  const [showLoginForm, setShowLoginForm] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Cleanup classes on component unmount
+  // Cleanup classes on component mount (returning from register) and unmount
   useEffect(() => {
+    // Immediately disable transitions and clean up classes when returning from register
+    document.documentElement.classList.remove('login-fullscreen-transition');
+    document.body.classList.remove('login-fullscreen-transition');
+    
+    // Force immediate layout reset with no transitions
+    const loginContainer = document.querySelector('.login-container');
+    if (loginContainer) {
+      loginContainer.style.transition = 'none';
+      loginContainer.classList.remove('fullscreen-transition');
+      
+      // Re-enable transitions after a brief moment
+      setTimeout(() => {
+        loginContainer.style.transition = '';
+      }, 50);
+    }
+    
+    // For now, disable fade-in to test dropdown issue
+    setShowLoginForm(true);
+    
     return () => {
       document.documentElement.classList.remove('login-fullscreen-transition');
       document.body.classList.remove('login-fullscreen-transition');
@@ -60,7 +80,7 @@ const Login = () => {
   // Check if we're in development mode
   const isDevelopment = process.env.NODE_ENV === 'development' || process.env.REACT_APP_ENV === 'development';
 
-  // Handle registration link click with fullscreen transition
+  // Handle registration link click with 3-stage transition
   const handleRegisterClick = (e) => {
     e.preventDefault();
     setIsTransitioningToRegister(true);
@@ -69,15 +89,17 @@ const Login = () => {
     document.documentElement.classList.add('login-fullscreen-transition');
     document.body.classList.add('login-fullscreen-transition');
     
-    // Delay navigation to allow animation to start
+    // Stage 1: Login form immediately disappears
+    // Stage 2: Blue container will expand (slow) 
+    // Then navigate to register for stage 3
     setTimeout(() => {
       navigate('/register');
-    }, 800); // Extended to match animation duration
+    }, 200); // Brief delay to let blue expansion start, then navigate
   };
 
   return (
     <div className={`login-container ${isTransitioningToRegister ? 'fullscreen-transition' : ''}`}>
-        <div className={`login-card ${isTransitioningToRegister ? 'expanding' : ''}`}>
+        <div className={`login-card ${isTransitioningToRegister ? 'expanding' : ''} ${showLoginForm ? 'fade-in' : 'fade-out'}`}>
         {/* Header */}
         <div className="login-header">
         </div>

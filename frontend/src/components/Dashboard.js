@@ -336,8 +336,8 @@ const Dashboard = () => {
                               <div className="d-flex justify-content-between align-items-start">
                                 <div className="flex-grow-1">
                                   <strong className="small">{item.generic_name}</strong>
-                                  {item.brand_name && <div className="text-muted" style={{fontSize: '0.75rem'}}>{item.brand_name}</div>}
-                                  <div className="text-muted" style={{fontSize: '0.7rem'}}>
+                                  {item.brand_name && <div className="text-muted dashboard-brand-name">{item.brand_name}</div>}
+                                  <div className="text-muted dashboard-reorder-info">
                                     Reorder at: {item.reorder_level}
                                   </div>
                                 </div>
@@ -355,7 +355,7 @@ const Dashboard = () => {
                       </div>
                     ) : (
                       <div className="text-center py-3 text-muted">
-                        <div style={{fontSize: '2rem'}}>✅</div>
+                        <div className="dashboard-empty-icon">✅</div>
                         <div>All items are well stocked!</div>
                       </div>
                     )}
@@ -387,8 +387,8 @@ const Dashboard = () => {
                               <div className="d-flex justify-content-between align-items-start">
                                 <div className="flex-grow-1">
                                   <strong className="small">{item.generic_name}</strong>
-                                  {item.brand_name && <div className="text-muted" style={{fontSize: '0.75rem'}}>{item.brand_name}</div>}
-                                  <div className="text-muted" style={{fontSize: '0.7rem'}}>
+                                  {item.brand_name && <div className="text-muted dashboard-brand-name">{item.brand_name}</div>}
+                                  <div className="text-muted dashboard-reorder-info">
                                     Expires: {new Date(item.expiration_date).toLocaleDateString()}
                                   </div>
                                 </div>
@@ -407,7 +407,7 @@ const Dashboard = () => {
                       </div>
                     ) : (
                       <div className="text-center py-3 text-muted">
-                        <div style={{fontSize: '2rem'}}>🗓️</div>
+                        <div className="dashboard-empty-icon">🗓️</div>
                         <div>No items expiring soon</div>
                       </div>
                     )}
@@ -452,7 +452,7 @@ const Dashboard = () => {
                                   value === 'expire' ? 'danger' :
                                   'secondary'
                                 }
-                                style={{fontSize: '0.6rem'}}
+                                className="dashboard-transaction-details"
                               >
                                 {value.replace('_', ' ')}
                               </Badge>
@@ -480,7 +480,7 @@ const Dashboard = () => {
                       />
                     ) : (
                       <div className="text-center py-3 text-muted">
-                        <div style={{fontSize: '2rem'}}>📋</div>
+                        <div className="dashboard-empty-icon">📋</div>
                         <div>No recent activity</div>
                       </div>
                     )}

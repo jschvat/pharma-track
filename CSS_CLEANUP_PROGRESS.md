@@ -72,6 +72,64 @@
 
 **Result**: Register.js now has **0 inline styles**, down from 11
 
+### **Actions Taken - PharmaDataGrid.js** ✅ **COMPLETED**
+
+#### **Extracted CSS Classes Added to `components.css`:**
+```css
+/* PharmaDataGrid Component Styles */
+.pharma-grid-resize-handle { /* Column resize handle with active state */ }
+.pharma-grid-resize-handle.active { background-color: rgba(13, 110, 253, 0.6); }
+.pharma-grid-body-row.clickable { cursor: pointer; }
+```
+
+#### **Replaced Complex Inline Styles:**
+- **Resize handle styling**: Complex inline style with dynamic active state → CSS classes with conditional logic
+- **Row cursor styling**: `style={{ cursor: onRowClick ? 'pointer' : 'default' }}` → `className={onRowClick ? 'clickable' : ''}`
+- **Kept legitimate dynamic styles**: CSS custom properties and props passthrough
+
+**Result**: PharmaDataGrid.js now has **3 legitimate inline styles**, down from 13 (10 extracted)
+
+### **Actions Taken - PostItNote.js** ✅ **COMPLETED**
+
+#### **Extracted CSS Classes Added to `components.css`:**
+```css
+/* Post-it Note Component Styles */
+.postit-note-base { /* Base note styling with position, size, font */ }
+.postit-note-base.dragging/.pinned/.normal { /* State-based styling */ }
+.postit-note-texture { /* Paper texture background */ }
+.postit-note-pin-button/.delete-button { /* Action buttons */ }
+.postit-note-content-wrapper { /* Content layout */ }
+.postit-note-textarea/.display { /* Text input and display */ }
+```
+
+#### **Replaced All Static Inline Styles:**
+- **Note container**: Massive inline style object → CSS classes with conditional state
+- **Texture overlay**: Complex gradient background → CSS class  
+- **Action buttons**: Pin/delete button styling → CSS classes
+- **Content areas**: Textarea and display divs → CSS classes
+- **Kept only dynamic styles**: Color theming and positioning based on component state
+
+**Result**: PostItNote.js now has **4 legitimate inline styles**, down from 13 (9 extracted)
+
+### **Actions Taken - Dashboard.js** ✅ **COMPLETED**
+
+#### **Extracted CSS Classes Added to `components.css`:**
+```css
+/* Dashboard Component Styles */
+.dashboard-brand-name { font-size: 0.75rem; }
+.dashboard-reorder-info { font-size: 0.7rem; }
+.dashboard-empty-icon { font-size: 2rem; }
+.dashboard-transaction-details { font-size: 0.6rem; }
+```
+
+#### **Replaced All Inline Font Sizes:**
+- `style={{fontSize: '0.75rem'}}` → `className="dashboard-brand-name"`
+- `style={{fontSize: '0.7rem'}}` → `className="dashboard-reorder-info"`  
+- `style={{fontSize: '2rem'}}` → `className="dashboard-empty-icon"`
+- `style={{fontSize: '0.6rem'}}` → `className="dashboard-transaction-details"`
+
+**Result**: Dashboard.js now has **0 inline styles**, down from 8 (8 extracted)
+
 ---
 
 ## 📊 **Overall Progress**
@@ -80,11 +138,16 @@
 - ✅ Branch created (`css-repair`)
 - ✅ CSS audit completed (16 files analyzed)
 - ✅ Dropdown consolidation (6 → 1 files)
-- ✅ Register.js inline style extraction (11 → 0)
+- ✅ **Major inline style extraction completed**:
+  - ✅ Register.js: 11 → 0 inline styles  
+  - ✅ PharmaDataGrid.js: 13 → 3 inline styles (10 extracted)
+  - ✅ PostItNote.js: 13 → 4 inline styles (9 extracted)  
+  - ✅ Dashboard.js: 8 → 0 inline styles (8 extracted)
+  - ✅ **Total extracted: 38 inline styles** from top priority components
 
 ### **In Progress**  
-- 🔄 Remaining inline styles: **214 occurrences** (was 225)
-- 🔄 Next targets: PharmaDataGrid.js (10), PostItNote.js (9)
+- 🔄 Remaining inline styles: **~187 occurrences** (was 225, extracted 38 more)
+- 🔄 Next targets: Components with 5 or fewer inline styles (lower priority)
 
 ### **Pending**
 - ⏳ CSS rule optimization (remove unused rules)

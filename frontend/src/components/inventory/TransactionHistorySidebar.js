@@ -169,42 +169,42 @@ const TransactionHistorySidebar = ({
       </Card.Header>
       
       <Card.Body className="p-0">
-        <div className="transaction-register-container" style={{height: 'calc(100vh - 200px)', overflow: 'auto'}}>
+        <div className="transaction-register-container">
           <Table size="sm" className="mb-0 transaction-register-table">
             <thead className="sticky-top bg-light">
               <tr>
                 <th 
-                  style={{cursor: 'pointer', padding: '8px'}} 
+                  className="transaction-sortable-header" 
                   onClick={() => onSort('transaction_date')}
                   title="Click to sort by date"
                 >
                   Date {sortField === 'transaction_date' && (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
                 <th 
-                  style={{cursor: 'pointer', padding: '8px'}} 
+                  className="transaction-sortable-header" 
                   onClick={() => onSort('transaction_type')}
                   title="Click to sort by type"
                 >
                   Type {sortField === 'transaction_type' && (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
                 <th 
-                  style={{cursor: 'pointer', padding: '8px'}} 
+                  className="transaction-sortable-header" 
                   onClick={() => onSort('performed_by_name')}
                   title="Click to sort by user"
                 >
                   User {sortField === 'performed_by_name' && (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
-                <th style={{padding: '8px'}}>Reason</th>
-                <th style={{padding: '8px'}}>Ref#</th>
+                <th className="transaction-header-cell">Reason</th>
+                <th className="transaction-header-cell">Ref#</th>
                 <th 
-                  style={{cursor: 'pointer', padding: '8px'}} 
+                  className="transaction-sortable-header" 
                   onClick={() => onSort('quantity_change')}
                   title="Click to sort by change"
                 >
                   Change {sortField === 'quantity_change' && (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
                 <th 
-                  style={{cursor: 'pointer', padding: '8px'}} 
+                  className="transaction-sortable-header" 
                   onClick={() => onSort('running_balance')}
                   title="Click to sort by balance"
                 >
@@ -214,15 +214,15 @@ const TransactionHistorySidebar = ({
               
               {/* Filter Row */}
               <tr className="bg-light">
-                <th style={{padding: '4px 8px'}}>
+                <th className="transaction-filter-cell">
                   <small className="text-muted">Filter:</small>
                 </th>
-                <th style={{padding: '4px 8px'}}>
+                <th className="transaction-filter-cell">
                   <Form.Select
                     size="sm"
                     value={columnFilters.transaction_type || ''}
                     onChange={(e) => onColumnFilterChange('transaction_type', e.target.value)}
-                    style={{fontSize: '0.75rem'}}
+                    className="transaction-filter-control"
                   >
                     <option value="">All types</option>
                     {transactionTypes.map(type => (
@@ -232,34 +232,34 @@ const TransactionHistorySidebar = ({
                     ))}
                   </Form.Select>
                 </th>
-                <th style={{padding: '4px 8px'}}>
+                <th className="transaction-filter-cell">
                   <Form.Control
                     size="sm"
                     type="text"
                     placeholder="Filter user..."
                     value={columnFilters.performed_by_name || ''}
                     onChange={(e) => onColumnFilterChange('performed_by_name', e.target.value)}
-                    style={{fontSize: '0.75rem'}}
+                    className="transaction-filter-control"
                   />
                 </th>
-                <th style={{padding: '4px 8px'}}>
+                <th className="transaction-filter-cell">
                   <Form.Control
                     size="sm"
                     type="text"
                     placeholder="Filter reason..."
                     value={columnFilters.reason || ''}
                     onChange={(e) => onColumnFilterChange('reason', e.target.value)}
-                    style={{fontSize: '0.75rem'}}
+                    className="transaction-filter-control"
                   />
                 </th>
-                <th style={{padding: '4px 8px'}}>
+                <th className="transaction-filter-cell">
                   <Form.Control
                     size="sm"
                     type="text"
                     placeholder="Filter ref..."
                     value={columnFilters.reference_number || ''}
                     onChange={(e) => onColumnFilterChange('reference_number', e.target.value)}
-                    style={{fontSize: '0.75rem'}}
+                    className="transaction-filter-control"
                   />
                 </th>
                 <th></th>

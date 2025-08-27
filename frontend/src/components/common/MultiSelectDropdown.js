@@ -249,10 +249,8 @@ const MultiSelectDropdown = ({
         setCalculatedMenuHeight(dimensions.height);
       }
       
-      // Update position
-      setTimeout(() => {
-        updateMenuPosition();
-      }, 10);
+      // Update position immediately - no setTimeout to prevent flicker
+      updateMenuPosition();
     }
   };
 

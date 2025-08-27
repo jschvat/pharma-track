@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PharmaDropdown from './common/PharmaDropdown';
 import '../css/components.css';
 
@@ -28,8 +28,34 @@ const Register = () => {
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
 
   const navigate = useNavigate();
+
+  // 3-Stage transition setup
+  useEffect(() => {
+    // Set up fullscreen mode
+    document.documentElement.classList.add('login-fullscreen-transition');
+    document.body.classList.add('login-fullscreen-transition');
+    
+    // Stage 2 is already in progress (blue container expanding)
+    // Stage 3: Show registration form after blue container expansion completes
+    const expandTimer = setTimeout(() => {
+      setIsExpanded(true);
+    }, 100);
+    
+    const formTimer = setTimeout(() => {
+      setShowRegistrationForm(true);
+    }, 500); // Shorter wait before form starts fading in
+    
+    return () => {
+      clearTimeout(expandTimer);
+      clearTimeout(formTimer);
+      // Note: Don't remove fullscreen classes immediately during navigation
+      // Let the Login component handle the cleanup after it's fully rendered
+    };
+  }, []);
 
   // US States for PharmaDropdown
   const US_STATES_OPTIONS = [
@@ -259,14 +285,7 @@ const Register = () => {
           deaRegistrationNumber: '',
           npi: ''
         });
-        // Redirect to login after 3 seconds
-        setTimeout(() => {
-          navigate('/login', { 
-            state: { 
-              message: 'Registration successful! Please contact your administrator for account activation.' 
-            } 
-          });
-        }, 3000);
+        // Stay on registration page - user must explicitly choose to leave via Cancel button
       } else {
         setError(data.error || data.errors?.[0]?.msg || 'Registration failed');
       }
@@ -302,18 +321,34 @@ const Register = () => {
     if (error) setError('');
   };
 
+  // Handle cancel/back to login with reverse 3-stage transition
+  const handleCancel = () => {
+    // Stage 1: Fade out registration form quickly
+    setShowRegistrationForm(false);
+    
+    // Stage 2: Contract blue container (slow)
+    setTimeout(() => {
+      setIsExpanded(false);
+    }, 500);
+    
+    // Stage 3: Navigate back to show login form
+    setTimeout(() => {
+      // Don't clean up fullscreen classes here - let Login component handle it
+      navigate('/login');
+    }, 950); // Wait for form fade + container contraction
+  };
+
   return (
-    <div className="login-container">
-      <div className="login-card register-card-wide">
+    <div className={`login-container ${isExpanded ? 'fullscreen-transition' : ''}`}>
+      <div className={`login-card register-card-wide ${isExpanded ? 'expanding' : ''} ${showRegistrationForm ? 'show-form' : 'hide-form'}`}>
         {/* Header with Logo */}
         <div className="login-header">
           <div className="login-logo">
             <svg 
-              className="pharmatrak-logo"
+              className="pharmatrak-logo register-logo"
               viewBox="0 0 400 200" 
               xmlns="http://www.w3.org/2000/svg"
               alt="PharmaTraK - Professional Pharmacy Management System"
-              className="register-logo"
             >
               <defs>
                 <linearGradient id="trayGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -588,13 +623,12 @@ const Register = () => {
                     type="text"
                     id="deaRegistrationNumber"
                     name="deaRegistrationNumber"
-                    className="form-control"
+                    className="form-control register-dea-input"
                     value={formData.deaRegistrationNumber}
                     onChange={handleChange}
                     required
                     placeholder="AB1234567"
                     maxLength="9"
-                    className="register-dea-input"
                   />
                   <small className="form-text text-muted">
                     2 letters + 7 digits (e.g., AB1234567)
@@ -681,39 +715,36 @@ const Register = () => {
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="btn btn-success w-100 login-submit-btn mb-3"
-              disabled={loading}
-              className="register-submit-button"
-            >
-              {loading ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2"></span>
-                  Creating Profile...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-user-plus me-2"></i>
-                  Create New Profile
-                </>
-              )}
-            </button>
+            <div className="d-flex gap-3 mt-4">
+              <button
+                type="button"
+                className="btn btn-outline-secondary flex-fill"
+                onClick={handleCancel}
+                disabled={loading}
+              >
+                <i className="fas fa-arrow-left me-2"></i>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-success flex-fill register-submit-button"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2"></span>
+                    Creating Profile...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-user-plus me-2"></i>
+                    Create New Profile
+                  </>
+                )}
+              </button>
+            </div>
           </form>
 
-          <div className="text-center">
-            <Link to="/login" className="btn btn-outline-primary">
-              <i className="fas fa-arrow-left me-2"></i>
-              Back to Sign In
-            </Link>
-          </div>
-
-          <div className="login-footer">
-            <small className="text-muted">
-              By creating a profile, you agree to the terms of use of this pharmacy management system.
-              Your account will require administrator approval before activation.
-            </small>
-          </div>
         </div>
       </div>
     </div>

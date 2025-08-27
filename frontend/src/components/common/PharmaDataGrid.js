@@ -607,24 +607,11 @@ const PharmaDataGrid = ({
       <div
         key={column.field || index}
         data-field={column.field}
-        className={`pharma-grid-header ${isSortable ? 'sortable' : ''} ${isResizableColumn ? 'resizable' : ''} ${sortInfo ? 'sorted' : ''} ${headerClassName}`}
-        style={{ 
-          position: 'relative',
-          overflow: 'visible',
-          flexDirection: 'column',
-          alignItems: 'flex-start'
-        }}
+        className={`pharma-grid-header pharma-grid-header-container ${isSortable ? 'sortable' : ''} ${isResizableColumn ? 'resizable' : ''} ${sortInfo ? 'sorted' : ''} ${headerClassName}`}
       >
         <div 
-          className="pharma-grid-header-label"
+          className={`pharma-grid-header-label ${isSortable ? 'pharma-grid-header-label-sortable' : 'pharma-grid-header-label-default'} ${!isFilterable ? 'pharma-grid-header-label-no-margin' : ''}`}
           onClick={isSortable ? () => handleSort(column.field) : undefined}
-          style={{ 
-            cursor: isSortable ? 'pointer' : 'default',
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: isFilterable ? '0.5rem' : '0'
-          }}
         >
           {column.label}
           {isSortable && (
@@ -646,7 +633,7 @@ const PharmaDataGrid = ({
         </div>
         
         {isFilterable && (
-          <div className="pharma-grid-filter" style={{ width: '100%', marginTop: '0.5rem' }}>
+          <div className="pharma-grid-filter pharma-grid-filter-container">
             <Form.Control
               size="sm"
               placeholder={`Filter ${column.label}`}
@@ -668,17 +655,6 @@ const PharmaDataGrid = ({
             aria-label={`Resize ${column.label} column`}
             role="button"
             tabIndex={0}
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: '-3px',
-              bottom: 0,
-              width: '6px',
-              cursor: 'col-resize',
-              backgroundColor: isResizing && resizingColumn === column.field ? 
-                'rgba(13, 110, 253, 0.6)' : 'transparent',
-              zIndex: 15
-            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -764,7 +740,7 @@ const PharmaDataGrid = ({
               setCurrentPageSize(parseInt(e.target.value));
               setCurrentPage(1);
             }}
-            style={{ width: 'auto' }}
+            className="pharma-grid-auto-width"
           >
             {pageSizeOptions.map(size => (
               <option key={size} value={size}>{size} per page</option>
@@ -839,7 +815,7 @@ const PharmaDataGrid = ({
         className={`pharma-data-grid ${className}`}
       >
         <div className="text-center py-4 text-muted">
-          <div style={{ fontSize: '3rem' }}>{emptyIcon}</div>
+          <div className="pharma-grid-empty-icon">{emptyIcon}</div>
           <div className="mt-2">{emptyMessage}</div>
         </div>
       </PharmaCard>
@@ -853,7 +829,8 @@ const PharmaDataGrid = ({
     <div 
       className={`pharma-data-grid ${isResizing ? 'resizing' : ''} ${className}`} 
       ref={gridRef} 
-      style={{ position: 'relative', ...otherProps.style }}
+      className="pharma-grid-container"
+      style={{ ...otherProps.style }}
       {...otherProps}
     >
       {/* Toolbar */}
@@ -990,10 +967,9 @@ const PharmaDataGrid = ({
             return (
               <div
                 key={rowId}
-                className={`pharma-grid-body-row ${isSelected ? 'selected' : ''} ${rowClassName}`}
+                className={`pharma-grid-body-row ${isSelected ? 'selected' : ''} ${onRowClick ? 'clickable' : ''} ${rowClassName}`}
                 onClick={onRowClick ? () => onRowClick(row, rowIndex) : undefined}
                 onDoubleClick={onRowDoubleClick ? () => onRowDoubleClick(row, rowIndex) : undefined}
-                style={{ cursor: onRowClick ? 'pointer' : 'default' }}
               >
                 {selectable && (
                   <div className="pharma-grid-cell pharma-grid-select-cell">

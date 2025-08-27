@@ -1075,63 +1075,50 @@ const Inventory = () => {
                     </div>
 
                     <div className="register-body">
-                      <div className="table-responsive h-100">
-                        <Table
-                          hover
-                          size="sm"
-                          className="mb-0 register-table"
-                          style={{ fontSize: "0.85rem" }}
-                        >
-                          <thead className="bg-light sticky-top">
-                            <tr style={{ borderBottom: "1px solid #dee2e6" }}>
+                      <div>
+                        <Table size="sm" className="mb-0">
+                          <thead>
+                            <tr>
                               <th
-                                style={{ cursor: "pointer", minWidth: "110px" }}
+                                style={{ cursor: "pointer" }}
                                 onClick={() => handleSort("transaction_date")}
                                 className="user-select-none"
                               >
                                 Date {getSortIcon("transaction_date")}
                               </th>
                               <th
-                                style={{ cursor: "pointer", minWidth: "140px" }}
+                                style={{ cursor: "pointer" }}
                                 onClick={() => handleSort("transaction_type")}
                                 className="user-select-none"
                               >
                                 Type {getSortIcon("transaction_type")}
                               </th>
                               <th
-                                style={{ cursor: "pointer", minWidth: "80px" }}
+                                style={{ cursor: "pointer" }}
                                 onClick={() => handleSort("performed_by_name")}
                                 className="user-select-none"
                               >
                                 User {getSortIcon("performed_by_name")}
                               </th>
-                              <th style={{ minWidth: "150px" }}>Reason</th>
-                              <th style={{ minWidth: "90px" }}>Reference</th>
+                              <th>Reason</th>
+                              <th>Reference</th>
                               <th
-                                style={{
-                                  cursor: "pointer",
-                                  minWidth: "70px",
-                                  textAlign: "right",
-                                }}
+                                style={{ cursor: "pointer" }}
                                 onClick={() => handleSort("quantity_change")}
                                 className="user-select-none text-end"
                               >
                                 Change {getSortIcon("quantity_change")}
                               </th>
                               <th
-                                style={{
-                                  cursor: "pointer",
-                                  minWidth: "70px",
-                                  textAlign: "right",
-                                }}
+                                style={{ cursor: "pointer" }}
                                 onClick={() => handleSort("quantity_after")}
                                 className="user-select-none text-end"
                               >
                                 Balance {getSortIcon("quantity_after")}
                               </th>
                             </tr>
-                            <tr style={{ borderBottom: "2px solid #dee2e6" }}>
-                              <th style={{ padding: "4px 8px" }}>
+                            <tr>
+                              <th>
                                 <Button
                                   size="sm"
                                   variant="link"
@@ -1142,7 +1129,7 @@ const Inventory = () => {
                                   🗑️
                                 </Button>
                               </th>
-                              <th style={{ padding: "4px 8px" }}>
+                              <th>
                                 <MultiSelectDropdown
                                   options={getDropdownOptions("transaction_type")}
                                   selectedValues={columnFilters.transaction_type}
@@ -1156,7 +1143,7 @@ const Inventory = () => {
                                   size="sm"
                                 />
                               </th>
-                              <th style={{ padding: "4px 8px" }}>
+                              <th>
                                 <MultiSelectDropdown
                                   options={getDropdownOptions("performed_by_name")}
                                   selectedValues={columnFilters.performed_by_name}
@@ -1170,7 +1157,7 @@ const Inventory = () => {
                                   size="sm"
                                 />
                               </th>
-                              <th style={{ padding: "4px 8px" }}>
+                              <th>
                                 <Form.Control
                                   size="sm"
                                   type="text"
@@ -1185,7 +1172,7 @@ const Inventory = () => {
                                   style={{ fontSize: "0.75rem" }}
                                 />
                               </th>
-                              <th style={{ padding: "4px 8px" }}>
+                              <th>
                                 <Form.Control
                                   size="sm"
                                   type="text"
@@ -1204,6 +1191,10 @@ const Inventory = () => {
                               <th></th>
                             </tr>
                           </thead>
+                        </Table>
+                      </div>
+                      <div>
+                        <Table hover size="sm" className="mb-0">
                           <tbody>
                             {historyLoading ? (
                               <tr>

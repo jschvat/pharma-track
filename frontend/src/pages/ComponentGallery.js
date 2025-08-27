@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Card, Nav, Badge, Alert, Button } from 'react-bootstrap';
+import { Container, Row, Col, Card, Nav, Badge, Alert, Button, Form } from 'react-bootstrap';
 import './ComponentGallery.css';
+
+// Import dropdown components
+import MultiSelectDropdown from '../components/common/MultiSelectDropdown';
+import PharmaDropdown from '../components/common/PharmaDropdown';
 
 // Import all PharmaTraK components (adjust paths as needed)
 // Note: These would be actual component imports in a real implementation
@@ -341,7 +345,7 @@ const PharmaTooltip = ({ content, children, position = 'top' }) => {
 };
 
 const ComponentGallery = () => {
-  const [activeCategory, setActiveCategory] = useState('buttons');
+  const [activeCategory, setActiveCategory] = useState('dropdowns');
   const [showModal, setShowModal] = useState(false);
 
   // Only show in development
@@ -585,6 +589,33 @@ const ComponentGallery = () => {
                   <PharmaTooltip content="Drug interaction warning" position="bottom">
                     <i className="fas fa-exclamation-triangle text-warning"></i>
                   </PharmaTooltip>
+                </div>
+              )
+            }
+          ]
+        }
+      ]
+    },
+    dropdowns: {
+      title: 'Dropdowns & Selects',
+      icon: 'fas fa-caret-down',
+      components: [
+        {
+          name: 'Test Dropdown Section',
+          description: 'Testing if dropdowns section appears in component gallery',
+          examples: [
+            {
+              title: 'Basic Test',
+              component: (
+                <div className="alert alert-success">
+                  <h5>🎉 Dropdowns section is working!</h5>
+                  <p>This confirms the dropdowns section has been added successfully to the Component Gallery.</p>
+                  <Form.Select style={{ width: '200px' }}>
+                    <option>Basic HTML Select</option>
+                    <option value="1">Option 1</option>
+                    <option value="2">Option 2</option>
+                    <option value="3">Option 3</option>
+                  </Form.Select>
                 </div>
               )
             }

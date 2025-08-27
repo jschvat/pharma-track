@@ -18,7 +18,7 @@ import PharmaAuditTrail from '../components/common/PharmaAuditTrail';
 import './ComponentGallery.css';
 
 const ComponentGallerySimple = () => {
-  const [activeCategory, setActiveCategory] = useState('buttons');
+  const [activeCategory, setActiveCategory] = useState('dropdowns');
 
   // Only show in development
   if (process.env.NODE_ENV === 'production') {
@@ -2139,6 +2139,151 @@ const ComponentGallerySimple = () => {
                     refreshInterval={30000}
                     onAuditClick={(audit) => console.log('System audit clicked:', audit)}
                   />
+                </div>
+              )
+            }
+          ]
+        }
+      ]
+    },
+    dropdowns: {
+      title: 'Dropdowns & Selects',
+      icon: 'fas fa-caret-down',
+      components: [
+        {
+          name: 'MultiSelectDropdown',
+          description: 'Advanced multi-select dropdown with auto-sizing and positioning',
+          examples: [
+            {
+              title: 'Basic Multi-Select',
+              component: (
+                <div className="d-flex flex-column gap-3">
+                  <MultiSelectDropdown
+                    options={[
+                      { value: 'prescription_fill', label: 'Prescription Fill' },
+                      { value: 'shipment_received', label: 'Shipment Received' },
+                      { value: 'return_to_stock', label: 'Return to Stock' },
+                      { value: 'expire', label: 'Expire' },
+                      { value: 'audit', label: 'Audit' }
+                    ]}
+                    selectedValues={['prescription_fill']}
+                    onSelectionChange={(values) => console.log('Selection changed:', values)}
+                    placeholder="Select transaction types..."
+                    header="Transaction Types"
+                    variant="outline-primary"
+                  />
+                </div>
+              )
+            },
+            {
+              title: 'User Selection',
+              component: (
+                <MultiSelectDropdown
+                  options={[
+                    { value: 'admin', label: 'Admin User' },
+                    { value: 'pharmacist', label: 'Pharmacist' },
+                    { value: 'technician', label: 'Pharmacy Technician' },
+                    { value: 'manager', label: 'Store Manager' }
+                  ]}
+                  selectedValues={[]}
+                  onSelectionChange={(values) => console.log('Users selected:', values)}
+                  placeholder="All Users"
+                  noneSelectedText="All Users"
+                  header="Select Users"
+                  variant="outline-secondary"
+                  size="sm"
+                  minWidth="150px"
+                />
+              )
+            },
+            {
+              title: 'In Different Containers',
+              component: (
+                <div className="row">
+                  <div className="col-md-6">
+                    <div className="card p-3">
+                      <h6>In Card Container</h6>
+                      <MultiSelectDropdown
+                        options={[
+                          { value: 'opt1', label: 'Option 1' },
+                          { value: 'opt2', label: 'Option 2' },
+                          { value: 'opt3', label: 'Option 3' }
+                        ]}
+                        selectedValues={[]}
+                        onSelectionChange={(values) => console.log('Card:', values)}
+                        placeholder="Select in card..."
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="position-sticky" style={{ top: '10px', background: '#f8f9fa', padding: '15px', border: '1px solid #dee2e6' }}>
+                      <h6>In Sticky Container</h6>
+                      <MultiSelectDropdown
+                        options={[
+                          { value: 'sticky1', label: 'Sticky Option 1' },
+                          { value: 'sticky2', label: 'Sticky Option 2' },
+                          { value: 'sticky3', label: 'Sticky Option 3' }
+                        ]}
+                        selectedValues={[]}
+                        onSelectionChange={(values) => console.log('Sticky:', values)}
+                        placeholder="In sticky container..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+          ]
+        },
+        {
+          name: 'PharmaDropdown',
+          description: 'Single-select dropdown with pharmacy-specific styling',
+          examples: [
+            {
+              title: 'Basic Dropdown',
+              component: (
+                <div className="d-flex gap-3">
+                  <PharmaDropdown
+                    options={[
+                      { value: 'active', label: 'Active' },
+                      { value: 'inactive', label: 'Inactive' },
+                      { value: 'all', label: 'All Status' }
+                    ]}
+                    value="active"
+                    onChange={(value) => console.log('Status changed:', value)}
+                    placeholder="Select status..."
+                  />
+                </div>
+              )
+            }
+          ]
+        },
+        {
+          name: 'Bootstrap Form Controls',
+          description: 'Standard Bootstrap form selects and dropdowns',
+          examples: [
+            {
+              title: 'Form Select Sizes',
+              component: (
+                <div className="d-flex gap-3">
+                  <Form.Select size="sm" style={{ width: '150px' }}>
+                    <option>Small Select</option>
+                    <option value="1">Option 1</option>
+                    <option value="2">Option 2</option>
+                    <option value="3">Option 3</option>
+                  </Form.Select>
+                  <Form.Select style={{ width: '150px' }}>
+                    <option>Normal Select</option>
+                    <option value="1">Option 1</option>
+                    <option value="2">Option 2</option>
+                    <option value="3">Option 3</option>
+                  </Form.Select>
+                  <Form.Select size="lg" style={{ width: '150px' }}>
+                    <option>Large Select</option>
+                    <option value="1">Option 1</option>
+                    <option value="2">Option 2</option>
+                    <option value="3">Option 3</option>
+                  </Form.Select>
                 </div>
               )
             }

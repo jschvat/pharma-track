@@ -10,7 +10,7 @@
 
 /* Register Component - Extracted from inline styles */
 .register-card-wide {
-  max-width: 600px;
+  max-width: 900px;
 }
 
 .register-logo {
@@ -61,6 +61,91 @@
   letter-spacing: 2px;
 }
 
+/* PharmaDataGrid Component - Extracted from inline styles */
+.pharma-grid-header-container {
+  position: relative;
+  overflow: visible;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.pharma-grid-sortable-header {
+  cursor: pointer;
+}
+
+.pharma-grid-default-header {
+  cursor: default;
+}
+
+.pharma-grid-filter-container {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.pharma-grid-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  background-color: transparent;
+  z-index: 15;
+}
+
+.pharma-grid-resize-handle.active {
+  background-color: rgba(13, 110, 253, 0.6);
+}
+
+.pharma-grid-auto-width {
+  width: auto;
+}
+
+.pharma-grid-container {
+  position: relative;
+}
+
+.pharma-grid-empty-icon {
+  font-size: 3rem;
+}
+
+.pharma-grid-clickable-row {
+  cursor: pointer;
+}
+
+.pharma-grid-default-row {
+  cursor: default;
+}
+
+.pharma-grid-body-row.clickable {
+  cursor: pointer;
+}
+
+/* Header label styles */
+.pharma-grid-header-label {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.pharma-grid-header-label-sortable {
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.pharma-grid-header-label-default {
+  cursor: default;
+}
+
+.pharma-grid-header-label-no-margin {
+  margin-bottom: 0;
+}
+
+/* Grid layout styles */
+.pharma-grid-main {
+  --grid-columns: 1fr;
+}
+
 /* ===== DASHBOARD COMPONENT ===== */
 
 .dashboard-loading {
@@ -106,7 +191,7 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  transition: all 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+  transition: all 0.75s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 
@@ -188,6 +273,13 @@ body.login-fullscreen-transition {
   padding: 0 !important;
   width: 100% !important;
   height: 100% !important;
+  /* Ensure consistent background during transition to prevent white flash */
+  background: linear-gradient(
+    135deg,
+    var(--granite-dark) 0%,
+    var(--granite-medium) 50%,
+    var(--granite-light) 100%
+  ) !important;
 }
 
 /* Override root container */
@@ -196,16 +288,31 @@ body.login-fullscreen-transition #root {
   height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
+  /* Ensure root has same background to prevent white flash */
+  background: linear-gradient(
+    135deg,
+    var(--granite-dark) 0%,
+    var(--granite-medium) 50%,
+    var(--granite-light) 100%
+  ) !important;
 }
 
 body.login-fullscreen-transition .app-container {
   visibility: hidden !important;
   overflow: hidden !important;
+  /* Ensure app-container has same background to prevent white flash */
+  background: linear-gradient(
+    135deg,
+    var(--granite-dark) 0%,
+    var(--granite-medium) 50%,
+    var(--granite-light) 100%
+  ) !important;
 }
 
 /* Ensure login container is always visible during transition */
 body.login-fullscreen-transition .login-container.fullscreen-transition {
   visibility: visible !important;
+  /* Background is handled by the base .login-container rule - no need to duplicate */
 }
 
 /* Force override any parent positioning */
@@ -217,12 +324,125 @@ body.login-fullscreen-transition .login-container.fullscreen-transition * {
   box-sizing: border-box;
 }
 
-
-.login-card {
-  transition: all 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+/* Fix dropdown ghosting during fullscreen transitions - only during initial transition */
+body.login-fullscreen-transition .login-container:not(.fullscreen-transition) #pharma-dropdown-menu,
+body.login-fullscreen-transition .login-container:not(.fullscreen-transition) .pharma-dropdown-menu,
+body.login-fullscreen-transition .login-container:not(.fullscreen-transition) [class*="dropdown-menu"] {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transform: translateY(-10px) !important;
+  z-index: -1 !important;
 }
 
+/* Allow dropdowns to work normally in the expanded registration form */
+body.login-fullscreen-transition .login-container.fullscreen-transition #pharma-dropdown-menu,
+body.login-fullscreen-transition .login-container.fullscreen-transition .pharma-dropdown-menu,
+body.login-fullscreen-transition .login-container.fullscreen-transition [class*="dropdown-menu"] {
+  opacity: unset !important;
+  visibility: unset !important;
+  pointer-events: unset !important;
+  transform: unset !important;
+  z-index: unset !important;
+}
+
+
+/* 3-Stage Transition System */
+
+/* Stage 1: Login form immediately disappears when transitioning starts */
+.login-card {
+  transition: none; /* No transition by default */
+}
+
+/* Login form fade-in effect when returning from register */
+.login-card.fade-out {
+  opacity: 0;
+  transition: none; /* Start hidden immediately */
+}
+
+.login-card.fade-in {
+  opacity: 1;
+  transition: opacity 0.4s ease-out;
+}
+
+/* Fix dropdown initial positioning flash */
+#pharma-dropdown-menu {
+  opacity: 0;
+  transition: opacity 0.1s ease-in;
+}
+
+/* Show dropdown only after positioning is calculated */
+#pharma-dropdown-menu[style*="position"] {
+  opacity: 1 !important;
+}
+
+/* Ensure dropdowns position correctly during login form fade-in */
+.login-card.fade-in .pharma-dropdown-menu,
+.login-card.fade-in .dropdown-menu {
+  position: absolute !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Login form should immediately become invisible when expanding class is added */
 .login-card.expanding {
+  opacity: 0 !important; /* Immediately hide login form */
+  transition: none !important; /* No fade transition, immediate hide */
+}
+
+/* Stage 2: Blue container expands slowly to fullscreen - only when transitioning TO fullscreen */
+.login-container.fullscreen-transition {
+  transition: all 0.75s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* Ensure smooth transition when removing fullscreen-transition class */
+.login-container:not(.fullscreen-transition) {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: auto !important;
+  height: auto !important;
+  z-index: auto !important;
+  transition: none !important; /* Disable transitions to prevent visual artifacts */
+}
+
+
+/* Stage 3: Registration form fade-in control */
+.login-card.expanding.hide-form {
+  opacity: 0; /* Keep hidden during blue expansion */
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+}
+
+/* Hide registration form completely when container is contracting back to small size */
+.login-card:not(.expanding).hide-form {
+  opacity: 0 !important;
+  display: none !important; /* Completely remove from layout */
+  visibility: hidden !important;
+  transition: none !important; /* Immediate hide */
+}
+
+/* Ensure any registration form content is hidden when container is not expanded */
+.login-card:not(.expanding).register-card-wide {
+  opacity: 0 !important;
+  display: none !important;
+  visibility: hidden !important;
+  transition: none !important;
+}
+
+.login-card.expanding.show-form {
+  opacity: 1 !important; /* Fade in registration form */
+  transition: opacity 0.3s ease-in !important;
   width: 100% !important;
   height: 100% !important;
   max-width: none !important;
@@ -240,8 +460,8 @@ body.login-fullscreen-transition .login-container.fullscreen-transition * {
   background: var(--bg-secondary) !important;
   border-radius: 16px !important;
   box-shadow: var(--shadow-lg) !important;
-  max-width: 500px !important;
-  width: 90% !important;
+  max-width: 900px !important;
+  width: 95% !important;
   margin: 0 auto !important;
 }
 
@@ -270,6 +490,115 @@ body.login-fullscreen-transition .login-container.fullscreen-transition * {
     width: 100% !important;
     height: 100% !important;
   }
+}
+
+/* ===== DASHBOARD COMPONENT STYLES ===== */
+
+.dashboard-brand-name {
+  font-size: 0.75rem;
+}
+
+.dashboard-reorder-info {
+  font-size: 0.7rem;
+}
+
+.dashboard-empty-icon {
+  font-size: 2rem;
+}
+
+.dashboard-transaction-details {
+  font-size: 0.6rem;
+}
+
+/* ===== TRANSACTION REGISTER STICKY HEADER FIX ===== */
+
+/* Alternative approach: Force sticky headers by creating a fixed header structure */
+.register-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.register-table-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 500px;
+  max-height: 600px;
+}
+
+/* Fixed header that doesn't scroll */
+.register-table-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: white;
+  border-bottom: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Scrollable body */
+.register-table-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+/* Table styling for fixed header approach */
+.register-table-header table,
+.register-table-body table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.register-table-header th,
+.register-table-body th,
+.register-table-body td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #dee2e6;
+  background-color: #fff;
+}
+
+.register-table-header th {
+  background-color: #f8f9fa !important;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Column widths to match between header and body */
+.register-table-header th:nth-child(1),
+.register-table-body td:nth-child(1) { width: 110px; }
+.register-table-header th:nth-child(2),
+.register-table-body td:nth-child(2) { width: 140px; }
+.register-table-header th:nth-child(3),
+.register-table-body td:nth-child(3) { width: 100px; }
+.register-table-header th:nth-child(4),
+.register-table-body td:nth-child(4) { width: 200px; }
+.register-table-header th:nth-child(5),
+.register-table-body td:nth-child(5) { width: 120px; }
+.register-table-header th:nth-child(6),
+.register-table-body td:nth-child(6) { width: 90px; text-align: right; }
+.register-table-header th:nth-child(7),
+.register-table-body td:nth-child(7) { width: 90px; text-align: right; }
+
+/* Fallback: Enhanced sticky positioning for existing structure */
+.register-table thead th {
+  position: -webkit-sticky !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+  background-color: #f8f9fa !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.register-table thead tr:nth-child(2) th {
+  top: 39px !important;
+  z-index: 999 !important;
 }
 
 /* ===== BOOTSTRAP MODAL DROPDOWN FIX ===== */
@@ -872,8 +1201,10 @@ body.login-fullscreen-transition .login-container.fullscreen-transition * {
 }
 
 .main-content-container {
-  height: 80vh;
-  overflow: hidden;
+  min-height: 80vh;
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -881,7 +1212,7 @@ body.login-fullscreen-transition .login-container.fullscreen-transition * {
 .content-area {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   padding-bottom: 20px;
 }
 
@@ -1390,3 +1721,226 @@ textarea[style*="--placeholder-color"]:-ms-input-placeholder {
 
 /* Protected Route Component Styles */
 /* Add any specific styles for ProtectedRoute component here */
+
+/* ===== STICKY HEADERS FOR TRANSACTION REGISTER ===== */
+
+/* Split-table approach: Fixed header with scrollable body for .register-body in Inventory.js */
+.transaction-register .register-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+}
+
+/* Fixed header section - contains both header and filter rows */
+.transaction-register .register-body > div:first-child {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Scrollable body section */
+.transaction-register .register-body > div:last-child {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Ensure both header and body tables have consistent styling */
+.transaction-register .register-body table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: 0 !important;
+}
+
+/* Column width consistency between header and body */
+.transaction-register .register-body th:nth-child(1),
+.transaction-register .register-body td:nth-child(1) { 
+  width: 110px; 
+  min-width: 110px; 
+}
+
+.transaction-register .register-body th:nth-child(2),
+.transaction-register .register-body td:nth-child(2) { 
+  width: 140px; 
+  min-width: 140px; 
+}
+
+.transaction-register .register-body th:nth-child(3),
+.transaction-register .register-body td:nth-child(3) { 
+  width: 80px; 
+  min-width: 80px; 
+}
+
+.transaction-register .register-body th:nth-child(4),
+.transaction-register .register-body td:nth-child(4) { 
+  width: 150px; 
+  min-width: 150px; 
+}
+
+.transaction-register .register-body th:nth-child(5),
+.transaction-register .register-body td:nth-child(5) { 
+  width: 90px; 
+  min-width: 90px; 
+}
+
+.transaction-register .register-body th:nth-child(6),
+.transaction-register .register-body td:nth-child(6) { 
+  width: 70px; 
+  min-width: 70px; 
+  text-align: right; 
+}
+
+.transaction-register .register-body th:nth-child(7),
+.transaction-register .register-body td:nth-child(7) { 
+  width: 70px; 
+  min-width: 70px; 
+  text-align: right; 
+}
+
+/* Header row styling */
+.transaction-register .register-body thead th {
+  background-color: #f8f9fa !important;
+  color: #212529 !important;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-right: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+  padding: 8px 12px;
+}
+
+/* Filter row styling */
+.transaction-register .register-body thead tr:nth-child(2) th {
+  background-color: #f1f3f4 !important;
+  color: #212529 !important;
+  padding: 4px 8px;
+  border-right: 1px solid #dee2e6;
+  border-bottom: 2px solid #dee2e6;
+}
+
+/* Body row styling */
+.transaction-register .register-body tbody td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #dee2e6;
+  border-right: 1px solid #e9ecef;
+  background-color: #fff;
+  font-size: 0.85rem;
+}
+
+/* Remove right border from last columns */
+.transaction-register .register-body th:last-child,
+.transaction-register .register-body td:last-child {
+  border-right: none !important;
+}
+
+/* Hover effects */
+.transaction-register .register-body tbody tr:hover td {
+  background-color: rgba(0, 123, 255, 0.12) !important;
+}
+
+/* ===== TRANSACTION HISTORY SIDEBAR - EXTRACTED INLINE STYLES ===== */
+
+/* Container for transaction register with vertical scrolling */
+.transaction-register-container {
+  height: calc(100vh - 200px);
+  overflow: auto;
+}
+
+/* Sortable header cells - clickable with padding */
+.transaction-sortable-header {
+  cursor: pointer;
+  padding: 8px;
+}
+
+/* Non-sortable header cells - padding only */
+.transaction-header-cell {
+  padding: 8px;
+}
+
+/* Filter row cells - reduced padding */
+.transaction-filter-cell {
+  padding: 4px 8px;
+}
+
+/* Small font size for filter controls */
+.transaction-filter-control {
+  font-size: 0.75rem;
+}
+
+/* Force header text visibility - override any conflicting styles */
+.transaction-register .register-body thead th,
+.transaction-register .register-body thead th * {
+  color: #212529 !important;
+  opacity: 1 !important;
+}
+
+/* Ensure click cursor is visible on sortable headers */
+.transaction-register .register-body thead th[style*="cursor: pointer"] {
+  cursor: pointer !important;
+}
+
+.transaction-register .register-body thead th[style*="cursor: pointer"]:hover {
+  background-color: #e9ecef !important;
+  color: #000 !important;
+}
+
+/* Fix dropdown positioning in sticky headers */
+.transaction-register .register-body .dropdown-menu {
+  position: fixed !important;
+  z-index: 1050 !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Prevent dropdown flicker by ensuring proper positioning context */
+.transaction-register .register-body .dropdown {
+  position: relative !important;
+}
+
+.transaction-register .register-body .dropdown-toggle {
+  position: relative !important;
+}
+
+/* Override Bootstrap's dropdown positioning */
+.transaction-register .register-body .dropdown-menu.show {
+  position: fixed !important;
+  transform: none !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure dropdown doesn't flicker during positioning */
+.transaction-register .register-body .dropdown-menu:not(.show) {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Force immediate positioning for sticky header dropdowns */
+.transaction-register .register-body > div:first-child .dropdown-menu {
+  position: fixed !important;
+  z-index: 1050 !important;
+  margin-top: 0 !important;
+  transform: translateY(0) !important;
+}
+
+/* Prevent any transition effects on dropdown positioning */
+.transaction-register .register-body .dropdown-menu {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Ensure dropdowns in sticky headers work properly */
+.transaction-register .register-body .dropdown-menu-escape {
+  position: fixed !important;
+  z-index: 1050 !important;
+}

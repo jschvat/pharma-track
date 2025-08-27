@@ -8,6 +8,7 @@
  * - Single select with proper positioning
  * - No positioning jumps or clipping issues
  * - Proper viewport boundary detection
+ * - Anti-flash positioning (preventPositioningFlash prop)
  * - Customizable styling and behavior
  * - Search/filter capability (optional)
  * 
@@ -43,6 +44,7 @@ const PharmaDropdown = ({
   searchable = false, // Enable search/filter functionality
   clearable = false, // Show clear option
   closeOnTableScroll = true, // Close dropdown when parent table scrolls
+  preventPositioningFlash = true, // Prevent flash in upper-left corner during positioning
   
   // Advanced props
   customDisplayFormatter = null, // Function(selectedValue, options) - custom display text
@@ -61,7 +63,10 @@ const PharmaDropdown = ({
   const [calculatedMenuWidth, setCalculatedMenuWidth] = useState(null);
   const [calculatedMenuHeight, setCalculatedMenuHeight] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const [isPositioned, setIsPositioned] = useState(false);
+  const [menuPosition, setMenuPosition] = useState(
+    preventPositioningFlash ? { top: -9999, left: -9999 } : { top: 0, left: 0 }
+  );
   const toggleRef = useRef(null);
   
   /**
@@ -259,6 +264,11 @@ const PharmaDropdown = ({
       top: Math.max(10, top), // Don't go above viewport
       left: Math.max(10, left) // Don't go outside left edge
     });
+    
+    // Mark as positioned to prevent flash (only if anti-flash is enabled)
+    if (preventPositioningFlash) {
+      setIsPositioned(true);
+    }
   };
 
   /**
@@ -268,6 +278,10 @@ const PharmaDropdown = ({
     setIsOpen(newIsOpen);
     
     if (newIsOpen) {
+      // Reset positioned state when opening (only if anti-flash is enabled)
+      if (preventPositioningFlash) {
+        setIsPositioned(false);
+      }
       if (autoSize) {
         // Recalculate dimensions when dropdown opens
         const dimensions = calculateMenuDimensions();
@@ -282,6 +296,12 @@ const PharmaDropdown = ({
     } else {
       // Clear search when closing
       setSearchTerm('');
+      
+      // Reset position if anti-flash is enabled
+      if (preventPositioningFlash) {
+        setIsPositioned(false);
+        setMenuPosition({ top: -9999, left: -9999 });
+      }
     }
   };
 
@@ -467,7 +487,7 @@ const PharmaDropdown = ({
           margin: 0,
           display: 'block',
           visibility: 'visible',
-          opacity: 1,
+          opacity: preventPositioningFlash ? (isPositioned ? 1 : 0) : 1,
           // Enhanced scrollbar styling
           scrollbarWidth: 'thin',
           scrollbarColor: '#6c757d #e9ecef',
