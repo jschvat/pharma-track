@@ -470,7 +470,7 @@ class Drug {
         params.push(`%${filters.dosage_form}%`);
       }
 
-      query += ' ORDER BY last_updated DESC LIMIT ? OFFSET ?';
+      query += ' ORDER BY generic_name ASC, brand_name ASC LIMIT ? OFFSET ?';
       const limitInt = parseInt(limit, 10) || 20;
       const offsetInt = parseInt(offset, 10) || 0;
       params.push(limitInt);

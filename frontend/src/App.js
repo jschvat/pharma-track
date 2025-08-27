@@ -20,6 +20,7 @@ import FDASearch from './components/FDASearch';
 import UserManagement from './components/UserManagement';
 import AdminStores from './components/AdminStores';
 import AdminSettings from './components/AdminSettings';
+import GlobalDrugManagement from './components/GlobalDrugManagement';
 import DevelopmentRoutes from './routes/DevelopmentRoutes';
 // import DropdownRouteHandler from './components/DropdownRouteHandler';
 
@@ -101,6 +102,7 @@ function App() {
                                 <Route path="/admin/users" element={<UserManagement />} />
                                 <Route path="/admin/stores" element={<AdminStores />} />
                                 <Route path="/admin/settings" element={<AdminSettings />} />
+                                <Route path="/admin/global-drugs" element={<GlobalDrugManagement />} />
                                 {/* Development Routes - Only available in development */}
                                 <Route path="/dev/*" element={<DevelopmentRoutes />} />
                                 {/* Catch all route */}

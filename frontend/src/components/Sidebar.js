@@ -11,7 +11,7 @@ import '../css/nav-icons.css';
 const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isGodMode } = useAuth();
   const { currentTheme, changeTheme, availableThemes } = useTheme();
   const [openDropdowns, setOpenDropdowns] = useState({});
 
@@ -228,6 +228,24 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
   ];
 
   if (isAdmin()) {
+    const adminDropdownItems = [
+      { label: 'Manage Stores', path: '/admin/stores' },
+      { label: 'Manage Users', path: '/admin/users' }
+    ];
+
+    // Add global drugs management for god_mode users only - ABOVE System Settings
+    if (isGodMode()) {
+      adminDropdownItems.push({
+        label: 'Manage Global Drugs',
+        path: '/admin/global-drugs',
+        icon: 'fas fa-globe',
+        className: 'god-mode-option'
+      });
+    }
+
+    // Add System Settings last
+    adminDropdownItems.push({ label: 'System Settings', path: '/admin/settings' });
+
     navigationItems.push({
       section: 'Administration',
       items: [
@@ -236,11 +254,7 @@ const Sidebar = ({ collapsed, onToggle, mobileOpen, onMobileToggle }) => {
           icon: 'fas fa-users-cog',
           label: 'Administration',
           dropdown: true,
-          items: [
-            { label: 'Manage Stores', path: '/admin/stores' },
-            { label: 'Manage Users', path: '/admin/users' },
-            { label: 'System Settings', path: '/admin/settings' }
-          ]
+          items: adminDropdownItems
         }
       ]
     });

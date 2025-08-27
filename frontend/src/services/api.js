@@ -583,6 +583,103 @@ export const drugAPI = {
    */
   checkDrugsExist: (ndcs) => {
     return api.post('/drugs/check-exist', { ndcs });
+  },
+
+  /**
+   * Get all global drugs (God Mode Only)
+   * 
+   * Retrieves paginated list of all drugs from the global catalog.
+   * Only accessible to god_mode users for administrative purposes.
+   * 
+   * Function Calls Made:
+   * - api.get() to backend endpoint /drugs/global
+   * 
+   * Variables Used:
+   * - params: Query parameters for pagination and filtering
+   * 
+   * @param {Object} params - Query parameters
+   * @param {number} [params.page=1] - Page number for pagination
+   * @param {number} [params.limit=50] - Number of results per page
+   * @param {string} [params.search] - Search term for drug name or NDC
+   * @param {boolean} [params.active_only] - Filter by active status
+   * @returns {Promise<Object>} Response with drugs array and pagination info
+   * 
+   * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:590
+   */
+  getGlobalDrugs: (params) => {
+    return api.get('/drugs/global', { params });
+  },
+
+  /**
+   * Get specific global drug with usage stats (God Mode Only)
+   * 
+   * Retrieves detailed information about a specific drug including
+   * usage statistics across all stores. Only accessible to god_mode users.
+   * 
+   * Function Calls Made:
+   * - api.get() to backend endpoint /drugs/global/{id}
+   * 
+   * Variables Used:
+   * - id: Drug database ID
+   * 
+   * @param {number} id - Drug database ID
+   * @returns {Promise<Object>} Response with drug details and usage stats
+   * 
+   * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:610
+   */
+  getGlobalDrug: (id) => {
+    return api.get(`/drugs/global/${id}`);
+  },
+
+  /**
+   * Update global drug (God Mode Only)
+   * 
+   * Updates a drug in the global catalog. Changes will affect all stores
+   * using this drug. Only accessible to god_mode users.
+   * 
+   * Function Calls Made:
+   * - api.put() to backend endpoint /drugs/global/{id}
+   * 
+   * Variables Used:
+   * - id: Drug database ID
+   * - updateData: Drug fields to update
+   * 
+   * @param {number} id - Drug database ID
+   * @param {Object} updateData - Drug update data
+   * @param {string} [updateData.generic_name] - Generic drug name
+   * @param {string} [updateData.brand_name] - Brand/trade name
+   * @param {string} [updateData.dosage_form] - Dosage form
+   * @param {string} [updateData.strength] - Drug strength
+   * @param {string} [updateData.manufacturer_name] - Manufacturer name
+   * @param {string} [updateData.substance_name] - Active substance
+   * @param {boolean} [updateData.is_active] - Active status
+   * @returns {Promise<Object>} Response with updated drug and affected stores count
+   * 
+   * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:626
+   */
+  updateGlobalDrug: (id, updateData) => {
+    return api.put(`/drugs/global/${id}`, updateData);
+  },
+
+  /**
+   * Deactivate global drug (God Mode Only)
+   * 
+   * Deactivates a drug in the global catalog by setting is_active to false.
+   * This affects all stores using this drug. Only accessible to god_mode users.
+   * 
+   * Function Calls Made:
+   * - api.patch() to backend endpoint /drugs/global/{id}/deactivate
+   * 
+   * Variables Used:
+   * - id: Drug database ID
+   * 
+   * @param {number} id - Drug database ID
+   * @returns {Promise<Object>} Response with deactivated drug and impact stats
+   * 
+   * Location: /home/jason/Development/claude/pharmatrak/frontend/src/services/api.js:652
+   */
+  deactivateGlobalDrug: (id) => {
+    return api.patch(`/drugs/global/${id}/deactivate`);
   }
 };
 

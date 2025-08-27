@@ -50,7 +50,6 @@ const { pool: db } = require('../config/database');
 const fdaService = require('../openfda/fdaService');
 const Drug = require('../models/Drug');
 const StoreInventory = require('../models/StoreInventory');
-const ProductLabelingCache = require('../models/ProductLabelingCache');
 const { authenticateToken, requireStoreAdmin, requireGodMode } = require('../middleware/auth');
 const { 
   verifyNDC, 
@@ -804,240 +803,6 @@ router.get('/all', authenticateToken, [
   }
 });
 
-// Get all global drugs (God Mode Only)
-router.get('/global', authenticateToken, requireGodMode, [
-  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
-  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100').toInt(),
-  query('search').optional().isLength({ min: 1, max: 100 }).withMessage('Search must be 1-100 characters'),
-  query('active_only').optional().isBoolean().withMessage('Active only must be boolean').toBoolean()
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { page = 1, limit = 50, search, active_only } = req.query;
-    const offset = (page - 1) * limit;
-
-    const filters = {};
-    if (search) filters.search = search;
-    if (active_only !== undefined) filters.is_active = active_only;
-
-    const drugs = await Drug.findWithFilters(filters, limit, offset);
-    const total = await Drug.countWithFilters(filters);
-
-    debugLogger.info('Global drugs retrieved', {
-      user: req.user.email,
-      drugsCount: drugs.length,
-      total,
-      filters
-    });
-
-    res.json({
-      drugs,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    });
-
-  } catch (error) {
-    debugLogger.error('Get global drugs error', {
-      error: error.message,
-      user: req.user?.email
-    });
-    
-    res.status(500).json({
-      error: 'Failed to retrieve global drugs',
-      message: error.message
-    });
-  }
-});
-
-// Get specific global drug with usage stats (God Mode Only)
-router.get('/global/:id', authenticateToken, requireGodMode, [verifyId()], async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const drug = await Drug.findById(id);
-    if (!drug) {
-      return res.status(404).json({ error: 'Drug not found' });
-    }
-
-    // Get usage statistics across all stores
-    const [usageStats] = await db.execute(`
-      SELECT 
-        s.id as store_id,
-        s.name as store_name,
-        COUNT(si.id) as inventory_items,
-        SUM(si.quantity_on_hand) as total_quantity
-      FROM stores s
-      LEFT JOIN store_inventory si ON s.id = si.store_id AND si.drug_id = ? AND si.is_active = TRUE
-      GROUP BY s.id, s.name
-      HAVING inventory_items > 0
-      ORDER BY total_quantity DESC
-    `, [id]);
-
-    const [totalStats] = await db.execute(`
-      SELECT 
-        COUNT(DISTINCT si.store_id) as total_stores_using,
-        COUNT(si.id) as total_inventory_items,
-        SUM(si.quantity_on_hand) as total_quantity_across_stores
-      FROM store_inventory si
-      WHERE si.drug_id = ? AND si.is_active = TRUE
-    `, [id]);
-
-    debugLogger.info('Global drug retrieved with stats', {
-      user: req.user.email,
-      drugId: id,
-      drugName: drug.generic_name,
-      storesUsing: totalStats[0].total_stores_using
-    });
-
-    res.json({
-      drug,
-      usage_stats: {
-        ...totalStats[0],
-        stores: usageStats
-      }
-    });
-
-  } catch (error) {
-    debugLogger.error('Get global drug error', {
-      error: error.message,
-      drugId: req.params.id,
-      user: req.user?.email
-    });
-    
-    res.status(500).json({
-      error: 'Failed to retrieve global drug',
-      message: error.message
-    });
-  }
-});
-
-// Update global drug (God Mode Only)
-router.put('/global/:id', authenticateToken, requireGodMode, [
-  verifyId(),
-  body('generic_name').optional().isLength({ min: 1, max: 500 }).withMessage('Generic name must be 1-500 characters'),
-  body('brand_name').optional().isLength({ min: 1, max: 500 }).withMessage('Brand name must be 1-500 characters'),
-  body('dosage_form').optional().isLength({ min: 1, max: 100 }).withMessage('Dosage form must be 1-100 characters'),
-  body('strength').optional().isLength({ min: 1, max: 255 }).withMessage('Strength must be 1-255 characters'),
-  body('manufacturer_name').optional().isLength({ min: 1, max: 255 }).withMessage('Manufacturer name must be 1-255 characters'),
-  body('substance_name').optional().isLength({ min: 1, max: 1000 }).withMessage('Substance name must be 1-1000 characters'),
-  body('is_active').optional().isBoolean().withMessage('Is active must be boolean')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { id } = req.params;
-    const updateData = req.body;
-
-    const drug = await Drug.findById(id);
-    if (!drug) {
-      return res.status(404).json({ error: 'Drug not found' });
-    }
-
-    // Get affected stores count before update
-    const [affectedStores] = await db.execute(`
-      SELECT COUNT(DISTINCT store_id) as store_count
-      FROM store_inventory
-      WHERE drug_id = ? AND is_active = TRUE
-    `, [id]);
-
-    const updated = await Drug.update(id, updateData);
-    if (!updated) {
-      return res.status(400).json({ error: 'No changes made' });
-    }
-
-    const updatedDrug = await Drug.findById(id);
-
-    debugLogger.info('Global drug updated', {
-      user: req.user.email,
-      drugId: id,
-      drugName: updatedDrug.generic_name,
-      affectedStores: affectedStores[0].store_count,
-      changes: Object.keys(updateData)
-    });
-
-    res.json({
-      message: 'Drug updated successfully',
-      drug: updatedDrug,
-      affected_stores: affectedStores[0].store_count
-    });
-
-  } catch (error) {
-    debugLogger.error('Update global drug error', {
-      error: error.message,
-      drugId: req.params.id,
-      user: req.user?.email
-    });
-    
-    res.status(500).json({
-      error: 'Failed to update global drug',
-      message: error.message
-    });
-  }
-});
-
-// Deactivate global drug (God Mode Only)
-router.patch('/global/:id/deactivate', authenticateToken, requireGodMode, [verifyId()], async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const drug = await Drug.findById(id);
-    if (!drug) {
-      return res.status(404).json({ error: 'Drug not found' });
-    }
-
-    // Get affected stores and inventory counts
-    const [impactStats] = await db.execute(`
-      SELECT 
-        COUNT(DISTINCT si.store_id) as affected_stores,
-        COUNT(si.id) as inventory_items,
-        SUM(si.quantity_on_hand) as total_quantity
-      FROM store_inventory si
-      WHERE si.drug_id = ? AND si.is_active = TRUE
-    `, [id]);
-
-    const updated = await Drug.update(id, { is_active: false });
-    if (!updated) {
-      return res.status(400).json({ error: 'Failed to deactivate drug' });
-    }
-
-    debugLogger.warn('Global drug deactivated', {
-      user: req.user.email,
-      drugId: id,
-      drugName: drug.generic_name,
-      impactStats: impactStats[0]
-    });
-
-    res.json({
-      message: 'Drug deactivated successfully',
-      drug: { ...drug, is_active: false },
-      impact: impactStats[0]
-    });
-
-  } catch (error) {
-    debugLogger.error('Deactivate global drug error', {
-      error: error.message,
-      drugId: req.params.id,
-      user: req.user?.email
-    });
-    
-    res.status(500).json({
-      error: 'Failed to deactivate global drug',
-      message: error.message
-    });
-  }
-});
-
 // Get drug by ID
 router.get('/:id', authenticateToken, [verifyId()], async (req, res) => {
   try {
@@ -1385,593 +1150,6 @@ router.get('/fda/cache-stats', authenticateToken, (req, res) => {
 });
 
 /**
- * OpenFDA Product Labeling API Routes
- * 
- * Comprehensive endpoints for searching and retrieving FDA-approved drug labeling information
- * using the OpenFDA drug/label.json endpoint. Provides access to indications, contraindications,
- * warnings, dosage information, and other clinical data from FDA drug labels.
- * 
- * Features:
- * - Multiple search methods (NDC, generic name, brand name, manufacturer)
- * - Parsed labeling data with structured clinical information
- * - Response caching for improved performance
- * - Advanced search with multiple criteria
- * - Comprehensive error handling
- * 
- * @since 2.0.0 - OpenFDA Product Labeling API Support
- */
-
-/**
- * Search FDA Drug Labeling by NDC Endpoint
- * 
- * Searches FDA drug labeling database by National Drug Code.
- * Returns comprehensive labeling information including indications,
- * contraindications, warnings, and dosage instructions.
- * 
- * @route GET /api/drugs/labeling/search/ndc
- * @access Protected - Requires valid JWT token
- * 
- * @param {string} ndc - National Drug Code (required)
- * @param {number} [limit=1] - Maximum results to return (1-10)
- * @param {boolean} [parse=true] - Whether to parse labeling data
- * 
- * @returns {Object} Labeling search results
- * @returns {Array} results - Array of labeling objects
- * @returns {boolean} fromCache - Whether results came from cache
- * @returns {Object} [parsed] - Parsed labeling information (if parse=true)
- * 
- * @throws {400} Invalid NDC format or parameters
- * @throws {404} No labeling found for NDC
- * @throws {500} FDA API error
- */
-router.get('/labeling/search/ndc', authenticateToken, [
-  query('ndc').notEmpty().matches(/^[0-9\-]{10,14}$/).withMessage('Valid NDC format required'),
-  query('limit').optional().isInt({ min: 1, max: 10 }).withMessage('Limit must be between 1 and 10').toInt(),
-  query('parse').optional().isBoolean().withMessage('Parse must be boolean').toBoolean()
-], async (req, res) => {
-  debugLogger.functionEntry('GET /labeling/search/ndc', { 
-    ndc: req.query?.ndc,
-    limit: req.query?.limit,
-    user: req.user?.email 
-  });
-  debugLogger.apiRequest(req, 'FDA labeling search by NDC');
-  
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      debugLogger.warn('FDA labeling NDC search validation failed', { 
-        errors: errors.array(), 
-        query: req.query 
-      });
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { ndc, limit = 1, parse = true } = req.query;
-    
-    debugLogger.info('Performing FDA labeling search by NDC', { ndc, limit, parse });
-    const startTime = Date.now();
-    
-    const result = await fdaService.searchLabelingByNDC(ndc, limit);
-    const responseTime = Date.now() - startTime;
-    
-    debugLogger.fdaApiCall(
-      'FDA Labeling Search by NDC',
-      { ndc, limit },
-      result?.data,
-      result?.fromCache,
-      responseTime
-    );
-
-    if (!result.data.results || result.data.results.length === 0) {
-      debugLogger.warn('No FDA labeling found for NDC', { ndc });
-      return res.status(404).json({ error: 'No labeling information found for this NDC' });
-    }
-
-    let responseData = {
-      results: result.data.results,
-      total: result.data.meta?.results?.total || result.data.results.length,
-      fromCache: result.fromCache,
-      responseTime: responseTime
-    };
-
-    // Parse labeling data if requested
-    if (parse) {
-      responseData.parsed = fdaService.parseLabelingData(result.data);
-      debugLogger.debug('Labeling data parsed', { 
-        hasIndications: !!responseData.parsed?.indications_and_usage,
-        hasWarnings: !!responseData.parsed?.warnings,
-        hasContraindications: !!responseData.parsed?.contraindications
-      });
-    }
-
-    debugLogger.info('FDA labeling search completed', {
-      ndc,
-      resultsFound: result.data.results.length,
-      responseTime: `${responseTime}ms`,
-      fromCache: result.fromCache
-    });
-
-    debugLogger.apiResponse(req, res, responseData, responseTime);
-    res.json(responseData);
-
-  } catch (error) {
-    debugLogger.error('FDA labeling NDC search error', {
-      error: error.message,
-      ndc: req.query?.ndc,
-      user: req.user?.email
-    });
-    
-    const errorResponse = { 
-      error: 'Failed to search FDA labeling database',
-      message: error.message 
-    };
-    
-    debugLogger.apiResponse(req, res, errorResponse);
-    res.status(500).json(errorResponse);
-  }
-});
-
-/**
- * Search FDA Drug Labeling by Generic Name Endpoint
- * 
- * @route GET /api/drugs/labeling/search/generic
- * @access Protected - Requires valid JWT token
- */
-router.get('/labeling/search/generic', authenticateToken, [
-  query('name').notEmpty().isLength({ min: 2, max: 100 }).withMessage('Generic name must be 2-100 characters'),
-  query('limit').optional().isInt({ min: 1, max: 10 }).withMessage('Limit must be between 1 and 10').toInt(),
-  query('parse').optional().isBoolean().withMessage('Parse must be boolean').toBoolean()
-], async (req, res) => {
-  debugLogger.functionEntry('GET /labeling/search/generic', { 
-    name: req.query?.name,
-    limit: req.query?.limit,
-    user: req.user?.email 
-  });
-  
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { name, limit = 5, parse = true } = req.query;
-    
-    const startTime = Date.now();
-    const result = await fdaService.searchLabelingByGenericName(name, limit);
-    const responseTime = Date.now() - startTime;
-
-    if (!result.data.results || result.data.results.length === 0) {
-      return res.status(404).json({ error: 'No labeling information found for this generic name' });
-    }
-
-    let responseData = {
-      results: result.data.results,
-      total: result.data.meta?.results?.total || result.data.results.length,
-      fromCache: result.fromCache,
-      responseTime: responseTime
-    };
-
-    if (parse && result.data.results.length > 0) {
-      responseData.parsed = result.data.results.map(result => 
-        fdaService.parseLabelingData({ results: [result] })
-      );
-    }
-
-    debugLogger.info('FDA labeling generic search completed', {
-      name,
-      resultsFound: result.data.results.length,
-      responseTime: `${responseTime}ms`
-    });
-
-    res.json(responseData);
-
-  } catch (error) {
-    debugLogger.error('FDA labeling generic search error', {
-      error: error.message,
-      name: req.query?.name
-    });
-    
-    res.status(500).json({ 
-      error: 'Failed to search FDA labeling database',
-      message: error.message 
-    });
-  }
-});
-
-/**
- * Search FDA Drug Labeling by Brand Name Endpoint
- * 
- * @route GET /api/drugs/labeling/search/brand
- * @access Protected - Requires valid JWT token
- */
-router.get('/labeling/search/brand', authenticateToken, [
-  query('name').notEmpty().isLength({ min: 2, max: 100 }).withMessage('Brand name must be 2-100 characters'),
-  query('limit').optional().isInt({ min: 1, max: 10 }).withMessage('Limit must be between 1 and 10').toInt(),
-  query('parse').optional().isBoolean().withMessage('Parse must be boolean').toBoolean()
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { name, limit = 5, parse = true } = req.query;
-    
-    const startTime = Date.now();
-    const result = await fdaService.searchLabelingByBrandName(name, limit);
-    const responseTime = Date.now() - startTime;
-
-    if (!result.data.results || result.data.results.length === 0) {
-      return res.status(404).json({ error: 'No labeling information found for this brand name' });
-    }
-
-    let responseData = {
-      results: result.data.results,
-      total: result.data.meta?.results?.total || result.data.results.length,
-      fromCache: result.fromCache,
-      responseTime: responseTime
-    };
-
-    if (parse && result.data.results.length > 0) {
-      responseData.parsed = result.data.results.map(result => 
-        fdaService.parseLabelingData({ results: [result] })
-      );
-    }
-
-    debugLogger.info('FDA labeling brand search completed', {
-      name,
-      resultsFound: result.data.results.length,
-      responseTime: `${responseTime}ms`
-    });
-
-    res.json(responseData);
-
-  } catch (error) {
-    debugLogger.error('FDA labeling brand search error', {
-      error: error.message,
-      name: req.query?.name
-    });
-    
-    res.status(500).json({ 
-      error: 'Failed to search FDA labeling database',
-      message: error.message 
-    });
-  }
-});
-
-/**
- * Advanced FDA Drug Labeling Search Endpoint
- * 
- * @route GET /api/drugs/labeling/search/advanced
- * @access Protected - Requires valid JWT token
- */
-router.get('/labeling/search/advanced', authenticateToken, [
-  query('ndc').optional().matches(/^[0-9\-]{10,14}$/).withMessage('Invalid NDC format'),
-  query('generic_name').optional().isLength({ min: 2, max: 100 }).withMessage('Generic name must be 2-100 characters'),
-  query('brand_name').optional().isLength({ min: 2, max: 100 }).withMessage('Brand name must be 2-100 characters'),
-  query('manufacturer').optional().isLength({ min: 2, max: 100 }).withMessage('Manufacturer must be 2-100 characters'),
-  query('limit').optional().isInt({ min: 1, max: 10 }).withMessage('Limit must be between 1 and 10').toInt(),
-  query('parse').optional().isBoolean().withMessage('Parse must be boolean').toBoolean()
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { ndc, generic_name, brand_name, manufacturer, limit = 10, parse = true } = req.query;
-    
-    const criteria = {};
-    if (ndc) criteria.ndc = ndc;
-    if (generic_name) criteria.genericName = generic_name;
-    if (brand_name) criteria.brandName = brand_name;
-    if (manufacturer) criteria.manufacturer = manufacturer;
-
-    if (Object.keys(criteria).length === 0) {
-      return res.status(400).json({ 
-        error: 'At least one search criterion is required (ndc, generic_name, brand_name, or manufacturer)' 
-      });
-    }
-    
-    const startTime = Date.now();
-    const result = await fdaService.advancedLabelingSearch(criteria, limit);
-    const responseTime = Date.now() - startTime;
-
-    if (!result.data.results || result.data.results.length === 0) {
-      return res.status(404).json({ error: 'No labeling information found matching criteria' });
-    }
-
-    let responseData = {
-      results: result.data.results,
-      total: result.data.meta?.results?.total || result.data.results.length,
-      fromCache: result.fromCache,
-      responseTime: responseTime,
-      criteria: criteria
-    };
-
-    if (parse && result.data.results.length > 0) {
-      responseData.parsed = result.data.results.map(result => 
-        fdaService.parseLabelingData({ results: [result] })
-      );
-    }
-
-    debugLogger.info('FDA advanced labeling search completed', {
-      criteria,
-      resultsFound: result.data.results.length,
-      responseTime: `${responseTime}ms`
-    });
-
-    res.json(responseData);
-
-  } catch (error) {
-    debugLogger.error('FDA advanced labeling search error', {
-      error: error.message,
-      criteria: req.query
-    });
-    
-    res.status(500).json({ 
-      error: 'Failed to search FDA labeling database',
-      message: error.message 
-    });
-  }
-});
-
-/**
- * Get Product Labeling by NDC Endpoint
- * 
- * Intelligent cache-first lookup for FDA product labeling data.
- * Automatically caches FDA data for 90 days to improve performance.
- * 
- * @route GET /api/drugs/labeling/:ndc
- * @access Protected - Requires valid JWT token
- * 
- * @param {string} ndc - National Drug Code (required)
- * 
- * @returns {Object} Comprehensive labeling information
- * @returns {Object} product_info - Basic product details
- * @returns {string} indications_and_usage - What the drug treats
- * @returns {string} warnings - Safety warnings and precautions
- * @returns {string} contraindications - When not to use
- * @returns {string} dosage_and_administration - How to take
- * @returns {string} storage_and_handling - Storage requirements
- * @returns {Object} cache_info - Cache status and timing
- * @returns {Object} raw_fda_data - Complete FDA labeling data
- * 
- * @throws {400} Invalid NDC format
- * @throws {404} No labeling data found
- * @throws {500} Database or FDA API error
- */
-router.get('/labeling/:ndc', authenticateToken, async (req, res) => {
-  debugLogger.functionEntry('GET /labeling/:ndc', { 
-    ndc: req.params?.ndc,
-    user: req.user?.email 
-  });
-  debugLogger.apiRequest(req, 'Get product labeling by NDC with intelligent caching');
-  
-  try {
-    const { ndc } = req.params;
-    
-    if (!ndc || !/^[0-9\-]+$/.test(ndc)) {
-      debugLogger.warn('Invalid NDC format provided', { ndc });
-      return res.status(400).json({ error: 'Valid NDC format required (numbers and dashes only)' });
-    }
-    
-    debugLogger.info('Looking up product labeling data', { ndc });
-    const startTime = Date.now();
-    
-    // Use intelligent cache-first lookup
-    const labelingData = await ProductLabelingCache.getByNDC(ndc);
-    const responseTime = Date.now() - startTime;
-    
-    if (!labelingData) {
-      debugLogger.warn('No product labeling found for NDC', { ndc });
-      return res.status(404).json({ 
-        error: 'No product labeling information found for this NDC',
-        ndc: ndc
-      });
-    }
-
-    debugLogger.info('Product labeling retrieved successfully', {
-      ndc,
-      fromCache: labelingData.cache_info?.from_cache,
-      hasWarnings: !!labelingData.warnings,
-      hasIndications: !!labelingData.indications_and_usage,
-      responseTime: `${responseTime}ms`
-    });
-
-    const responseData = {
-      ...labelingData,
-      response_time: responseTime
-    };
-
-    debugLogger.apiResponse(req, res, responseData, responseTime);
-    res.json(responseData);
-
-  } catch (error) {
-    debugLogger.error('Product labeling lookup error', {
-      error: error.message,
-      stack: error.stack,
-      ndc: req.params?.ndc,
-      user: req.user?.email
-    });
-    
-    const errorResponse = { 
-      error: 'Failed to retrieve product labeling information',
-      message: error.message,
-      ndc: req.params?.ndc
-    };
-    
-    debugLogger.apiResponse(req, res, errorResponse);
-    res.status(500).json(errorResponse);
-  }
-});
-
-/**
- * Get Product Labeling Cache Statistics Endpoint
- * 
- * @route GET /api/drugs/labeling/cache/stats
- * @access Protected - Requires admin role
- */
-router.get('/labeling/cache/stats', authenticateToken, requireStoreAdmin, async (req, res) => {
-  try {
-    const stats = await ProductLabelingCache.getCacheStats();
-    
-    debugLogger.info('Labeling cache statistics retrieved', {
-      user: req.user.email,
-      ...stats
-    });
-    
-    res.json({
-      cache_statistics: stats,
-      retrieved_at: new Date().toISOString()
-    });
-
-  } catch (error) {
-    debugLogger.error('Error retrieving cache statistics', {
-      error: error.message,
-      user: req.user?.email
-    });
-    
-    res.status(500).json({
-      error: 'Failed to retrieve cache statistics',
-      message: error.message
-    });
-  }
-});
-
-/**
- * Search FDA Labeling by Exact NDC
- * Direct search using package_ndc.exact field for precise matching
- * 
- * Route: GET /api/drugs/labeling/search/ndc-exact
- * Query Parameters:
- *   - ndc (required): Exact NDC format (e.g., "15631-0404-0")
- *   - limit (optional): Max results (1-10, default: 1)
- * 
- * @access Protected - Requires valid JWT token
- */
-router.get('/labeling/search/ndc-exact', authenticateToken, [
-  query('ndc').notEmpty().isLength({ min: 4, max: 15 }).withMessage('NDC must be 4-15 characters'),
-  query('limit').optional().isInt({ min: 1, max: 10 }).withMessage('Limit must be between 1 and 10').toInt()
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { ndc, limit = 1 } = req.query;
-    
-    console.log(`🔍 Direct NDC Search Starting: "${ndc}"`);
-    console.log(`📋 Using exact matching with both package_ndc.exact and product_ndc.exact`);
-    
-    // Try both exact fields
-    const searchFields = [
-      'openfda.package_ndc.exact',
-      'openfda.product_ndc.exact'
-    ];
-
-    let response = null;
-    let lastError = null;
-    let workingField = null;
-    
-    for (const field of searchFields) {
-      try {
-        const searchQuery = `${field}:"${ndc}"`;
-        const url = `https://api.fda.gov/drug/label.json?search=${encodeURIComponent(searchQuery)}&limit=${limit}`;
-        
-        console.log(`🌐 Direct NDC API Call:`);
-        console.log(`   📍 NDC: "${ndc}"`);
-        console.log(`   🔍 Field: ${field}`);
-        console.log(`   🔗 Full API URL: ${url}`);
-        console.log(`   🔎 Search Query: ${searchQuery}`);
-        
-        const startTime = Date.now();
-        const fdaService = require('../openfda/fdaService');
-        
-        // Make direct API call using the fdaService helper for API key support
-        response = await fdaService.makeApiRequest(url);
-        
-        const responseTime = Date.now() - startTime;
-        workingField = field;
-        
-        console.log(`✅ Direct NDC API SUCCESS!`);
-        console.log(`   🎯 NDC: "${ndc}"`);
-        console.log(`   🏷️  Field that worked: ${field}`);
-        console.log(`   ⚡ Response time: ${responseTime}ms`);
-        console.log(`   📊 Results found: ${response.data?.results?.length || 0}`);
-        break;
-        
-      } catch (error) {
-        lastError = error;
-        console.log(`❌ Direct NDC API Failed for field: ${field}`);
-        console.log(`   🚫 Error: ${error.response?.status || error.code} - ${error.response?.statusText || error.message}`);
-        continue;
-      }
-    }
-    
-    if (!response || !response.data?.results?.length) {
-      console.log(`❌ Direct NDC Search FAILED - No results found`);
-      console.log(`   🔍 NDC: "${ndc}"`);
-      console.log(`   📋 Fields tried: ${searchFields.length}`);
-      
-      return res.status(404).json({ 
-        error: 'No FDA labeling information found for this exact NDC',
-        ndc: ndc,
-        fields_searched: searchFields,
-        message: 'Try using the regular NDC search which tries multiple format variations'
-      });
-    }
-    
-    const labeling = response.data.results[0];
-    
-    res.json({
-      success: true,
-      ndc: ndc,
-      field_used: workingField,
-      results_count: response.data.results.length,
-      labeling_data: {
-        product_info: {
-          generic_name: labeling.openfda?.generic_name?.[0],
-          brand_name: labeling.openfda?.brand_name?.[0],
-          manufacturer: labeling.openfda?.manufacturer_name?.[0],
-          dosage_form: labeling.openfda?.dosage_form?.[0],
-          route: labeling.openfda?.route,
-          product_type: labeling.openfda?.product_type?.[0]
-        },
-        ndc_info: {
-          package_ndcs: labeling.openfda?.package_ndc?.slice(0, 5),
-          product_ndcs: labeling.openfda?.product_ndc?.slice(0, 5)
-        },
-        indications_and_usage: labeling.indications_and_usage?.[0],
-        warnings: labeling.warnings?.[0],
-        contraindications: labeling.contraindications?.[0],
-        dosage_and_administration: labeling.dosage_and_administration?.[0],
-        storage_and_handling: labeling.how_supplied_storage_and_handling?.[0],
-        fda_metadata: {
-          set_id: labeling.set_id,
-          product_id: labeling.id,
-          version: labeling.version,
-          effective_time: labeling.effective_time
-        }
-      },
-      search_info: {
-        exact_match: true,
-        field_used: workingField,
-        from_cache: false
-      }
-    });
-
-  } catch (error) {
-    console.error('Direct NDC Search Error:', error);
-    res.status(500).json({
-      error: 'Failed to search FDA labeling by exact NDC',
-      message: error.message
-    });
-  }
-});
-
-/**
  * Check Drug Existence in Store Inventory Route Handler
  * 
  * Checks which drugs from a provided list of NDCs already exist in the
@@ -2082,6 +1260,429 @@ router.post('/check-exist', authenticateToken, async (req, res) => {
     
     debugLogger.apiResponse(req, res, errorResponse);
     res.status(500).json(errorResponse);
+  }
+});
+
+/**
+ * @swagger
+ * /api/drugs/global:
+ *   get:
+ *     summary: Get all global drugs (God Mode Only)
+ *     description: Retrieve all drugs from the global drug catalog for administration purposes. God mode access required.
+ *     tags: [Drugs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Number of items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term for drug name or NDC
+ *       - in: query
+ *         name: active_only
+ *         schema:
+ *           type: boolean
+ *         description: Filter to active drugs only
+ *     responses:
+ *       200:
+ *         description: Global drugs retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 drugs:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Drug'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     pages:
+ *                       type: integer
+ *       403:
+ *         description: Access denied - God mode required
+ */
+// Get all global drugs (God Mode Only)
+router.get('/global', authenticateToken, requireGodMode, [
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100').toInt(),
+  query('search').optional().isLength({ min: 1, max: 100 }).withMessage('Search must be 1-100 characters'),
+  query('active_only').optional().isBoolean().withMessage('Active only must be boolean').toBoolean()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { page = 1, limit = 50, search, active_only } = req.query;
+    const offset = (page - 1) * limit;
+
+    const filters = {};
+    if (search) filters.search = search;
+    if (active_only !== undefined) filters.is_active = active_only;
+
+    const drugs = await Drug.findWithFilters(filters, limit, offset);
+    const total = await Drug.countWithFilters(filters);
+
+    debugLogger.info('Global drugs retrieved', {
+      user: req.user.email,
+      drugsCount: drugs.length,
+      total,
+      filters
+    });
+
+    res.json({
+      drugs,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+
+  } catch (error) {
+    debugLogger.error('Get global drugs error', {
+      error: error.message,
+      user: req.user?.email
+    });
+    
+    res.status(500).json({
+      error: 'Failed to retrieve global drugs',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/drugs/global/{id}:
+ *   get:
+ *     summary: Get specific global drug (God Mode Only)
+ *     description: Retrieve a specific drug from the global catalog with detailed information and usage statistics across all stores.
+ *     tags: [Drugs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Drug ID
+ *     responses:
+ *       200:
+ *         description: Drug retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 drug:
+ *                   $ref: '#/components/schemas/Drug'
+ *                 usage_stats:
+ *                   type: object
+ *                   properties:
+ *                     total_stores_using:
+ *                       type: integer
+ *                     total_inventory_items:
+ *                       type: integer
+ *                     total_quantity_across_stores:
+ *                       type: integer
+ *                     stores:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           store_name:
+ *                             type: string
+ *                           store_id:
+ *                             type: integer
+ *                           inventory_items:
+ *                             type: integer
+ *                           total_quantity:
+ *                             type: integer
+ *       403:
+ *         description: Access denied - God mode required
+ *       404:
+ *         description: Drug not found
+ */
+// Get specific global drug with usage stats (God Mode Only)
+router.get('/global/:id', authenticateToken, requireGodMode, [verifyId()], async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const drug = await Drug.findById(id);
+    if (!drug) {
+      return res.status(404).json({ error: 'Drug not found' });
+    }
+
+    // Get usage statistics across all stores
+    const [usageStats] = await db.execute(`
+      SELECT 
+        s.id as store_id,
+        s.name as store_name,
+        COUNT(si.id) as inventory_items,
+        SUM(si.quantity_on_hand) as total_quantity
+      FROM stores s
+      LEFT JOIN store_inventory si ON s.id = si.store_id AND si.drug_id = ? AND si.is_active = TRUE
+      WHERE s.is_active = TRUE
+      GROUP BY s.id, s.name
+      HAVING inventory_items > 0
+      ORDER BY total_quantity DESC
+    `, [id]);
+
+    const [totalStats] = await db.execute(`
+      SELECT 
+        COUNT(DISTINCT si.store_id) as total_stores_using,
+        COUNT(si.id) as total_inventory_items,
+        SUM(si.quantity_on_hand) as total_quantity_across_stores
+      FROM store_inventory si
+      WHERE si.drug_id = ? AND si.is_active = TRUE
+    `, [id]);
+
+    debugLogger.info('Global drug retrieved with stats', {
+      user: req.user.email,
+      drugId: id,
+      drugName: drug.generic_name,
+      storesUsing: totalStats[0].total_stores_using
+    });
+
+    res.json({
+      drug,
+      usage_stats: {
+        ...totalStats[0],
+        stores: usageStats
+      }
+    });
+
+  } catch (error) {
+    debugLogger.error('Get global drug error', {
+      error: error.message,
+      drugId: req.params.id,
+      user: req.user?.email
+    });
+    
+    res.status(500).json({
+      error: 'Failed to retrieve global drug',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/drugs/global/{id}:
+ *   put:
+ *     summary: Update global drug (God Mode Only)
+ *     description: Update a drug in the global catalog. Changes will affect all stores using this drug.
+ *     tags: [Drugs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Drug ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               generic_name:
+ *                 type: string
+ *                 description: Generic drug name
+ *               brand_name:
+ *                 type: string
+ *                 description: Brand/trade name
+ *               dosage_form:
+ *                 type: string
+ *                 description: Dosage form
+ *               strength:
+ *                 type: string
+ *                 description: Drug strength
+ *               manufacturer_name:
+ *                 type: string
+ *                 description: Manufacturer name
+ *               substance_name:
+ *                 type: string
+ *                 description: Active substance
+ *               is_active:
+ *                 type: boolean
+ *                 description: Whether drug is active
+ *     responses:
+ *       200:
+ *         description: Drug updated successfully
+ *       403:
+ *         description: Access denied - God mode required
+ *       404:
+ *         description: Drug not found
+ */
+// Update global drug (God Mode Only)
+router.put('/global/:id', authenticateToken, requireGodMode, [
+  verifyId(),
+  body('generic_name').optional().isLength({ min: 1, max: 500 }).withMessage('Generic name must be 1-500 characters'),
+  body('brand_name').optional().isLength({ min: 1, max: 500 }).withMessage('Brand name must be 1-500 characters'),
+  body('dosage_form').optional().isLength({ min: 1, max: 100 }).withMessage('Dosage form must be 1-100 characters'),
+  body('strength').optional().isLength({ min: 1, max: 255 }).withMessage('Strength must be 1-255 characters'),
+  body('manufacturer_name').optional().isLength({ min: 1, max: 255 }).withMessage('Manufacturer name must be 1-255 characters'),
+  body('substance_name').optional().isLength({ min: 1, max: 1000 }).withMessage('Substance name must be 1-1000 characters'),
+  body('is_active').optional().isBoolean().withMessage('Is active must be boolean')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const drug = await Drug.findById(id);
+    if (!drug) {
+      return res.status(404).json({ error: 'Drug not found' });
+    }
+
+    // Get affected stores count before update
+    const [affectedStores] = await db.execute(`
+      SELECT COUNT(DISTINCT store_id) as store_count
+      FROM store_inventory
+      WHERE drug_id = ? AND is_active = TRUE
+    `, [id]);
+
+    const updated = await Drug.update(id, updateData);
+    if (!updated) {
+      return res.status(400).json({ error: 'No changes made' });
+    }
+
+    const updatedDrug = await Drug.findById(id);
+
+    debugLogger.info('Global drug updated', {
+      user: req.user.email,
+      drugId: id,
+      drugName: updatedDrug.generic_name,
+      affectedStores: affectedStores[0].store_count,
+      changes: Object.keys(updateData)
+    });
+
+    res.json({
+      message: 'Drug updated successfully',
+      drug: updatedDrug,
+      affected_stores: affectedStores[0].store_count
+    });
+
+  } catch (error) {
+    debugLogger.error('Update global drug error', {
+      error: error.message,
+      drugId: req.params.id,
+      user: req.user?.email
+    });
+    
+    res.status(500).json({
+      error: 'Failed to update global drug',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/drugs/global/{id}/deactivate:
+ *   patch:
+ *     summary: Deactivate global drug (God Mode Only)
+ *     description: Deactivate a drug in the global catalog. This will affect all stores using this drug.
+ *     tags: [Drugs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Drug ID
+ *     responses:
+ *       200:
+ *         description: Drug deactivated successfully
+ *       403:
+ *         description: Access denied - God mode required
+ *       404:
+ *         description: Drug not found
+ */
+// Deactivate global drug (God Mode Only)
+router.patch('/global/:id/deactivate', authenticateToken, requireGodMode, [verifyId()], async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const drug = await Drug.findById(id);
+    if (!drug) {
+      return res.status(404).json({ error: 'Drug not found' });
+    }
+
+    // Get affected stores and inventory counts
+    const [impactStats] = await db.execute(`
+      SELECT 
+        COUNT(DISTINCT si.store_id) as affected_stores,
+        COUNT(si.id) as inventory_items,
+        SUM(si.quantity_on_hand) as total_quantity
+      FROM store_inventory si
+      WHERE si.drug_id = ? AND si.is_active = TRUE
+    `, [id]);
+
+    const updated = await Drug.update(id, { is_active: false });
+    if (!updated) {
+      return res.status(400).json({ error: 'Failed to deactivate drug' });
+    }
+
+    debugLogger.warn('Global drug deactivated', {
+      user: req.user.email,
+      drugId: id,
+      drugName: drug.generic_name,
+      impactStats: impactStats[0]
+    });
+
+    res.json({
+      message: 'Drug deactivated successfully',
+      drug: { ...drug, is_active: false },
+      impact: impactStats[0]
+    });
+
+  } catch (error) {
+    debugLogger.error('Deactivate global drug error', {
+      error: error.message,
+      drugId: req.params.id,
+      user: req.user?.email
+    });
+    
+    res.status(500).json({
+      error: 'Failed to deactivate global drug',
+      message: error.message
+    });
   }
 });
 

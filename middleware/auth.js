@@ -60,6 +60,22 @@ const requireStoreAdmin = async (req, res, next) => {
   next();
 };
 
+const requireGodMode = async (req, res, next) => {
+  console.log('🔐 requireGodMode check:', { 
+    userId: req.user.id, 
+    userRole: req.user.role,
+    isGodMode: req.user.role === 'god_mode'
+  });
+  
+  if (req.user.role !== 'god_mode') {
+    console.log('❌ Access denied - user role is not god_mode');
+    return res.status(403).json({ error: 'God mode access required' });
+  }
+  
+  console.log('✅ God mode access granted');
+  next();
+};
+
 const requireSameStoreOrAdmin = async (req, res, next) => {
   const targetUserId = req.params.userId || req.body.userId;
   
@@ -91,6 +107,7 @@ module.exports = {
   requireRole,
   requireAdminRole,
   requireStoreAdmin,
+  requireGodMode,
   requireSameStoreOrAdmin,
   generateToken
 };

@@ -1982,9 +1982,21 @@ router.get('/:id/running-total', authenticateToken, [verifyId()], async (req, re
       return res.status(404).json({ error: 'Inventory item not found' });
     }
 
-    // Check access
-    if (req.user.role !== 'admin' && req.user.store_id !== inventory.store_id) {
-      return res.status(403).json({ error: 'Access denied' });
+    // Enhanced access control - restrict to user's assigned store or currently selected store for admin
+    const currentStoreId = req.headers['x-current-store-id'] || req.user.store_id;
+    
+    if (req.user.role === 'god_mode') {
+      // God mode can access any store
+    } else if (req.user.role === 'admin') {
+      // Admin can only access their assigned store or currently selected store
+      if (inventory.store_id !== parseInt(currentStoreId)) {
+        return res.status(403).json({ error: 'Access denied - inventory item not in current store context' });
+      }
+    } else {
+      // Regular users can only access their assigned store
+      if (req.user.store_id !== inventory.store_id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
     }
 
     const runningTotal = await InventoryAuditLog.getRunningTotal(id);
