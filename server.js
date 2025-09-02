@@ -19,6 +19,7 @@ const backupRoutes = require('./routes/backup');
 const healthRoutes = require('./routes/health');
 const postItNotesRoutes = require('./routes/postItNotes');
 const dashboardRoutes = require('./routes/dashboard');
+const drugShortagesRoutes = require('./routes/drugShortages');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { sanitizeInput } = require('./middleware/validation');
 const { sanitizeAndTrim, checkDataIntegrity } = require('./middleware/dataVerification');
@@ -51,7 +52,9 @@ const corsOptions = {
     'http://localhost:3002',
     'http://127.0.0.1:3002',
     'http://localhost:3003',
-    'http://127.0.0.1:3003'
+    'http://127.0.0.1:3003',
+    'http://localhost:3004',
+    'http://127.0.0.1:3004'
   ],
   credentials: true,
   optionsSuccessStatus: 200,
@@ -150,6 +153,7 @@ app.use('/api/backup', backupRoutes); // Backup and disaster recovery routes
 app.use('/api/health', healthRoutes); // Health monitoring routes
 app.use('/api/notes', postItNotesRoutes); // Post-it notes routes
 app.use('/api/dashboard', dashboardRoutes); // Consolidated dashboard data routes
+app.use('/api/drug-shortages', drugShortagesRoutes); // FDA Drug Shortages API routes
 app.use('/api/debug', require('./routes/debug')); // Debug logging routes (development only)
 
 // API Documentation endpoint

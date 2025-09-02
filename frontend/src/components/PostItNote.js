@@ -17,6 +17,10 @@ const PostItNote = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(initialEditing);
   const [zIndex, setZIndex] = useState(1000);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [gatheredSize, setGatheredSize] = useState(null); // Store gathered dimensions
+  const [size, setSize] = useState({ width: 300, height: 300 }); // Note dimensions
+  const [isResizing, setIsResizing] = useState(false);
   
   const noteRef = useRef(null);
   const textareaRef = useRef(null);
@@ -77,10 +81,27 @@ const PostItNote = ({
     }
   }, [isEditing]);
 
+  // Handle outside clicks to collapse expanded gathered notes
+  useEffect(() => {
+    if (isExpanded) {
+      const handleOutsideClick = (e) => {
+        if (noteRef.current && !noteRef.current.contains(e.target)) {
+          setIsExpanded(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleOutsideClick);
+      return () => {
+        document.removeEventListener('mousedown', handleOutsideClick);
+      };
+    }
+  }, [isExpanded]);
+
   // Handle mouse down for dragging
   const handleMouseDown = (e) => {
-    // Don't drag if clicking on the textarea while editing
+    // Don't drag if clicking on the textarea while editing or on resize handle
     if (isEditing && e.target.tagName === 'TEXTAREA') return;
+    if (isResizing) return;
     
     // If we're editing and clicking outside the textarea, save and exit editing mode
     if (isEditing && e.target.tagName !== 'TEXTAREA') {
@@ -146,6 +167,80 @@ const PostItNote = ({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  // Handle resize start
+  const handleResizeMouseDown = (e) => {
+    e.preventDefault();
+    e.stopPropagation(); // Don't trigger note drag or click
+    
+    setIsResizing(true);
+    setZIndex(zIndex + 100); // Bring to front while resizing
+
+    const startMouseX = e.clientX;
+    const startMouseY = e.clientY;
+    const startWidth = size.width;
+    const startHeight = size.height;
+
+    const handleResizeMouseMove = (e) => {
+      const deltaX = e.clientX - startMouseX;
+      const deltaY = e.clientY - startMouseY;
+      
+      const newWidth = Math.max(150, startWidth + deltaX); // Min width 150px
+      const newHeight = Math.max(150, startHeight + deltaY); // Min height 150px
+      
+      setSize({ width: newWidth, height: newHeight });
+    };
+
+    const handleResizeMouseUp = () => {
+      setIsResizing(false);
+      // Save new size
+      if (onUpdate) {
+        onUpdate(id, { position, text, size });
+      }
+      // Remove event listeners
+      document.removeEventListener('mousemove', handleResizeMouseMove);
+      document.removeEventListener('mouseup', handleResizeMouseUp);
+    };
+
+    // Add event listeners immediately
+    document.addEventListener('mousemove', handleResizeMouseMove);
+    document.addEventListener('mouseup', handleResizeMouseUp);
+  };
+
+  // Detect if note is gathered (small size) - check if width is smaller than normal
+  const isGathered = () => {
+    if (noteRef.current) {
+      const computedStyle = window.getComputedStyle(noteRef.current);
+      const width = parseInt(computedStyle.width);
+      return width < 250; // Normal size is 300px, gathered is 180px
+    }
+    return false;
+  };
+
+  // Handle single click - expand gathered notes or focus for editing
+  const handleClick = (e) => {
+    // Don't handle click if we're dragging, resizing, or clicking buttons/resize handle
+    if (isDragging || isResizing) return;
+    if (e.target.tagName === 'BUTTON') return;
+    
+    e.stopPropagation();
+    
+    // If this is a gathered note and not expanded, expand it
+    if (isGathered() && !isExpanded) {
+      // Capture the current gathered size before expanding
+      if (noteRef.current) {
+        const computedStyle = window.getComputedStyle(noteRef.current);
+        setGatheredSize({
+          width: computedStyle.width,
+          height: computedStyle.height,
+          fontSize: computedStyle.fontSize
+        });
+      }
+      
+      setIsExpanded(true);
+      setZIndex(2000); // Bring to front when expanded
+    }
+  };
+
   // Handle double click to edit
   const handleDoubleClick = () => {
     setIsEditing(true);
@@ -185,6 +280,7 @@ const PostItNote = ({
   return (
     <div
       ref={noteRef}
+      className="post-it-note"
       data-note-id={id}
       style={{
         position: 'fixed',
@@ -193,9 +289,9 @@ const PostItNote = ({
         zIndex: zIndex,
         background: currentColor.gradient,
         fontFamily: 'Comic Sans MS, cursive, sans-serif',
-        fontSize: '14px',
-        width: '300px',
-        height: '300px',
+        fontSize: isExpanded ? '14px' : (gatheredSize ? gatheredSize.fontSize : undefined), // Use gathered size when collapsed
+        width: isExpanded ? `${size.width}px` : (gatheredSize ? gatheredSize.width : `${size.width}px`), // Use custom size or gathered size
+        height: isExpanded ? `${size.height}px` : (gatheredSize ? gatheredSize.height : `${size.height}px`), // Use custom size or gathered size
         padding: '16px',
         border: `1px solid ${currentColor.border}`,
         borderRadius: '8px',
@@ -215,6 +311,7 @@ const PostItNote = ({
         borderRight: '1px solid rgba(0, 0, 0, 0.05)'
       }}
       onMouseDown={handleMouseDown}
+      onClick={handleClick}
       onDoubleClick={handleDoubleClick}
     >
       {/* Paper texture overlay */}
@@ -242,8 +339,8 @@ const PostItNote = ({
           position: 'absolute',
           top: '4px',
           left: '4px',
-          width: '20px',
-          height: '20px',
+          width: '24px', // Slightly larger hit area
+          height: '24px',
           background: isPinned ? 'linear-gradient(135deg, #4caf50, #388e3c)' : 'linear-gradient(135deg, #9e9e9e, #757575)',
           border: 'none',
           color: 'white',
@@ -255,18 +352,25 @@ const PostItNote = ({
           justifyContent: 'center',
           boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
           transition: 'all 0.1s ease',
-          transform: 'translateZ(0)'
+          transform: 'translateZ(0)',
+          zIndex: 10 // Ensure it's above other elements
         }}
         onMouseEnter={(e) => {
-          e.target.style.transform = 'scale(1.1) translateZ(0)';
+          e.target.style.transform = 'scale(1.15) translateZ(0)';
           e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
         }}
         onMouseLeave={(e) => {
           e.target.style.transform = 'scale(1) translateZ(0)';
           e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
         }}
+        onMouseDown={(e) => {
+          // Prevent drag from starting when clicking pin button
+          e.stopPropagation();
+          e.preventDefault();
+        }}
         onClick={(e) => {
           e.stopPropagation();
+          e.preventDefault();
           if (onPin) onPin(id);
         }}
         title={isPinned ? "Unpin note" : "Pin note"}
@@ -274,14 +378,14 @@ const PostItNote = ({
         📌
       </button>
       
-      {/* Delete button - only show on hover */}
+      {/* Delete button - improved sensitivity */}
       <button
         style={{
           position: 'absolute',
           top: '4px',
           right: '4px',
-          width: '20px',
-          height: '20px',
+          width: '24px', // Slightly larger hit area
+          height: '24px',
           background: 'linear-gradient(135deg, #ff5252, #d32f2f)',
           border: 'none',
           color: 'white',
@@ -293,18 +397,25 @@ const PostItNote = ({
           justifyContent: 'center',
           boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
           transition: 'all 0.1s ease',
-          transform: 'translateZ(0)'
+          transform: 'translateZ(0)',
+          zIndex: 10 // Ensure it's above other elements
         }}
         onMouseEnter={(e) => {
-          e.target.style.transform = 'scale(1.1) translateZ(0)';
+          e.target.style.transform = 'scale(1.15) translateZ(0)';
           e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
         }}
         onMouseLeave={(e) => {
           e.target.style.transform = 'scale(1) translateZ(0)';
           e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
         }}
+        onMouseDown={(e) => {
+          // Prevent drag from starting when clicking delete button
+          e.stopPropagation();
+          e.preventDefault();
+        }}
         onClick={(e) => {
           e.stopPropagation();
+          e.preventDefault();
           handleDelete();
         }}
         title="Delete note"
@@ -376,6 +487,26 @@ const PostItNote = ({
           </div>
         )}
       </div>
+
+      {/* Resize handle - bottom right corner */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '2px',
+          right: '2px',
+          width: '12px',
+          height: '12px',
+          cursor: 'nw-resize',
+          background: 'linear-gradient(-45deg, transparent 0%, transparent 40%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.3) 60%, transparent 60%)',
+          borderRadius: '0 0 6px 0',
+          opacity: isResizing ? 0.8 : 0.4,
+          transition: 'opacity 0.2s ease'
+        }}
+        onMouseDown={handleResizeMouseDown}
+        title="Drag to resize"
+        onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+        onMouseLeave={(e) => e.target.style.opacity = isResizing ? '0.8' : '0.4'}
+      />
     </div>
   );
 };
@@ -384,11 +515,16 @@ const PostItNote = ({
 export const PostItContainer = ({ onNotesUpdate }) => {
   const { user } = useAuth();
   const [notes, setNotes] = useState([]);
-  const [ephemeralNotes, setEphemeralNotes] = useState([]); // Unpinned notes in memory only
-  const [nextEphemeralId, setNextEphemeralId] = useState(-1); // Negative IDs for ephemeral notes
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const handleAddNoteRef = useRef();
+  
+  // Update parent component when notes change
+  useEffect(() => {
+    if (onNotesUpdate && !loading) {
+      onNotesUpdate({ notes: notes, loading: false });
+    }
+  }, [notes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load notes from API
   useEffect(() => {
@@ -397,10 +533,7 @@ export const PostItContainer = ({ onNotesUpdate }) => {
     }
   }, [user]);
 
-  // Get all notes (pinned from DB + ephemeral from memory)
-  const getAllNotes = () => {
-    return [...notes, ...ephemeralNotes];
-  };
+  // All notes are now persistent (no ephemeral notes system)
 
   const loadNotes = async () => {
     try {
@@ -419,16 +552,13 @@ export const PostItContainer = ({ onNotesUpdate }) => {
         setNotes(notesArray);
         setError('');
         
-        // Update parent component with notes data
-        if (onNotesUpdate) {
-          onNotesUpdate({ notes: notesArray, loading: false });
-        }
+        // Parent component will be updated by useEffect
       } else {
-        console.error('Failed to load notes:', response.status);
+        // Failed to load notes
         setError('Failed to load notes');
       }
     } catch (err) {
-      console.error('Error loading notes:', err);
+      // Error loading notes
       setError('Error loading notes');
     } finally {
       setLoading(false);
@@ -460,13 +590,10 @@ export const PostItContainer = ({ onNotesUpdate }) => {
         );
         setNotes(updatedNotes);
         
-        // Update parent component with new notes data
-        if (onNotesUpdate) {
-          onNotesUpdate({ notes: updatedNotes, loading: false });
-        }
+        // Parent component will be updated by useEffect
       }
     } catch (err) {
-      console.error('Error updating note:', err);
+      // Error updating note
     }
   };
 
@@ -484,40 +611,50 @@ export const PostItContainer = ({ onNotesUpdate }) => {
         const updatedNotes = notes.filter(note => note.id !== id);
         setNotes(updatedNotes);
         
-        // Update parent component with new notes data
-        if (onNotesUpdate) {
-          onNotesUpdate({ notes: updatedNotes, loading: false });
-        }
+        // Parent component will be updated by useEffect
       }
     } catch (err) {
-      console.error('Error deleting note:', err);
+      // Error deleting note
     }
   };
 
   const handlePinNote = async (id) => {
     try {
       const token = localStorage.getItem('token');
+      
+      // Find the current note (all notes are persistent now)
+      const currentNote = notes.find(note => note.id === id);
+      
+      if (!currentNote) {
+        return;
+      }
+      
+      // Send both pin toggle AND current position to preserve location when pinning
       const response = await fetch(`/api/notes/${id}/pin`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          position_x: currentNote.position_x,
+          position_y: currentNote.position_y
+        })
       });
 
       if (response.ok) {
         const data = await response.json();
+        
+        // Update the note in the notes array (all notes are persistent)
         const updatedNotes = notes.map(note => 
           note.id === id ? { ...note, ...data.note } : note
         );
         setNotes(updatedNotes);
         
-        // Update parent component with new notes data
-        if (onNotesUpdate) {
-          onNotesUpdate({ notes: updatedNotes, loading: false });
-        }
+        // Parent component will be updated by useEffect
       }
     } catch (err) {
-      console.error('Error toggling pin:', err);
+      // Error toggling pin
     }
   };
 
@@ -565,13 +702,10 @@ export const PostItContainer = ({ onNotesUpdate }) => {
         const updatedNotes = [...notes, newNote];
         setNotes(updatedNotes);
         
-        // Update parent component with new notes data
-        if (onNotesUpdate) {
-          onNotesUpdate({ notes: updatedNotes, loading: false });
-        }
+        // Parent component will be updated by useEffect
       }
     } catch (err) {
-      console.error('Error creating note:', err);
+      // Error creating note
     }
   }, []);
 
@@ -588,11 +722,77 @@ export const PostItContainer = ({ onNotesUpdate }) => {
       }
     };
 
+    // Listen for colored note creation events from BulletinBoard
+    const handleCreateColoredNote = (event) => {
+      const { position, content, color } = event.detail;
+      
+      // Calculate content area bounds for new note placement  
+      const sidebarWidth = 280;
+      const headerHeight = 60;
+      const padding = 20;
+      const noteWidth = 300;
+      const noteHeight = 300;
+      
+      const minX = sidebarWidth + padding;
+      const minY = headerHeight + padding;
+      const maxX = window.innerWidth - noteWidth - padding;
+      const maxY = window.innerHeight - noteHeight - padding;
+
+      const notePosition = position || {
+        x: Math.max(minX, minX + Math.random() * Math.max(0, maxX - minX)),
+        y: Math.max(minY, minY + Math.random() * Math.max(0, maxY - minY))
+      };
+
+      const newNoteData = {
+        content: content || '',
+        position_x: notePosition.x,
+        position_y: notePosition.y,
+        color: color || 'yellow'
+      };
+
+      // Create the note using the same API call pattern as handleAddNote
+      const createColoredNote = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch('/api/notes', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newNoteData)
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const newNote = {
+              ...data.note,
+              isEditing: true // Set new note to editing mode
+            };
+            // Use functional update to ensure we have the latest notes
+            setNotes(currentNotes => {
+              const updatedNotes = [...currentNotes, newNote];
+              return updatedNotes;
+            });
+            
+            // Parent component update will be handled by useEffect
+          }
+        } catch (err) {
+          // Error creating colored note
+        }
+      };
+
+      createColoredNote();
+    };
+
     window.addEventListener('addPostItNote', handleAddNoteEvent);
+    window.addEventListener('createColoredNote', handleCreateColoredNote);
+    
     return () => {
       window.removeEventListener('addPostItNote', handleAddNoteEvent);
+      window.removeEventListener('createColoredNote', handleCreateColoredNote);
     };
-  }, []); // Empty dependency array - stable listener
+  }, []); // Remove dependencies to prevent re-creation
 
   // Listen for note position update events from dashboard
   useEffect(() => {
@@ -639,10 +839,10 @@ export const PostItContainer = ({ onNotesUpdate }) => {
         <span className="text-yellow-800 text-xl font-bold">+</span>
       </button>
 
-      {/* Render all notes (pinned + ephemeral) */}
-      {getAllNotes().map(note => (
+      {/* Render all notes */}
+      {notes.map(note => (
         <PostItNote
-          key={note.id}
+          key={`note_${note.id}`}
           id={note.id}
           initialText={note.content || ''}
           initialPosition={{ x: note.position_x, y: note.position_y }}
